@@ -1,14 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSurvey, ROLES, RoleType } from "@/hooks/use-survey";
+import { useSurvey, ROLES, RoleType, CompanyEntity } from "@/hooks/use-survey";
 import { StepIndicator } from "@/components/StepIndicator";
 import { Button } from "@/components/ui/button-custom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
-import { ChevronRight, GripVertical, CheckCircle2, Circle, ArrowUp, ArrowDown, RefreshCw } from "lucide-react";
+import { ChevronRight, GripVertical, CheckCircle2, ArrowUp, ArrowDown, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function SurveyPage() {
   const { state, actions } = useSurvey();
-  const [activePair, setActivePair] = useState<[string, string] | null>(null);
+  const [activePair, setActivePair] = useState<[CompanyEntity, CompanyEntity] | null>(null);
 
   // --- DERIVED STATE ---
   const totalSteps = 5; // Updated to 5 stages
@@ -43,10 +43,10 @@ export default function SurveyPage() {
 
       const a = candidates[idx1];
       const b = candidates[idx2];
-      const key = [a, b].sort().join("|");
+      const key = [a.id, b.id].sort().join("|");
 
       if (!state.completedPairs.has(key)) {
-        return [a, b] as [string, string];
+        return [a, b] as [CompanyEntity, CompanyEntity];
       }
       attempts++;
     }
@@ -80,12 +80,12 @@ export default function SurveyPage() {
     actions.nextStep();
   };
 
-  const handlePairChoice = (winner: string | null) => {
+  const handlePairChoice = (winnerId: string | null) => {
     if (!activePair) return;
     const [a, b] = activePair;
     
-    if (winner) actions.recordWin(winner);
-    actions.markPairSeen(a, b);
+    if (winnerId) actions.recordWin(winnerId);
+    actions.markPairSeen(a.id, b.id);
     
     // Reset active pair to trigger effect
     setActivePair(null);
@@ -212,12 +212,12 @@ export default function SurveyPage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-3xl mx-auto w-full">
-        {state.displayedCompanies.map((company) => {
-          const isSelected = state.selectedCompanies.includes(company);
+        {state.displayedCompanies.map((entity) => {
+          const isSelected = !!state.selectedCompanies.find(c => c.id === entity.id);
           return (
             <div
-              key={company}
-              onClick={() => actions.toggleCompanySelection(company)}
+              key={entity.id}
+              onClick={() => actions.toggleCompanySelection(entity)}
               className={cn(
                 "cursor-pointer rounded-lg p-3 border transition-all duration-200 flex items-center gap-3 select-none",
                 isSelected 
@@ -231,9 +231,12 @@ export default function SurveyPage() {
               )}>
                 {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
               </div>
-              <span className={cn("text-sm font-medium leading-tight", isSelected ? "text-primary" : "text-foreground")}>
-                {company}
-              </span>
+              <div className="flex flex-col min-w-0">
+                <span className={cn("text-sm font-bold leading-tight truncate", isSelected ? "text-primary" : "text-foreground")}>
+                  {entity.name}
+                </span>
+                <span className="text-[10px] text-muted-foreground uppercase font-medium mt-0.5">{entity.role}</span>
+              </div>
             </div>
           );
         })}
@@ -273,15 +276,15 @@ export default function SurveyPage() {
              className="flex flex-col h-full"
            >
              <button
-                onClick={() => handlePairChoice(activePair[0])}
+                onClick={() => handlePairChoice(activePair[0].id)}
                 className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-3xl p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[240px]"
              >
                 <div className="absolute top-4 left-4 bg-slate-100 text-slate-500 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Option A</div>
                 <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-primary transition-colors">
-                  {activePair[0]}
+                  {activePair[0].name}
                 </h3>
                 <p className="mt-2 text-sm text-muted-foreground font-medium uppercase tracking-tight">
-                  {actions.getCompanyRole?.(activePair[0])}
+                  {activePair[0].role}
                 </p>
                 <span className="mt-4 text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
                   Select this company →
@@ -301,15 +304,15 @@ export default function SurveyPage() {
              className="flex flex-col h-full"
            >
              <button
-                onClick={() => handlePairChoice(activePair[1])}
+                onClick={() => handlePairChoice(activePair[1].id)}
                 className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-3xl p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[240px]"
              >
                 <div className="absolute top-4 left-4 bg-slate-100 text-slate-500 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Option B</div>
                 <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-primary transition-colors">
-                  {activePair[1]}
+                  {activePair[1].name}
                 </h3>
                 <p className="mt-2 text-sm text-muted-foreground font-medium uppercase tracking-tight">
-                  {actions.getCompanyRole?.(activePair[1])}
+                  {activePair[1].role}
                 </p>
                 <span className="mt-4 text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
                   Select this company →
@@ -348,15 +351,16 @@ export default function SurveyPage() {
 
       <div className="max-w-2xl mx-auto space-y-3 pb-8">
         <Reorder.Group axis="y" values={state.finalRanking} onReorder={actions.updateFinalRanking} className="space-y-3">
-          {state.finalRanking.map((company, index) => (
-            <Reorder.Item key={company} value={company}>
+          {state.finalRanking.map((entity, index) => (
+            <Reorder.Item key={entity.id} value={entity}>
               <div className="group bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-all flex items-center gap-4 cursor-grab active:cursor-grabbing">
                 <div className="flex flex-col items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary font-bold text-lg">
                   {index + 1}
                 </div>
                 
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{company}</h3>
+                  <h3 className="font-semibold text-lg">{entity.name}</h3>
+                  <p className="text-sm text-muted-foreground">{entity.role}</p>
                 </div>
 
                 <GripVertical className="text-muted-foreground/50" />

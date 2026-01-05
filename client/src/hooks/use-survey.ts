@@ -16,15 +16,21 @@ export const COMPANIES_BY_ROLE: Record<RoleType, string[]> = {
 };
 
 // --- TYPES ---
+export interface CompanyEntity {
+  name: string;
+  role: RoleType;
+  id: string; // e.g. "Commonwealth Bank|Finance and Banking"
+}
+
 export interface SurveyState {
   step: number;
   selectedRoles: RoleType[];
   roleOrder: RoleType[];
-  displayedCompanies: string[]; // The pool of 20 random companies
-  selectedCompanies: string[]; // The subset recognized by user
-  pairwiseWins: Record<string, number>; // "CompanyName": count
-  completedPairs: Set<string>; // "A|B" to track history
-  finalRanking: string[]; // Final sorted list
+  displayedCompanies: CompanyEntity[]; // Unique entities
+  selectedCompanies: CompanyEntity[]; // Unique entities
+  pairwiseWins: Record<string, number>; // Use ID
+  completedPairs: Set<string>; // "ID1|ID2"
+  finalRanking: CompanyEntity[]; 
 }
 
 // --- HOOK ---
@@ -39,16 +45,6 @@ export function useSurvey() {
     completedPairs: new Set(),
     finalRanking: [],
   });
-
-  // --- HELPER: Find role for a company ---
-  const getCompanyRole = (companyName: string): RoleType | null => {
-    for (const role of ROLES) {
-      if (COMPANIES_BY_ROLE[role].includes(companyName)) {
-        return role;
-      }
-    }
-    return null;
-  };
 
   // --- ACTIONS ---
 
@@ -67,46 +63,50 @@ export function useSurvey() {
   };
 
   const generateCompanyPool = () => {
-    // 1. Gather all unique companies from selected roles
-    const allCompanies = new Set<string>();
+    // 1. Gather all unique company-role pairs
+    const allEntities: CompanyEntity[] = [];
     state.selectedRoles.forEach(role => {
-      COMPANIES_BY_ROLE[role].forEach(company => allCompanies.add(company));
+      COMPANIES_BY_ROLE[role].forEach(name => {
+        allEntities.push({
+          name,
+          role,
+          id: `${name}|${role}`
+        });
+      });
     });
     
-    // 2. Convert to array and shuffle
-    const companyList = Array.from(allCompanies);
-    const shuffled = [...companyList].sort(() => 0.5 - Math.random());
+    // 2. Shuffle
+    const shuffled = [...allEntities].sort(() => 0.5 - Math.random());
     
-    // 3. Take first 20 (or fewer if not enough unique companies)
+    // 3. Take first 20
     const displayedCompanies = shuffled.slice(0, 20);
     
     setState(prev => ({ ...prev, displayedCompanies }));
   };
 
-  const toggleCompanySelection = (company: string) => {
+  const toggleCompanySelection = (entity: CompanyEntity) => {
     setState(prev => {
-      const exists = prev.selectedCompanies.includes(company);
+      const exists = prev.selectedCompanies.find(c => c.id === entity.id);
       const nextCompanies = exists
-        ? prev.selectedCompanies.filter(c => c !== company)
-        : [...prev.selectedCompanies, company];
+        ? prev.selectedCompanies.filter(c => c.id !== entity.id)
+        : [...prev.selectedCompanies, entity];
       return { ...prev, selectedCompanies: nextCompanies };
     });
   };
 
-  const recordWin = (winner: string) => {
+  const recordWin = (winnerId: string) => {
     setState(prev => {
-      const currentScore = prev.pairwiseWins[winner] || 0;
+      const currentScore = prev.pairwiseWins[winnerId] || 0;
       return {
         ...prev,
-        pairwiseWins: { ...prev.pairwiseWins, [winner]: currentScore + 1 }
+        pairwiseWins: { ...prev.pairwiseWins, [winnerId]: currentScore + 1 }
       };
     });
   };
 
-  const markPairSeen = (a: string, b: string) => {
+  const markPairSeen = (idA: string, idB: string) => {
     setState(prev => {
-      // Create canonical key for the pair
-      const key = [a, b].sort().join("|");
+      const key = [idA, idB].sort().join("|");
       return {
         ...prev,
         completedPairs: new Set(prev.completedPairs).add(key)
@@ -116,14 +116,14 @@ export function useSurvey() {
 
   const generateFinalRanking = () => {
     const sorted = [...state.selectedCompanies].sort((a, b) => {
-      const scoreA = state.pairwiseWins[a] || 0;
-      const scoreB = state.pairwiseWins[b] || 0;
-      return scoreB - scoreA; // Descending
+      const scoreA = state.pairwiseWins[a.id] || 0;
+      const scoreB = state.pairwiseWins[b.id] || 0;
+      return scoreB - scoreA;
     });
     setState(prev => ({ ...prev, finalRanking: sorted }));
   };
   
-  const updateFinalRanking = (newRanking: string[]) => {
+  const updateFinalRanking = (newRanking: CompanyEntity[]) => {
     setState(prev => ({ ...prev, finalRanking: newRanking }));
   };
 
@@ -155,7 +155,6 @@ export function useSurvey() {
   return {
     state,
     actions: {
-      getCompanyRole,
       selectRole,
       reorderRoles,
       generateCompanyPool,
