@@ -58,10 +58,10 @@ export const COMPANIES_BY_ROLE: Record<RoleType, string[]> = {
     "Fontis Australia"
   ],
   "Investment banking": [
-    "Goldman Sachs",
+    "Goldman Sachs Australia",
     "Macquarie Group",
     "JPMorganChase Australia",
-    "UBS",
+    "UBS Australia",
     "Morgan Stanley Australia",
     "Citi Group Australia",
     "Bank of America",
@@ -72,7 +72,7 @@ export const COMPANIES_BY_ROLE: Record<RoleType, string[]> = {
     "Azure Capital (Natixis)",
     "Grant Samuel",
     "ICA Partners",
-    "Stanton Road",
+    "Stanton Road Partners Australia",
     "Flagstaff Partners",
     "Allier Capital",
     "Alchemist Capital Partners"
@@ -177,7 +177,7 @@ export function useSurvey() {
       "Computer Science & Software Engineering": ["Google AU", "Atlassian", "Canva"],
       "Finance and Banking": ["Goldman Sachs Australia", "Commonwealth Bank"],
       "Law": ["Allens", "King & Wood Mallesons", "Herbert Smith Freehills Kramer", "Ashurst", "Clayton Utz", "Gilbert + Tobin"],
-      "Investment banking": ["Goldman Sachs", "Macquarie Group", "JPMorganChase Australia", "UBS", "Morgan Stanley Australia"],
+      "Investment banking": ["Goldman Sachs Australia", "Macquarie Group", "JPMorganChase Australia", "UBS Australia", "Morgan Stanley Australia"],
       "Accounting & Advisory": ["PwC Australia", "EY Australia", "KPMG Australia", "Deloitte Australia", "Australian Taxation Office (ATO)"]
     };
 
