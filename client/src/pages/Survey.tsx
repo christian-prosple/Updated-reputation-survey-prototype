@@ -3,14 +3,19 @@ import { useSurvey, ROLES, RoleType, CompanyEntity } from "@/hooks/use-survey";
 import { StepIndicator } from "@/components/StepIndicator";
 import { Button } from "@/components/ui/button-custom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
-import { ChevronRight, GripVertical, CheckCircle2, ArrowUp, ArrowDown, RefreshCw } from "lucide-react";
+import { ChevronRight, GripVertical, CheckCircle2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+interface ManualCompany {
+  name: string;
+  role: string;
+}
 
 export default function SurveyPage() {
   const { state, actions } = useSurvey();
   const [activePair, setActivePair] = useState<[CompanyEntity, CompanyEntity] | null>(null);
 
-  const [newCompany, setNewCompany] = useState({ name: "", role: ROLES[0] });
+  const [newCompany, setNewCompany] = useState<ManualCompany>({ name: "", role: ROLES[0] });
   const [isAdding, setIsAdding] = useState(false);
 
   const handleAddManualCompany = () => {
