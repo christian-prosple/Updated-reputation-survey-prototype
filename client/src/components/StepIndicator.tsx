@@ -15,7 +15,7 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
           Step {currentStep > totalSteps ? totalSteps : currentStep} of {totalSteps}
         </span>
         <span className="text-xs text-muted-foreground font-medium">
-          {Math.round(((currentStep - 1) / totalSteps) * 100)}% Complete
+          {Math.round(((currentStep) / totalSteps) * 100)}% Complete
         </span>
       </div>
       
@@ -25,7 +25,7 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
         <motion.div
           className="absolute top-0 left-0 h-full bg-primary rounded-full"
           initial={{ width: 0 }}
-          animate={{ width: `${((currentStep - 1) / totalSteps) * 100}%` }}
+          animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
           transition={{ duration: 0.5, ease: "easeInOut" }}
         />
       </div>
