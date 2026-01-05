@@ -145,8 +145,8 @@ export default function SurveyPage() {
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
-          Career Path
+        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
+          Career Paths
         </h2>
         <p className="text-lg text-muted-foreground max-w-lg mx-auto">
           What role/s or career path/s are you most interested in pursuing?
@@ -200,7 +200,7 @@ export default function SurveyPage() {
   const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
+        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
           Priorities
         </h2>
         <p className="text-lg text-muted-foreground max-w-lg mx-auto">
@@ -240,7 +240,7 @@ export default function SurveyPage() {
     return (
       <div className="space-y-6 h-full flex flex-col">
         <div className="text-center mb-4">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
             Employer Recognition
           </h2>
           <p className="text-lg text-muted-foreground max-w-lg mx-auto">
@@ -296,8 +296,8 @@ export default function SurveyPage() {
   const renderStep4 = () => (
     <div className="flex flex-col h-full justify-center max-w-4xl mx-auto w-full">
       <div className="text-center mb-6">
-        <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
-          Your Preference
+        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
+          Pairwise Comparison
         </h2>
         <p className="text-lg text-muted-foreground">
           Which of these two would you prefer to work for?
@@ -411,8 +411,8 @@ export default function SurveyPage() {
   const renderStep5 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
-          Your Personal Shortlist
+        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
+          Top Shortlist
         </h2>
         <p className="text-lg text-muted-foreground max-w-lg mx-auto">
           We've sorted these based on your preferences. Drag to sort them in order of preference.
@@ -524,10 +524,10 @@ export default function SurveyPage() {
       <header className="bg-white border-b sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xl font-display">
-              S
+            <div className="w-8 h-8 bg-[#96D2C0] rounded-full flex items-center justify-center text-slate-800 font-bold text-xl font-display">
+              P
             </div>
-            <span className="font-display font-bold text-xl tracking-tight">SurveyFlow</span>
+            <span className="font-display font-bold text-xl tracking-tight">Prosple</span>
           </div>
           <div className="text-sm font-medium text-slate-500">
             Career Preferences

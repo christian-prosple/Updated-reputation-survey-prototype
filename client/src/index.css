@@ -6,7 +6,7 @@
 
 :root {
   /* Premium, Professional Palette - Deep Indigo & Slate */
-  --background: 210 40% 98%;
+  --background: 0 0% 100%;
   --foreground: 222 47% 11%;
 
   --card: 0 0% 100%;
@@ -15,8 +15,8 @@
   --popover: 0 0% 100%;
   --popover-foreground: 222 47% 11%;
 
-  --primary: 246 80% 60%; /* Vibrant Indigo */
-  --primary-foreground: 210 40% 98%;
+  --primary: 162 40% 71%; /* Prosple Mint #96D2C0 approx */
+  --primary-foreground: 222 47% 11%;
 
   --secondary: 210 40% 96.1%;
   --secondary-foreground: 222 47% 11%;
@@ -24,15 +24,15 @@
   --muted: 210 40% 96.1%;
   --muted-foreground: 215 16% 47%;
 
-  --accent: 246 80% 95%; /* Very light Indigo tint */
-  --accent-foreground: 246 80% 40%;
+  --accent: 162 40% 95%; 
+  --accent-foreground: 162 40% 30%;
 
   --destructive: 0 84.2% 60.2%;
   --destructive-foreground: 210 40% 98%;
 
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
-  --ring: 246 80% 60%;
+  --ring: 162 40% 71%;
 
   --radius: 0.75rem;
 
