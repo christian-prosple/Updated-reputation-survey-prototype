@@ -4,7 +4,9 @@ import { useState, useMemo } from 'react';
 export const ROLES = [
   "Business, Commerce & Management",
   "Finance and Banking",
-  "Law"
+  "Law",
+  "Management consulting",
+  "Computer Science & Software Engineering"
 ] as const;
 
 export type RoleType = typeof ROLES[number];
@@ -12,7 +14,47 @@ export type RoleType = typeof ROLES[number];
 export const COMPANIES_BY_ROLE: Record<RoleType, string[]> = {
   "Business, Commerce & Management": ["Deloitte Australia", "Commonwealth Bank", "Macquarie Group", "SAP Australia", "Oracle Australia", "PKF Australia", "WSP Australia", "Carter Newell Australia", "Nexia Sydney", "Liberty Financial", "Accenture Australia and New Zealand", "Westpac Group", "L'Oréal Australia and New Zealand", "Accru Felsers", "BAE Systems Australia", "Lockheed Martin Australia", "Northrop Grumman Australia", "Qantas", "Linfox ANZ", "Western Power"],
   "Finance and Banking": ["Commonwealth Bank", "UBS Australia", "Goldman Sachs Australia", "Deloitte Australia", "PwC Australia", "NAB Australia", "Moody's Corporation Australia", "QBE Insurance Australia Pacific", "AustralianSuper", "Stanton Road Partners Australia", "Origin Energy Australia", "BASF Australia & New Zealand", "Nutrien Ag Solutions", "BlueScope Australia", "Chatham Financial", "Canopius Group Australia", "Moore Australia", "Pitcher Partners", "Qantas", "WiseTech Global"],
-  "Law": ["Allens", "King & Wood Mallesons", "Herbert Smith Freehills Kramer", "Ashurst", "Clayton Utz", "Gilbert + Tobin", "MinterEllison", "Corrs Chambers Westgarth", "Baker McKenzie", "White & Case", "Arcadis Australia Pacific", "Safewill", "LIgold", "George Migration", "Weir Legal and Consulting", "Bendigo Health", "McCabes Lawyers", "K&L Gates", "Pinsent Masons", "RELX Australia"]
+  "Law": ["Allens", "King & Wood Mallesons", "Herbert Smith Freehills Kramer", "Ashurst", "Clayton Utz", "Gilbert + Tobin", "MinterEllison", "Corrs Chambers Westgarth", "Baker McKenzie", "White & Case", "Arcadis Australia Pacific", "Safewill", "LIgold", "George Migration", "Weir Legal and Consulting", "Bendigo Health", "McCabes Lawyers", "K&L Gates", "Pinsent Masons", "RELX Australia"],
+  "Management consulting": [
+    "McKinsey & Company Australia",
+    "Boston Consulting Group Australia",
+    "Bain & Company Australia",
+    "L.E.K. Consulting",
+    "Oliver Wyman Australia & New Zealand",
+    "EY-Parthenon Strategy (formerly EY Port Jackson Partners)",
+    "OC&C Strategy Consultants Australia",
+    "Altman Solon Australia",
+    "Kearney",
+    "Partners in Performance",
+    "Nous Group",
+    "Argon & Co",
+    "Visagio",
+    "NMG Consulting",
+    "TSA Riley",
+    "Escient",
+    "Cognizant Australia",
+    "Strategic Project Partners"
+  ],
+  "Computer Science & Software Engineering": [
+    "Google AU",
+    "Atlassian",
+    "Jane Street",
+    "Optiver",
+    "IMC Trading Australia",
+    "Canva",
+    "Amazon AU",
+    "Microsoft Australia",
+    "Meta Australia",
+    "Apple Australia",
+    "Commonwealth Bank",
+    "21CS Australia",
+    "NTI Australia",
+    "Kroolo",
+    "NetApp Australia",
+    "Crown Management Consultants",
+    "simPRO",
+    "Fontis Australia"
+  ]
 };
 
 // --- TYPES ---
