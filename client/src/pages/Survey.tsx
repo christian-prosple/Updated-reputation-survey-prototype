@@ -427,7 +427,7 @@ export default function SurveyPage() {
       <div className="max-w-2xl mx-auto space-y-3 pb-4">
         <div className="flex justify-end mb-4">
           {!isAdding ? (
-            <Button variant="outline" size="sm" onClick={() => setIsAdding(true)} className="hover:text-slate-900">
+            <Button variant="outline" size="sm" onClick={() => setIsAdding(true)} className="text-slate-900 border-slate-200 hover:bg-slate-50">
               + Add another company
             </Button>
           ) : (
@@ -488,13 +488,14 @@ export default function SurveyPage() {
       <div className="flex justify-center mt-8 pb-12 gap-4">
         <Button 
           variant="outline"
+          className="text-slate-900 border-slate-200 hover:bg-slate-50"
           onClick={() => window.location.reload()}
         >
           <RefreshCw className="mr-2 w-4 h-4" /> Start Over
         </Button>
         <Button 
           size="lg"
-          className="px-12 bg-green-600 hover:bg-green-700 shadow-green-600/25"
+          className="px-12 bg-[#96D2C0] text-slate-900 hover:bg-[#85c1af] shadow-lg shadow-[#96D2C0]/20 font-bold"
           onClick={() => actions.nextStep()}
         >
           Submit Ranking
@@ -516,6 +517,7 @@ export default function SurveyPage() {
       <Button 
         variant="outline" 
         size="lg"
+        className="text-slate-900 border-slate-200 hover:bg-slate-50"
         onClick={() => window.location.reload()}
       >
         <RefreshCw className="mr-2 w-4 h-4" /> Start Over
