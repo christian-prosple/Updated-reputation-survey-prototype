@@ -10,6 +10,23 @@ export default function SurveyPage() {
   const { state, actions } = useSurvey();
   const [activePair, setActivePair] = useState<[CompanyEntity, CompanyEntity] | null>(null);
 
+  const [newCompany, setNewCompany] = useState({ name: "", role: ROLES[0] });
+  const [isAdding, setIsAdding] = useState(false);
+
+  const handleAddManualCompany = () => {
+    if (!newCompany.name.trim()) return;
+    
+    const entity: CompanyEntity = {
+      name: newCompany.name.trim(),
+      role: newCompany.role as RoleType,
+      id: `manual-${Date.now()}-${newCompany.name.trim()}|${newCompany.role}`
+    };
+    
+    actions.updateFinalRanking([entity, ...state.finalRanking]);
+    setNewCompany({ name: "", role: ROLES[0] });
+    setIsAdding(false);
+  };
+
   // --- DERIVED STATE ---
   const totalSteps = 5; 
 
@@ -402,7 +419,47 @@ export default function SurveyPage() {
         </p>
       </div>
 
-      <div className="max-w-2xl mx-auto space-y-3 pb-8">
+      <div className="max-w-2xl mx-auto space-y-3 pb-4">
+        <div className="flex justify-end mb-4">
+          {!isAdding ? (
+            <Button variant="outline" size="sm" onClick={() => setIsAdding(true)}>
+              + Add another company
+            </Button>
+          ) : (
+            <div className="bg-white border rounded-xl p-4 shadow-sm w-full space-y-4 animate-in fade-in slide-in-from-top-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Company Name</label>
+                  <input 
+                    type="text"
+                    value={newCompany.name}
+                    onChange={(e) => setNewCompany(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full p-2 border rounded-md text-sm focus:ring-1 focus:ring-primary outline-none"
+                    placeholder="Enter company name..."
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Industry / Role</label>
+                  <select 
+                    value={newCompany.role}
+                    onChange={(e) => setNewCompany(prev => ({ ...prev, role: e.target.value as RoleType }))}
+                    className="w-full p-2 border rounded-md text-sm focus:ring-1 focus:ring-primary outline-none bg-white"
+                  >
+                    {ROLES.map(role => (
+                      <option key={role} value={role}>{role}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setIsAdding(false)}>Cancel</Button>
+                <Button size="sm" onClick={handleAddManualCompany} disabled={!newCompany.name.trim()}>Add to List</Button>
+              </div>
+            </div>
+          )}
+        </div>
+
         <Reorder.Group axis="y" values={state.finalRanking} onReorder={actions.updateFinalRanking} className="space-y-3">
           {state.finalRanking.map((entity, index) => (
             <Reorder.Item key={entity.id} value={entity}>
