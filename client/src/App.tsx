@@ -4,12 +4,17 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
+import SurveyPage from "@/pages/Survey";
 
 function Router() {
   return (
     <Switch>
-      {/* Add pages below */}
-      {/* <Route path="/" component={Home}/> */}
+      {/* 
+        This is a Single Page App survey.
+        The root path serves the Survey flow.
+      */}
+      <Route path="/" component={SurveyPage} />
+      
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
