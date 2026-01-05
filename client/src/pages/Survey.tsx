@@ -235,7 +235,6 @@ export default function SurveyPage() {
                 <span className={cn("text-sm font-bold leading-tight truncate", isSelected ? "text-primary" : "text-foreground")}>
                   {entity.name}
                 </span>
-                <span className="text-[10px] text-muted-foreground uppercase font-medium mt-0.5">{entity.role}</span>
               </div>
             </div>
           );
