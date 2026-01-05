@@ -13,6 +13,13 @@ export default function SurveyPage() {
   // --- DERIVED STATE ---
   const totalSteps = 5; // Updated to 5 stages
 
+  const targetPairwiseCount = useMemo(() => {
+    const n = state.selectedCompanies.length;
+    if (n < 2) return 0;
+    const maxPossible = (n * (n - 1)) / 2;
+    return Math.min(20, maxPossible);
+  }, [state.selectedCompanies.length]);
+
   // --- EFFECT: Initialize Companies for Step 3 ---
   useEffect(() => {
     if (state.step === 3 && state.displayedCompanies.length === 0) {
@@ -283,15 +290,15 @@ export default function SurveyPage() {
       <div className="max-w-md mx-auto w-full mb-10 space-y-2">
         <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
           <span>Progress</span>
-          <span>{state.pairwiseCount} / 20</span>
+          <span>{state.pairwiseCount} / {targetPairwiseCount}</span>
         </div>
         <div className="h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
           <motion.div 
             initial={{ width: 0 }}
-            animate={{ width: `${Math.min((state.pairwiseCount / 20) * 100, 100)}%` }}
+            animate={{ width: `${Math.min((state.pairwiseCount / targetPairwiseCount) * 100, 100)}%` }}
             className={cn(
               "h-full transition-colors duration-500",
-              state.pairwiseCount >= 20 ? "bg-green-500" : "bg-primary"
+              state.pairwiseCount >= targetPairwiseCount ? "bg-green-500" : "bg-primary"
             )}
           />
         </div>
@@ -364,15 +371,15 @@ export default function SurveyPage() {
             </Button>
           )}
           <Button 
-            variant={state.pairwiseCount >= 20 ? "primary" : "secondary"}
+            variant={state.pairwiseCount >= targetPairwiseCount ? "primary" : "secondary"}
             size="lg"
             className={cn(
               "flex-[2] transition-all duration-300",
-              state.pairwiseCount >= 20 ? "shadow-lg shadow-primary/20 scale-105" : "text-muted-foreground"
+              state.pairwiseCount >= targetPairwiseCount ? "shadow-lg shadow-primary/20 scale-105" : "text-muted-foreground"
             )}
             onClick={handleFinishSurvey}
           >
-            {state.pairwiseCount >= 20 ? "Continue" : "Finish Early"}
+            {state.pairwiseCount >= targetPairwiseCount ? "Continue" : "Finish Early"}
             <ChevronRight className="ml-2 w-5 h-5" />
           </Button>
         </div>
