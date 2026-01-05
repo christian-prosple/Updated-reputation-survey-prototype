@@ -6,7 +6,9 @@ export const ROLES = [
   "Finance and Banking",
   "Law",
   "Management consulting",
-  "Computer Science & Software Engineering"
+  "Computer Science & Software Engineering",
+  "Investment banking",
+  "Accounting & Advisory"
 ] as const;
 
 export type RoleType = typeof ROLES[number];
@@ -54,6 +56,46 @@ export const COMPANIES_BY_ROLE: Record<RoleType, string[]> = {
     "Crown Management Consultants",
     "simPRO",
     "Fontis Australia"
+  ],
+  "Investment banking": [
+    "Goldman Sachs",
+    "Macquarie Group",
+    "JPMorganChase Australia",
+    "UBS",
+    "Morgan Stanley Australia",
+    "Citi Group Australia",
+    "Bank of America",
+    "Barrenjoey (Barclays)",
+    "Jefferies Australia",
+    "Deutsche Bank",
+    "Gresham",
+    "Azure Capital (Natixis)",
+    "Grant Samuel",
+    "ICA Partners",
+    "Stanton Road",
+    "Flagstaff Partners",
+    "Allier Capital",
+    "Alchemist Capital Partners"
+  ],
+  "Accounting & Advisory": [
+    "PwC Australia",
+    "EY Australia",
+    "KPMG Australia",
+    "Deloitte Australia",
+    "Australian Taxation Office (ATO)",
+    "Grant Thornton Australia",
+    "BDO Australia",
+    "RSM Australia",
+    "Kelly+Partners",
+    "Byfields Business Advisers",
+    "Fordham",
+    "Altus Financial",
+    "Abound Group",
+    "Worrells",
+    "Sage Advising",
+    "Vincents Chartered Accountants",
+    "BlueSky Accounting",
+    "Scott Chartered Accountants"
   ]
 };
 
@@ -134,7 +176,9 @@ export function useSurvey() {
       "Management consulting": ["McKinsey & Company Australia", "Boston Consulting Group Australia", "Bain & Company Australia"],
       "Computer Science & Software Engineering": ["Google AU", "Atlassian", "Canva"],
       "Finance and Banking": ["Goldman Sachs Australia", "Commonwealth Bank"],
-      "Law": ["Allens", "King & Wood Mallesons", "Herbert Smith Freehills Kramer", "Ashurst", "Clayton Utz", "Gilbert + Tobin"]
+      "Law": ["Allens", "King & Wood Mallesons", "Herbert Smith Freehills Kramer", "Ashurst", "Clayton Utz", "Gilbert + Tobin"],
+      "Investment banking": ["Goldman Sachs", "Macquarie Group", "JPMorganChase Australia", "UBS", "Morgan Stanley Australia"],
+      "Accounting & Advisory": ["PwC Australia", "EY Australia", "KPMG Australia", "Deloitte Australia", "Australian Taxation Office (ATO)"]
     };
 
     const mandatoryNames = new Set<string>();
