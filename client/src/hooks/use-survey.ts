@@ -77,22 +77,54 @@ export function useSurvey() {
       });
     });
     
-    // 2. Shuffle
-    const shuffled = [...allEntities].sort(() => 0.5 - Math.random());
+    // Group entities by company name
+    const groupedByName: Record<string, CompanyEntity[]> = {};
+    allEntities.forEach(entity => {
+      if (!groupedByName[entity.name]) {
+        groupedByName[entity.name] = [];
+      }
+      groupedByName[entity.name].push(entity);
+    });
+
+    const uniqueNames = Object.keys(groupedByName);
+    // Shuffle and pick 20 names
+    const shuffledNames = [...uniqueNames].sort(() => Math.random() - 0.5);
+    const selectedNames = shuffledNames.slice(0, 20);
     
-    // 3. Take first 20
-    const displayedCompanies = shuffled.slice(0, 20);
+    // The pool contains ALL role-specific entities for those names
+    const pool = selectedNames.flatMap(name => groupedByName[name]);
     
-    setState(prev => ({ ...prev, displayedCompanies }));
+    setState(prev => ({
+      ...prev,
+      displayedCompanies: pool,
+      selectedCompanies: [],
+      pairwiseWins: {},
+      completedPairs: new Set(),
+      pairwiseCount: 0,
+      finalRanking: []
+    }));
   };
 
-  const toggleCompanySelection = (entity: CompanyEntity) => {
+  const toggleCompanySelection = (name: string) => {
     setState(prev => {
-      const exists = prev.selectedCompanies.find(c => c.id === entity.id);
-      const nextCompanies = exists
-        ? prev.selectedCompanies.filter(c => c.id !== entity.id)
-        : [...prev.selectedCompanies, entity];
-      return { ...prev, selectedCompanies: nextCompanies };
+      // Find all entities with this name
+      const entitiesWithName = prev.displayedCompanies.filter(c => c.name === name);
+      const firstEntityId = entitiesWithName[0]?.id;
+      const isCurrentlySelected = prev.selectedCompanies.some(c => c.id === firstEntityId);
+
+      let nextSelected: CompanyEntity[];
+      if (isCurrentlySelected) {
+        // Remove all entities with this name
+        nextSelected = prev.selectedCompanies.filter(c => c.name !== name);
+      } else {
+        // Add all entities with this name
+        nextSelected = [...prev.selectedCompanies, ...entitiesWithName];
+      }
+
+      return {
+        ...prev,
+        selectedCompanies: nextSelected
+      };
     });
   };
 

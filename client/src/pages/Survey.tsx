@@ -200,59 +200,64 @@ export default function SurveyPage() {
   );
 
   // STEP 3: COMPANY SELECTION
-  const renderStep3 = () => (
-    <div className="space-y-6 h-full flex flex-col">
-      <div className="text-center mb-4">
-        <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
-          Employer Recognition
-        </h2>
-        <p className="text-lg text-muted-foreground max-w-lg mx-auto">
-          Which of the following employers do you recognise? Select all that apply.
-        </p>
-      </div>
+  const renderStep3 = () => {
+    // Get unique company names from displayed entities
+    const uniqueCompanyNames = Array.from(new Set(state.displayedCompanies.map(c => c.name)));
+    
+    return (
+      <div className="space-y-6 h-full flex flex-col">
+        <div className="text-center mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
+            Employer Recognition
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+            Which of the following employers do you recognise? Select all that apply.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-3xl mx-auto w-full">
-        {state.displayedCompanies.map((entity) => {
-          const isSelected = !!state.selectedCompanies.find(c => c.id === entity.id);
-          return (
-            <div
-              key={entity.id}
-              onClick={() => actions.toggleCompanySelection(entity)}
-              className={cn(
-                "cursor-pointer rounded-lg p-3 border transition-all duration-200 flex items-center gap-3 select-none",
-                isSelected 
-                  ? "border-primary bg-primary/5 ring-1 ring-primary/20" 
-                  : "border-border bg-card hover:bg-secondary/50"
-              )}
-            >
-               <div className={cn(
-                "w-5 h-5 rounded border flex items-center justify-center transition-colors flex-shrink-0",
-                isSelected ? "border-primary bg-primary text-white" : "border-muted-foreground/50"
-              )}>
-                {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-3xl mx-auto w-full">
+          {uniqueCompanyNames.map((name) => {
+            const isSelected = !!state.selectedCompanies.find(c => c.name === name);
+            return (
+              <div
+                key={name}
+                onClick={() => actions.toggleCompanySelection(name)}
+                className={cn(
+                  "cursor-pointer rounded-lg p-3 border transition-all duration-200 flex items-center gap-3 select-none",
+                  isSelected 
+                    ? "border-primary bg-primary/5 ring-1 ring-primary/20" 
+                    : "border-border bg-card hover:bg-secondary/50"
+                )}
+              >
+                 <div className={cn(
+                  "w-5 h-5 rounded border flex items-center justify-center transition-colors flex-shrink-0",
+                  isSelected ? "border-primary bg-primary text-white" : "border-muted-foreground/50"
+                )}>
+                  {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className={cn("text-sm font-bold leading-tight truncate", isSelected ? "text-primary" : "text-foreground")}>
+                    {name}
+                  </span>
+                </div>
               </div>
-              <div className="flex flex-col min-w-0">
-                <span className={cn("text-sm font-bold leading-tight truncate", isSelected ? "text-primary" : "text-foreground")}>
-                  {entity.name}
-                </span>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
 
-      <div className="flex justify-center mt-8 pb-8">
-        <Button 
-          onClick={handleCompanyContinue} 
-          disabled={state.selectedCompanies.length === 0}
-          size="lg"
-          className="w-full max-w-xs"
-        >
-          Continue <ChevronRight className="ml-2 w-5 h-5" />
-        </Button>
+        <div className="flex justify-center mt-8 pb-8">
+          <Button 
+            onClick={handleCompanyContinue} 
+            disabled={state.selectedCompanies.length === 0}
+            size="lg"
+            className="w-full max-w-xs"
+          >
+            Continue <ChevronRight className="ml-2 w-5 h-5" />
+          </Button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // STEP 4: PAIRWISE LOOP
   const renderStep4 = () => (
