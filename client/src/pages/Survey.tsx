@@ -336,49 +336,28 @@ export default function SurveyPage() {
           Your Personal Shortlist
         </h2>
         <p className="text-lg text-muted-foreground max-w-lg mx-auto">
-          We've sorted these based on your preferences. Use the arrow buttons to make final adjustments.
+          We've sorted these based on your preferences. Drag to sort them in order of preference.
         </p>
       </div>
 
       <div className="max-w-2xl mx-auto space-y-3 pb-8">
-        {state.finalRanking.map((company, index) => (
-          <motion.div 
-            key={company}
-            layout
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="group bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-all flex items-center gap-4"
-          >
-            <div className="flex flex-col items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary font-bold text-lg">
-              {index + 1}
-            </div>
-            
-            <div className="flex-1">
-              <h3 className="font-semibold text-lg">{company}</h3>
-            </div>
+        <Reorder.Group axis="y" values={state.finalRanking} onReorder={actions.updateFinalRanking} className="space-y-3">
+          {state.finalRanking.map((company, index) => (
+            <Reorder.Item key={company} value={company}>
+              <div className="group bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-all flex items-center gap-4 cursor-grab active:cursor-grabbing">
+                <div className="flex flex-col items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary font-bold text-lg">
+                  {index + 1}
+                </div>
+                
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg">{company}</h3>
+                </div>
 
-            <div className="flex gap-1">
-               <Button
-                 variant="secondary" 
-                 size="icon" 
-                 className="h-8 w-8 rounded-lg"
-                 disabled={index === 0}
-                 onClick={() => moveRankItem(index, 'up')}
-               >
-                 <ArrowUp className="w-4 h-4" />
-               </Button>
-               <Button
-                 variant="secondary" 
-                 size="icon" 
-                 className="h-8 w-8 rounded-lg"
-                 disabled={index === state.finalRanking.length - 1}
-                 onClick={() => moveRankItem(index, 'down')}
-               >
-                 <ArrowDown className="w-4 h-4" />
-               </Button>
-            </div>
-          </motion.div>
-        ))}
+                <GripVertical className="text-muted-foreground/50" />
+              </div>
+            </Reorder.Item>
+          ))}
+        </Reorder.Group>
       </div>
 
       <div className="flex justify-center mt-8 pb-12 gap-4">
