@@ -1,0 +1,105 @@
+Build a React single-page app (no backend, no database) that prototypes a survey flow with 5 questions.
+
+Data (hardcoded):
+Roles: [“Business, Commerce & Management”, “Finance and Banking”, “Law”]
+
+Companies in hiring for Business, Commerce & Management
+Deloitte Australia
+Commonwealth Bank
+Macquarie Group
+SAP Australia
+Oracle Australia
+PKF Australia
+WSP Australia
+Carter Newell Australia
+Nexia Sydney
+Liberty Financial
+Accenture Australia and New Zealand
+Westpac Group
+L'Oréal Australia and New Zealand
+Accru Felsers
+BAE Systems Australia
+Lockheed Martin Australia
+Northrop Grumman Australia
+Qantas
+Linfox ANZ
+Western Power
+
+Companies hiring for Finance and Banking:
+Commonwealth Bank
+UBS Australia
+Goldman Sachs Australia
+Deloitte Australia
+PwC Australia
+NAB Australia
+Moody's Corporation Australia
+QBE Insurance Australia Pacific
+AustralianSuper
+Stanton Road Partners Australia
+Origin Energy Australia
+BASF Australia & New Zealand
+Nutrien Ag Solutions
+BlueScope Australia
+Chatham Financial
+Canopius Group Australia
+Moore Australia
+Pitcher Partners
+Qantas
+WiseTech Global
+
+Companies hiring for law
+Allens
+King & Wood Mallesons
+Herbert Smith Freehills Kramer
+Ashurst
+Clayton Utz
+Gilbert + Tobin
+MinterEllison
+Corrs Chambers Westgarth
+Baker McKenzie
+White & Case
+Arcadis Australia Pacific
+Safewill
+LIgold
+George Migration
+Weir Legal and Consulting
+Bendigo Health
+McCabes Lawyers
+K&L Gates
+Pinsent Masons
+RELX Australia
+
+Question 1 (Roles):
+Display question: “What role/s or career path/s are you most interested in pursuing? Please select all that apply”
+Show checkboxes for roles (multi-select).
+“Continue” button disabled until at least 1 role selected.
+
+Question 2 (Order roles)
+Display question:  “Which roles are most attractive to you? Sort the roles in the order you would accept offers.“
+If more than 1 role was selected in question 1, display this question
+Show all selected roles and implement a drag and drop reordering system
+
+Question 3 (Companies):
+Display question: “Which of the following employers do you recognise?”
+Show a total of 20 employers, made up of an even mix of companies from all the roles selected in question 1
+Checkboxes for companies (multi-select).
+“Continue” disabled until at least 1 company is selected.
+
+Step 4 (Pairwise loop):
+Repeatedly show a question: “If you received both of these offers, which would you accept?”
+ Randomly pick two companies from selected options in Q3
+Alongside each company, display their role (only show 1 role at a time)
+Show 4 buttons: Choose Company 1, Choose Company 2, “Too hard, skip”, “Finish Survey”.
+Keep an in-memory set of seen pairs per role (like “ROLE|A|B” with A/B sorted) and try to avoid repeating pairs. If all pairs are exhausted, show a message and auto-advance to Step 4.
+Record choices in memory only (optional). No persistence needed.
+
+Step 4 (Shortlist reorder):
+Display question: “Thanks! We've now made a personalised shortlist for you, sorted by your preferences! You can make further adjustments by dragging and dropping below.“
+Show the selected companies as a reorderable list
+Maintain order of companies from the order that they are displayed
+Implement reordering using simple Up/Down arrow buttons (preferred for reliability). Each item has “Move up” and “Move down”.
+
+UI requirements:
+Clean minimal UI, step indicator (Step 1 of 4 etc).
+Basic validation messages when Continue is disabled (e.g., “Select at least 2 companies to continue”).
+Everything must run via the Replit “Run” button.
