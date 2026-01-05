@@ -339,13 +339,13 @@ export default function SurveyPage() {
                 className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-3xl p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[240px]"
              >
                 <div className="absolute top-4 left-4 bg-slate-100 text-slate-500 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Option A</div>
-                <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-primary transition-colors">
+                <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors">
                   {activePair[0].name}
                 </h3>
                 <p className="mt-2 text-sm text-muted-foreground font-medium uppercase tracking-tight">
                   {activePair[0].role}
                 </p>
-                <span className="mt-4 text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="mt-4 text-sm font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity">
                   Select this company →
                 </span>
              </button>
@@ -367,13 +367,13 @@ export default function SurveyPage() {
                 className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-3xl p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[240px]"
              >
                 <div className="absolute top-4 left-4 bg-slate-100 text-slate-500 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Option B</div>
-                <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-primary transition-colors">
+                <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors">
                   {activePair[1].name}
                 </h3>
                 <p className="mt-2 text-sm text-muted-foreground font-medium uppercase tracking-tight">
                   {activePair[1].role}
                 </p>
-                <span className="mt-4 text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="mt-4 text-sm font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity">
                   Select this company →
                 </span>
              </button>
@@ -427,7 +427,7 @@ export default function SurveyPage() {
       <div className="max-w-2xl mx-auto space-y-3 pb-4">
         <div className="flex justify-end mb-4">
           {!isAdding ? (
-            <Button variant="outline" size="sm" onClick={() => setIsAdding(true)}>
+            <Button variant="outline" size="sm" onClick={() => setIsAdding(true)} className="hover:text-slate-900">
               + Add another company
             </Button>
           ) : (
