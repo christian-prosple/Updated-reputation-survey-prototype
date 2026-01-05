@@ -11,7 +11,7 @@ export default function SurveyPage() {
   const [activePair, setActivePair] = useState<[CompanyEntity, CompanyEntity] | null>(null);
 
   // --- DERIVED STATE ---
-  const totalSteps = 6; // Updated to 6 for Thank You page
+  const totalSteps = 5; 
 
   const targetPairwiseCount = useMemo(() => {
     const n = state.selectedCompanies.length;
@@ -394,10 +394,6 @@ export default function SurveyPage() {
   const renderStep5 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold uppercase tracking-wider mb-4">
-          <CheckCircle2 className="w-3.5 h-3.5" />
-          100% Complete
-        </div>
         <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
           Your Personal Shortlist
         </h2>
@@ -484,7 +480,7 @@ export default function SurveyPage() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center py-8 md:py-12 px-4 md:px-8 max-w-6xl mx-auto w-full">
-        <StepIndicator currentStep={state.step} totalSteps={totalSteps} />
+        {state.step <= 5 && <StepIndicator currentStep={state.step} totalSteps={totalSteps} />}
         
         <AnimatePresence mode="wait">
           <motion.div
