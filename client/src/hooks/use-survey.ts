@@ -40,6 +40,16 @@ export function useSurvey() {
     finalRanking: [],
   });
 
+  // --- HELPER: Find role for a company ---
+  const getCompanyRole = (companyName: string): RoleType | null => {
+    for (const role of ROLES) {
+      if (COMPANIES_BY_ROLE[role].includes(companyName)) {
+        return role;
+      }
+    }
+    return null;
+  };
+
   // --- ACTIONS ---
 
   const selectRole = (role: RoleType) => {
@@ -145,6 +155,7 @@ export function useSurvey() {
   return {
     state,
     actions: {
+      getCompanyRole,
       selectRole,
       reorderRoles,
       generateCompanyPool,

@@ -11,7 +11,7 @@ export default function SurveyPage() {
   const [activePair, setActivePair] = useState<[string, string] | null>(null);
 
   // --- DERIVED STATE ---
-  const totalSteps = 4; // We combine pairwise & ranking conceptually for the user, or just say 4 steps. User brief said 4 steps.
+  const totalSteps = 5; // Updated to 5 stages
 
   // --- EFFECT: Initialize Companies for Step 3 ---
   useEffect(() => {
@@ -280,6 +280,9 @@ export default function SurveyPage() {
                 <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-primary transition-colors">
                   {activePair[0]}
                 </h3>
+                <p className="mt-2 text-sm text-muted-foreground font-medium uppercase tracking-tight">
+                  {actions.getCompanyRole?.(activePair[0])}
+                </p>
                 <span className="mt-4 text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
                   Select this company →
                 </span>
@@ -305,6 +308,9 @@ export default function SurveyPage() {
                 <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-primary transition-colors">
                   {activePair[1]}
                 </h3>
+                <p className="mt-2 text-sm text-muted-foreground font-medium uppercase tracking-tight">
+                  {actions.getCompanyRole?.(activePair[1])}
+                </p>
                 <span className="mt-4 text-sm font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
                   Select this company →
                 </span>
@@ -397,9 +403,7 @@ export default function SurveyPage() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center py-8 md:py-12 px-4 md:px-8 max-w-6xl mx-auto w-full">
-        {state.step <= 4 && (
-          <StepIndicator currentStep={state.step} totalSteps={totalSteps} />
-        )}
+        <StepIndicator currentStep={state.step} totalSteps={totalSteps} />
         
         <AnimatePresence mode="wait">
           <motion.div
