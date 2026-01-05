@@ -130,13 +130,39 @@ export function useSurvey() {
       groupedByName[entity.name].push(entity);
     });
 
+    const mandatoryCompanies: Record<string, string[]> = {
+      "Management consulting": ["McKinsey & Company Australia", "Boston Consulting Group Australia", "Bain & Company Australia"],
+      "Computer Science & Software Engineering": ["Google AU", "Atlassian", "Canva"],
+      "Finance and Banking": ["Goldman Sachs Australia", "Commonwealth Bank"],
+      "Law": ["Allens", "King & Wood Mallesons", "Herbert Smith Freehills Kramer", "Ashurst", "Clayton Utz", "Gilbert + Tobin"]
+    };
+
+    const mandatoryNames = new Set<string>();
+    state.selectedRoles.forEach(role => {
+      if (mandatoryCompanies[role]) {
+        mandatoryCompanies[role].forEach(name => mandatoryNames.add(name));
+      }
+    });
+
     const uniqueNames = Object.keys(groupedByName);
-    // Shuffle and pick 20 names
-    const shuffledNames = [...uniqueNames].sort(() => Math.random() - 0.5);
-    const selectedNames = shuffledNames.slice(0, 20);
+    const nonMandatoryNames = uniqueNames.filter(name => !mandatoryNames.has(name));
+
+    // Shuffle non-mandatory names
+    const shuffledNonMandatory = [...nonMandatoryNames].sort(() => Math.random() - 0.5);
+    
+    // Pick until we have 20 total including mandatory ones
+    const finalSelection = Array.from(mandatoryNames).filter(name => uniqueNames.includes(name));
+    const needed = 20 - finalSelection.length;
+    
+    if (needed > 0) {
+      finalSelection.push(...shuffledNonMandatory.slice(0, needed));
+    }
+
+    // Shuffle the final selection so mandatory ones aren't always at the start
+    const finalShuffled = [...finalSelection].sort(() => Math.random() - 0.5);
     
     // The pool contains ALL role-specific entities for those names
-    const pool = selectedNames.flatMap(name => groupedByName[name]);
+    const pool = finalShuffled.flatMap(name => groupedByName[name]);
     
     setState(prev => ({
       ...prev,

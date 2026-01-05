@@ -137,7 +137,7 @@ export default function SurveyPage() {
       </div>
 
       <div className="grid gap-4 max-w-xl mx-auto">
-        {ROLES.map((role) => {
+        {[...ROLES].sort().map((role) => {
           const isSelected = state.selectedRoles.includes(role);
           return (
             <motion.div
