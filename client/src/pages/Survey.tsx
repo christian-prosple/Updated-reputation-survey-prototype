@@ -84,11 +84,20 @@ export default function SurveyPage() {
     if (!activePair) return;
     const [a, b] = activePair;
     
-    if (winnerId) actions.recordWin(winnerId);
-    actions.markPairSeen(a.id, b.id);
+    if (winnerId) {
+      actions.recordWin(winnerId, [a.id, b.id]);
+      actions.markPairSeen(a.id, b.id, false);
+    } else {
+      actions.markPairSeen(a.id, b.id, true);
+    }
     
     // Reset active pair to trigger effect
     setActivePair(null);
+  };
+
+  const handleUndo = () => {
+    actions.undoLastComparison();
+    setActivePair(null); // Reset to trigger re-selection from state
   };
 
   const handleFinishSurvey = () => {
@@ -348,18 +357,25 @@ export default function SurveyPage() {
       )}
 
       <div className="flex flex-col items-center gap-4">
-        <Button 
-          variant={state.pairwiseCount >= 20 ? "primary" : "secondary"}
-          size="lg"
-          className={cn(
-            "w-full max-w-xs transition-all duration-300",
-            state.pairwiseCount >= 20 ? "shadow-lg shadow-primary/20 scale-105" : "text-muted-foreground"
+        <div className="flex gap-4 w-full max-w-xs">
+          {state.comparisonHistory.length > 0 && (
+            <Button variant="outline" size="lg" className="flex-1" onClick={handleUndo}>
+              Back
+            </Button>
           )}
-          onClick={handleFinishSurvey}
-        >
-          {state.pairwiseCount >= 20 ? "Continue to Results" : "Finish Early"}
-          <ChevronRight className="ml-2 w-5 h-5" />
-        </Button>
+          <Button 
+            variant={state.pairwiseCount >= 20 ? "primary" : "secondary"}
+            size="lg"
+            className={cn(
+              "flex-[2] transition-all duration-300",
+              state.pairwiseCount >= 20 ? "shadow-lg shadow-primary/20 scale-105" : "text-muted-foreground"
+            )}
+            onClick={handleFinishSurvey}
+          >
+            {state.pairwiseCount >= 20 ? "Continue" : "Finish Early"}
+            <ChevronRight className="ml-2 w-5 h-5" />
+          </Button>
+        </div>
         <Button variant="ghost" onClick={() => handlePairChoice(null)} className="text-muted-foreground">
           Too hard, skip this pair
         </Button>

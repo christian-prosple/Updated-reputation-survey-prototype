@@ -31,6 +31,7 @@ export interface SurveyState {
   pairwiseWins: Record<string, number>; // Use ID
   completedPairs: Set<string>; // "ID1|ID2"
   pairwiseCount: number; // New counter
+  comparisonHistory: { winnerId: string | null; pair: [string, string] }[];
   finalRanking: CompanyEntity[]; 
 }
 
@@ -45,6 +46,7 @@ export function useSurvey() {
     pairwiseWins: {},
     completedPairs: new Set(),
     pairwiseCount: 0,
+    comparisonHistory: [],
     finalRanking: [],
   });
 
@@ -128,23 +130,56 @@ export function useSurvey() {
     });
   };
 
-  const recordWin = (winnerId: string) => {
+  const recordWin = (winnerId: string, pair: [string, string]) => {
     setState(prev => {
       const currentScore = prev.pairwiseWins[winnerId] || 0;
       return {
         ...prev,
-        pairwiseWins: { ...prev.pairwiseWins, [winnerId]: currentScore + 1 }
+        pairwiseWins: { ...prev.pairwiseWins, [winnerId]: currentScore + 1 },
+        comparisonHistory: [...prev.comparisonHistory, { winnerId, pair }]
       };
     });
   };
 
-  const markPairSeen = (idA: string, idB: string) => {
+  const markPairSeen = (idA: string, idB: string, skip: boolean = false) => {
     setState(prev => {
       const key = [idA, idB].sort().join("|");
-      return {
+      const nextState = {
         ...prev,
         completedPairs: new Set(prev.completedPairs).add(key),
         pairwiseCount: prev.pairwiseCount + 1
+      };
+      
+      if (skip) {
+        nextState.comparisonHistory = [...prev.comparisonHistory, { winnerId: null, pair: [idA, idB] }];
+      }
+      
+      return nextState;
+    });
+  };
+
+  const undoLastComparison = () => {
+    setState(prev => {
+      if (prev.comparisonHistory.length === 0) return prev;
+      
+      const last = prev.comparisonHistory[prev.comparisonHistory.length - 1];
+      const newHistory = prev.comparisonHistory.slice(0, -1);
+      const newWins = { ...prev.pairwiseWins };
+      
+      if (last.winnerId) {
+        newWins[last.winnerId] = Math.max(0, (newWins[last.winnerId] || 1) - 1);
+      }
+      
+      const key = [...last.pair].sort().join("|");
+      const newCompleted = new Set(prev.completedPairs);
+      newCompleted.delete(key);
+      
+      return {
+        ...prev,
+        pairwiseWins: newWins,
+        completedPairs: newCompleted,
+        comparisonHistory: newHistory,
+        pairwiseCount: Math.max(0, prev.pairwiseCount - 1)
       };
     });
   };
@@ -196,6 +231,7 @@ export function useSurvey() {
       toggleCompanySelection,
       recordWin,
       markPairSeen,
+      undoLastComparison,
       generateFinalRanking,
       updateFinalRanking,
       nextStep,
