@@ -176,11 +176,11 @@ export default function SurveyPage() {
             >
               <div className={cn(
                 "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",
-                isSelected ? "border-primary bg-primary text-white" : "border-muted-foreground group-hover:border-primary"
+                isSelected ? "border-primary bg-primary text-slate-900" : "border-muted-foreground group-hover:border-primary"
               )}>
                 {isSelected && <CheckCircle2 className="w-4 h-4" />}
               </div>
-              <span className={cn("font-medium text-lg", isSelected ? "text-primary" : "text-foreground")}>
+              <span className={cn("font-medium text-lg", isSelected ? "text-slate-900" : "text-foreground")}>
                 {role}
               </span>
             </motion.div>
@@ -269,12 +269,12 @@ export default function SurveyPage() {
               >
                  <div className={cn(
                   "w-5 h-5 rounded border flex items-center justify-center transition-colors flex-shrink-0",
-                  isSelected ? "border-primary bg-primary text-white" : "border-muted-foreground/50"
+                  isSelected ? "border-primary bg-primary text-slate-900" : "border-muted-foreground/50"
                 )}>
                   {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className={cn("text-sm font-bold leading-tight truncate", isSelected ? "text-primary" : "text-foreground")}>
+                  <span className={cn("text-sm font-bold leading-tight truncate", isSelected ? "text-slate-900" : "text-foreground")}>
                     {name}
                   </span>
                 </div>
@@ -529,7 +529,7 @@ export default function SurveyPage() {
       <header className="bg-white border-b sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#96D2C0] rounded-full flex items-center justify-center text-[#2A4D43] font-bold text-xl font-display">
+            <div className="w-8 h-8 bg-[#96D2C0] rounded-full flex items-center justify-center text-slate-800 font-bold text-xl font-display">
               P
             </div>
             <span className="font-display font-bold text-xl tracking-tight text-slate-900">Prosple</span>
