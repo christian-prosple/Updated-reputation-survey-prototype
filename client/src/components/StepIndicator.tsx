@@ -14,7 +14,7 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
         <span className="text-sm font-semibold text-slate-800 uppercase tracking-wider">
           Step {currentStep > totalSteps ? totalSteps : currentStep} of {totalSteps}
         </span>
-        <span className="text-xs text-muted-foreground font-medium">
+        <span className="text-xs text-[#2A4D43] font-bold">
           {Math.round(((currentStep) / totalSteps) * 100)}% Complete
         </span>
       </div>

@@ -529,10 +529,10 @@ export default function SurveyPage() {
       <header className="bg-white border-b sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#96D2C0] rounded-full flex items-center justify-center text-slate-800 font-bold text-xl font-display">
+            <div className="w-8 h-8 bg-[#96D2C0] rounded-full flex items-center justify-center text-[#2A4D43] font-bold text-xl font-display">
               P
             </div>
-            <span className="font-display font-bold text-xl tracking-tight">Prosple</span>
+            <span className="font-display font-bold text-xl tracking-tight text-slate-900">Prosple</span>
           </div>
           <div className="text-sm font-medium text-slate-500">
             Career Preferences
