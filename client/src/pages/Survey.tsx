@@ -257,13 +257,30 @@ export default function SurveyPage() {
   // STEP 4: PAIRWISE LOOP
   const renderStep4 = () => (
     <div className="flex flex-col h-full justify-center max-w-4xl mx-auto w-full">
-      <div className="text-center mb-12">
+      <div className="text-center mb-6">
         <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
           Your Preference
         </h2>
         <p className="text-lg text-muted-foreground">
           Which of these two would you prefer to work for?
         </p>
+      </div>
+
+      <div className="max-w-md mx-auto w-full mb-10 space-y-2">
+        <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
+          <span>Progress</span>
+          <span>{state.pairwiseCount} / 20</span>
+        </div>
+        <div className="h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+          <motion.div 
+            initial={{ width: 0 }}
+            animate={{ width: `${Math.min((state.pairwiseCount / 20) * 100, 100)}%` }}
+            className={cn(
+              "h-full transition-colors duration-500",
+              state.pairwiseCount >= 20 ? "bg-green-500" : "bg-primary"
+            )}
+          />
+        </div>
       </div>
 
       {activePair ? (
@@ -325,12 +342,21 @@ export default function SurveyPage() {
         </div>
       )}
 
-      <div className="flex justify-center gap-4">
-        <Button variant="secondary" onClick={() => handlePairChoice(null)}>
-          Too hard, skip
+      <div className="flex flex-col items-center gap-4">
+        <Button 
+          variant={state.pairwiseCount >= 20 ? "primary" : "secondary"}
+          size="lg"
+          className={cn(
+            "w-full max-w-xs transition-all duration-300",
+            state.pairwiseCount >= 20 ? "shadow-lg shadow-primary/20 scale-105" : "text-muted-foreground"
+          )}
+          onClick={handleFinishSurvey}
+        >
+          {state.pairwiseCount >= 20 ? "Continue to Results" : "Finish Early"}
+          <ChevronRight className="ml-2 w-5 h-5" />
         </Button>
-        <Button variant="ghost" onClick={handleFinishSurvey} className="text-muted-foreground hover:text-foreground">
-          Finish Survey
+        <Button variant="ghost" onClick={() => handlePairChoice(null)} className="text-muted-foreground">
+          Too hard, skip this pair
         </Button>
       </div>
     </div>

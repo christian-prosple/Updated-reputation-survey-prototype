@@ -30,6 +30,7 @@ export interface SurveyState {
   selectedCompanies: CompanyEntity[]; // Unique entities
   pairwiseWins: Record<string, number>; // Use ID
   completedPairs: Set<string>; // "ID1|ID2"
+  pairwiseCount: number; // New counter
   finalRanking: CompanyEntity[]; 
 }
 
@@ -43,6 +44,7 @@ export function useSurvey() {
     selectedCompanies: [],
     pairwiseWins: {},
     completedPairs: new Set(),
+    pairwiseCount: 0,
     finalRanking: [],
   });
 
@@ -109,7 +111,8 @@ export function useSurvey() {
       const key = [idA, idB].sort().join("|");
       return {
         ...prev,
-        completedPairs: new Set(prev.completedPairs).add(key)
+        completedPairs: new Set(prev.completedPairs).add(key),
+        pairwiseCount: prev.pairwiseCount + 1
       };
     });
   };
