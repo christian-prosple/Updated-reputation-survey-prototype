@@ -273,17 +273,14 @@ export function useSurvey() {
       if (prev.step === 1) {
         // If only 1 role, skip reordering (step 2) and go to 3
         if (prev.selectedRoles.length <= 1) {
-           // We need to trigger this side effect properly. 
-           // In a real app we might use useEffect, but here we can just chain logic.
-           // However, generating company pool depends on state update.
-           // Better to let component handle side effect or update state atomically.
            return { ...prev, step: 3, roleOrder: prev.selectedRoles };
         }
         // If >1 role, initialize order with selection order
         return { ...prev, step: 2, roleOrder: prev.selectedRoles };
       }
 
-      return { ...prev, step: next };
+      // Cap at step 6 (Thank You)
+      return { ...prev, step: Math.min(next, 6) };
     });
   };
   

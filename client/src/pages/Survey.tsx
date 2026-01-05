@@ -11,7 +11,7 @@ export default function SurveyPage() {
   const [activePair, setActivePair] = useState<[CompanyEntity, CompanyEntity] | null>(null);
 
   // --- DERIVED STATE ---
-  const totalSteps = 5; // Updated to 5 stages
+  const totalSteps = 6; // Updated to 6 for Thank You page
 
   const targetPairwiseCount = useMemo(() => {
     const n = state.selectedCompanies.length;
@@ -394,6 +394,10 @@ export default function SurveyPage() {
   const renderStep5 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold uppercase tracking-wider mb-4">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          100% Complete
+        </div>
         <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-600">
           Your Personal Shortlist
         </h2>
@@ -433,11 +437,31 @@ export default function SurveyPage() {
         <Button 
           size="lg"
           className="px-12 bg-green-600 hover:bg-green-700 shadow-green-600/25"
-          onClick={() => alert("Survey complete! In a real app, this would submit the data.")}
+          onClick={() => actions.nextStep()}
         >
           Submit Ranking
         </Button>
       </div>
+    </div>
+  );
+
+  // STEP 6: THANK YOU
+  const renderStep6 = () => (
+    <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500">
+      <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-8">
+        <CheckCircle2 className="w-10 h-10" />
+      </div>
+      <h2 className="text-4xl font-bold mb-4">Thank you for your response</h2>
+      <p className="text-xl text-muted-foreground max-w-md mx-auto mb-12">
+        Your career preferences have been recorded. We appreciate your time and insights.
+      </p>
+      <Button 
+        variant="outline" 
+        size="lg"
+        onClick={() => window.location.reload()}
+      >
+        <RefreshCw className="mr-2 w-4 h-4" /> Start Over
+      </Button>
     </div>
   );
 
@@ -476,6 +500,7 @@ export default function SurveyPage() {
             {state.step === 3 && renderStep3()}
             {state.step === 4 && renderStep4()}
             {state.step === 5 && renderStep5()}
+            {state.step === 6 && renderStep6()}
           </motion.div>
         </AnimatePresence>
       </main>
