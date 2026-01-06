@@ -190,15 +190,6 @@ export default function SurveyPage() {
 
       <div className="flex justify-center mt-12 gap-4">
         <Button 
-          variant="outline" 
-          size="lg" 
-          onClick={() => actions.prevStep()}
-          disabled={state.step === 1}
-          className="w-full max-w-[160px] text-slate-900 border-slate-200"
-        >
-          <ChevronLeft className="mr-2 w-5 h-5" /> Back
-        </Button>
-        <Button 
           onClick={handleRoleContinue} 
           disabled={state.selectedRoles.length === 0}
           size="lg"
@@ -518,13 +509,6 @@ export default function SurveyPage() {
           className="w-full max-w-[160px] text-slate-900 border-slate-200"
         >
           <ChevronLeft className="mr-2 w-5 h-5" /> Back
-        </Button>
-        <Button 
-          variant="outline"
-          className="text-slate-900 border-slate-200 hover:bg-slate-50"
-          onClick={() => window.location.reload()}
-        >
-          <RefreshCw className="mr-2 w-4 h-4" /> Start Over
         </Button>
         <Button 
           size="lg"
