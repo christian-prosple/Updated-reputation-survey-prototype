@@ -104,7 +104,6 @@ export interface CompanyEntity {
   name: string;
   role: RoleType;
   id: string; // e.g. "Commonwealth Bank|Finance and Banking"
-  logoUrl?: string;
 }
 
 export interface SurveyState {
@@ -207,13 +206,7 @@ export function useSurvey() {
     const finalShuffled = [...finalSelection].sort(() => Math.random() - 0.5);
     
     // The pool contains ALL role-specific entities for those names
-    const pool = finalShuffled.flatMap(name => {
-      const entities = groupedByName[name];
-      return entities.map(entity => ({
-        ...entity,
-        logoUrl: `https://logo.clearbit.com/${name.toLowerCase().replace(/[^a-z0-9]/g, '')}.com`
-      }));
-    });
+    const pool = finalShuffled.flatMap(name => groupedByName[name]);
     
     setState(prev => ({
       ...prev,
