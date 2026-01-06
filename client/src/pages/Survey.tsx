@@ -3,7 +3,7 @@ import { useSurvey, ROLES, RoleType, CompanyEntity } from "@/hooks/use-survey";
 import { StepIndicator } from "@/components/StepIndicator";
 import { Button } from "@/components/ui/button-custom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
-import { ChevronRight, GripVertical, CheckCircle2, RefreshCw } from "lucide-react";
+import { ChevronRight, ChevronLeft, GripVertical, CheckCircle2, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ManualCompany {
@@ -175,7 +175,7 @@ export default function SurveyPage() {
               )}
             >
               <div className={cn(
-                "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors",
+                "w-6 h-6 rounded border-2 flex items-center justify-center transition-colors",
                 isSelected ? "border-primary bg-primary text-slate-900" : "border-muted-foreground group-hover:border-primary"
               )}>
                 {isSelected && <CheckCircle2 className="w-4 h-4" />}
@@ -204,6 +204,16 @@ export default function SurveyPage() {
   // STEP 2: ROLE ORDERING
   const renderStep2 = () => (
     <div className="space-y-6">
+      <div className="flex justify-start mb-2">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => actions.prevStep()}
+          className="text-muted-foreground hover:text-slate-900"
+        >
+          <ChevronLeft className="mr-1 w-4 h-4" /> Back
+        </Button>
+      </div>
       <div className="text-center mb-8">
         <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
           Priorities
@@ -244,6 +254,16 @@ export default function SurveyPage() {
     
     return (
       <div className="space-y-6 h-full flex flex-col">
+        <div className="flex justify-start mb-2">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => actions.prevStep()}
+            className="text-muted-foreground hover:text-slate-900"
+          >
+            <ChevronLeft className="mr-1 w-4 h-4" /> Back
+          </Button>
+        </div>
         <div className="text-center mb-4">
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
             Employer Recognition
@@ -300,6 +320,16 @@ export default function SurveyPage() {
   // STEP 4: PAIRWISE LOOP
   const renderStep4 = () => (
     <div className="flex flex-col h-full justify-center max-w-4xl mx-auto w-full">
+      <div className="flex justify-start mb-6">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => actions.prevStep()}
+          className="text-muted-foreground hover:text-slate-900"
+        >
+          <ChevronLeft className="mr-1 w-4 h-4" /> Back
+        </Button>
+      </div>
       <div className="text-center mb-6">
         <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
           Pairwise Comparison
@@ -415,6 +445,16 @@ export default function SurveyPage() {
   // STEP 5: FINAL RANKING
   const renderStep5 = () => (
     <div className="space-y-6">
+      <div className="flex justify-start mb-2">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => actions.prevStep()}
+          className="text-muted-foreground hover:text-slate-900"
+        >
+          <ChevronLeft className="mr-1 w-4 h-4" /> Back
+        </Button>
+      </div>
       <div className="text-center mb-8">
         <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
           Top Shortlist
