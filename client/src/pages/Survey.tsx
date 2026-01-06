@@ -24,7 +24,8 @@ export default function SurveyPage() {
     const entity: CompanyEntity = {
       name: newCompany.name.trim(),
       role: newCompany.role as RoleType,
-      id: `manual-${Date.now()}-${newCompany.name.trim()}|${newCompany.role}`
+      id: `manual-${Date.now()}-${newCompany.name.trim()}|${newCompany.role}`,
+      logoUrl: `https://logo.clearbit.com/${newCompany.name.trim().toLowerCase().replace(/[^a-z0-9]/g, '')}.com`
     };
     
     actions.updateFinalRanking([entity, ...state.finalRanking]);
@@ -281,10 +282,20 @@ export default function SurveyPage() {
                 )}>
                   {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
                 </div>
-                <div className="flex flex-col min-w-0">
-                  <span className={cn("text-sm font-bold leading-tight truncate", isSelected ? "text-slate-900" : "text-foreground")}>
-                    {name}
-                  </span>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <img 
+                      src={state.displayedCompanies.find(c => c.name === name)?.logoUrl} 
+                      alt=""
+                      className="w-6 h-6 rounded-md bg-slate-100 object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(name) + "&background=random";
+                      }}
+                    />
+                    <span className={cn("text-sm font-bold leading-tight truncate", isSelected ? "text-slate-900" : "text-foreground")}>
+                      {name}
+                    </span>
+                  </div>
                 </div>
               </div>
             );
@@ -352,9 +363,17 @@ export default function SurveyPage() {
            >
              <button
                 onClick={() => handlePairChoice(activePair[0].id)}
-                className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-3xl p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[240px]"
+                className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-3xl p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[280px]"
              >
                 <div className="absolute top-4 left-4 bg-slate-100 text-slate-500 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Option A</div>
+                <img 
+                  src={activePair[0].logoUrl} 
+                  alt=""
+                  className="w-16 h-16 mb-4 rounded-xl bg-slate-50 object-contain p-2"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(activePair[0].name) + "&background=random&size=128";
+                  }}
+                />
                 <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors">
                   {activePair[0].name}
                 </h3>
@@ -380,9 +399,17 @@ export default function SurveyPage() {
            >
              <button
                 onClick={() => handlePairChoice(activePair[1].id)}
-                className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-3xl p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[240px]"
+                className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-3xl p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[280px]"
              >
                 <div className="absolute top-4 left-4 bg-slate-100 text-slate-500 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Option B</div>
+                <img 
+                  src={activePair[1].logoUrl} 
+                  alt=""
+                  className="w-16 h-16 mb-4 rounded-xl bg-slate-50 object-contain p-2"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(activePair[1].name) + "&background=random&size=128";
+                  }}
+                />
                 <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors">
                   {activePair[1].name}
                 </h3>
@@ -489,9 +516,19 @@ export default function SurveyPage() {
                   {index + 1}
                 </div>
                 
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{entity.name}</h3>
-                  <p className="text-sm text-muted-foreground">{entity.role}</p>
+                <div className="flex-1 flex items-center gap-3">
+                  <img 
+                    src={entity.logoUrl} 
+                    alt=""
+                    className="w-10 h-10 rounded-lg bg-slate-50 object-contain p-1 border border-slate-100"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "https://ui-avatars.com/api/?name=" + encodeURIComponent(entity.name) + "&background=random";
+                    }}
+                  />
+                  <div>
+                    <h3 className="font-semibold text-lg leading-tight">{entity.name}</h3>
+                    <p className="text-sm text-muted-foreground">{entity.role}</p>
+                  </div>
                 </div>
 
                 <GripVertical className="text-muted-foreground/50" />
