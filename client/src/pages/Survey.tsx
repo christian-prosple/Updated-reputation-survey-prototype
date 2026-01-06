@@ -149,6 +149,45 @@ export default function SurveyPage() {
   // STEP 1: ROLE SELECTION
   const renderStep1 = () => (
     <div className="space-y-6">
+      <div className="text-center mb-8">
+        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
+          Career Paths
+        </h2>
+        <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+          What role/s or career path/s are you most interested in pursuing?
+        </p>
+      </div>
+
+      <div className="grid gap-4 max-w-xl mx-auto">
+        {[...ROLES].sort().map((role) => {
+          const isSelected = state.selectedRoles.includes(role);
+          return (
+            <motion.div
+              key={role}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              onClick={() => actions.selectRole(role)}
+              className={cn(
+                "cursor-pointer rounded-2xl p-5 border-2 transition-all duration-200 flex items-center gap-4 group",
+                isSelected 
+                  ? "border-primary bg-primary/5 shadow-md shadow-primary/10" 
+                  : "border-border bg-card hover:border-primary/50 hover:bg-slate-50"
+              )}
+            >
+              <div className={cn(
+                "w-6 h-6 rounded border-2 flex items-center justify-center transition-colors",
+                isSelected ? "border-primary bg-primary text-slate-900" : "border-muted-foreground group-hover:border-primary"
+              )}>
+                {isSelected && <CheckCircle2 className="w-4 h-4" />}
+              </div>
+              <span className={cn("font-medium text-lg", isSelected ? "text-slate-900" : "text-foreground")}>
+                {role}
+              </span>
+            </motion.div>
+          );
+        })}
+      </div>
+
       <div className="flex justify-center mt-12 gap-4">
         <Button 
           variant="outline" 
@@ -174,6 +213,31 @@ export default function SurveyPage() {
   // STEP 2: ROLE ORDERING
   const renderStep2 = () => (
     <div className="space-y-6">
+      <div className="text-center mb-8">
+        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
+          Priorities
+        </h2>
+        <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+          Which roles are most attractive to you? Drag to sort them in order of preference.
+        </p>
+      </div>
+
+      <div className="max-w-xl mx-auto">
+        <Reorder.Group axis="y" values={state.roleOrder} onReorder={actions.reorderRoles} className="space-y-3">
+          {state.roleOrder.map((role, index) => (
+            <Reorder.Item key={role} value={role}>
+              <div className="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4 cursor-grab active:cursor-grabbing">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary text-muted-foreground font-bold">
+                  {index + 1}
+                </div>
+                <span className="flex-1 font-medium">{role}</span>
+                <GripVertical className="text-muted-foreground/50" />
+              </div>
+            </Reorder.Item>
+          ))}
+        </Reorder.Group>
+      </div>
+
       <div className="flex justify-center mt-12 gap-4">
         <Button 
           variant="outline" 
@@ -197,6 +261,45 @@ export default function SurveyPage() {
     
     return (
       <div className="space-y-6 h-full flex flex-col">
+        <div className="text-center mb-4">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
+            Employer Recognition
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+            Which of the following employers do you recognise? Select all that apply.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-3xl mx-auto w-full">
+          {uniqueCompanyNames.map((name) => {
+            const isSelected = !!state.selectedCompanies.find(c => c.name === name);
+            return (
+              <div
+                key={name}
+                onClick={() => actions.toggleCompanySelection(name)}
+                className={cn(
+                  "cursor-pointer rounded-lg p-3 border transition-all duration-200 flex items-center gap-3 select-none",
+                  isSelected 
+                    ? "border-primary bg-primary/5 ring-1 ring-primary/20" 
+                    : "border-border bg-card hover:bg-secondary/50"
+                )}
+              >
+                 <div className={cn(
+                  "w-5 h-5 rounded border flex items-center justify-center transition-colors flex-shrink-0",
+                  isSelected ? "border-primary bg-primary text-slate-900" : "border-muted-foreground/50"
+                )}>
+                  {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className={cn("text-sm font-bold leading-tight truncate", isSelected ? "text-slate-900" : "text-foreground")}>
+                    {name}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
         <div className="flex justify-center mt-8 pb-8 gap-4">
           <Button 
             variant="outline" 
@@ -337,6 +440,76 @@ export default function SurveyPage() {
   // STEP 5: FINAL RANKING
   const renderStep5 = () => (
     <div className="space-y-6">
+      <div className="text-center mb-8">
+        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
+          Top Shortlist
+        </h2>
+        <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+          We've sorted these based on your preferences. Drag to sort them in order of preference.
+        </p>
+      </div>
+
+      <div className="max-w-2xl mx-auto space-y-3 pb-4">
+        <div className="flex justify-end mb-4">
+          {!isAdding ? (
+            <Button variant="outline" size="sm" onClick={() => setIsAdding(true)} className="text-slate-900 border-slate-200 hover:bg-slate-50">
+              + Add another company
+            </Button>
+          ) : (
+            <div className="bg-white border rounded-xl p-4 shadow-sm w-full space-y-4 animate-in fade-in slide-in-from-top-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Company Name</label>
+                  <input 
+                    type="text"
+                    value={newCompany.name}
+                    onChange={(e) => setNewCompany(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full p-2 border rounded-md text-sm focus:ring-1 focus:ring-primary outline-none"
+                    placeholder="Enter company name..."
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Industry / Role</label>
+                  <select 
+                    value={newCompany.role}
+                    onChange={(e) => setNewCompany(prev => ({ ...prev, role: e.target.value as RoleType }))}
+                    className="w-full p-2 border rounded-md text-sm focus:ring-1 focus:ring-primary outline-none bg-white"
+                  >
+                    {ROLES.map(role => (
+                      <option key={role} value={role}>{role}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setIsAdding(false)}>Cancel</Button>
+                <Button size="sm" onClick={handleAddManualCompany} disabled={!newCompany.name.trim()}>Add to List</Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <Reorder.Group axis="y" values={state.finalRanking} onReorder={actions.updateFinalRanking} className="space-y-3">
+          {state.finalRanking.map((entity, index) => (
+            <Reorder.Item key={entity.id} value={entity}>
+              <div className="group bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-all flex items-center gap-4 cursor-grab active:cursor-grabbing">
+                <div className="flex flex-col items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary font-bold text-lg">
+                  {index + 1}
+                </div>
+                
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg">{entity.name}</h3>
+                  <p className="text-sm text-muted-foreground">{entity.role}</p>
+                </div>
+
+                <GripVertical className="text-muted-foreground/50" />
+              </div>
+            </Reorder.Item>
+          ))}
+        </Reorder.Group>
+      </div>
+
       <div className="flex justify-center mt-8 pb-12 gap-4">
         <Button 
           variant="outline" 
