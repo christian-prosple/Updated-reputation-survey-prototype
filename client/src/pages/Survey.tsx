@@ -149,6 +149,17 @@ export default function SurveyPage() {
   // STEP 1: ROLE SELECTION
   const renderStep1 = () => (
     <div className="space-y-6">
+      <div className="flex justify-start mb-2">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => actions.prevStep()}
+          disabled={state.step === 1}
+          className="text-muted-foreground hover:text-slate-900"
+        >
+          <ChevronLeft className="mr-1 w-4 h-4" /> Back
+        </Button>
+      </div>
       <div className="text-center mb-8">
         <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
           Career Paths
@@ -416,6 +427,9 @@ export default function SurveyPage() {
       )}
 
       <div className="flex flex-col items-center gap-4">
+        <Button variant="ghost" onClick={() => handlePairChoice(null)} className="text-muted-foreground">
+          Too hard, skip this pair
+        </Button>
         <div className="flex gap-4 w-full max-w-xs">
           {state.comparisonHistory.length > 0 && (
             <Button variant="outline" size="lg" className="flex-1" onClick={handleUndo}>
@@ -435,9 +449,6 @@ export default function SurveyPage() {
             <ChevronRight className="ml-2 w-5 h-5" />
           </Button>
         </div>
-        <Button variant="ghost" onClick={() => handlePairChoice(null)} className="text-muted-foreground">
-          Too hard, skip this pair
-        </Button>
       </div>
     </div>
   );

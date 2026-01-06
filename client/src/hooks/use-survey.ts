@@ -331,6 +331,16 @@ export function useSurvey() {
   // Custom setter for specific logic needs
   const setStep = (step: number) => setState(prev => ({ ...prev, step }));
 
+  const prevStep = () => {
+    setState(prev => {
+      // Logic to reverse the skip from step 1 to 3
+      if (prev.step === 3 && prev.selectedRoles.length <= 1) {
+        return { ...prev, step: 1 };
+      }
+      return { ...prev, step: Math.max(1, prev.step - 1) };
+    });
+  };
+
   return {
     state,
     actions: {
@@ -344,6 +354,7 @@ export function useSurvey() {
       generateFinalRanking,
       updateFinalRanking,
       nextStep,
+      prevStep,
       setStep,
     }
   };
