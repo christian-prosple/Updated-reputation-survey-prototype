@@ -581,7 +581,7 @@ export default function SurveyPage() {
           Top Shortlist
         </h2>
         <p className="text-lg text-muted-foreground max-w-lg mx-auto">
-          We've sorted these based on your preferences. Drag to sort them in order of preference.
+          Based on your responses we have generated a draft shortlist for you. Drag to sort them in order of preference before submitting your final rankings
         </p>
       </div>
 
