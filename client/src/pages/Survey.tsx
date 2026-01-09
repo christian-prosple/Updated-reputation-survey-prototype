@@ -63,9 +63,14 @@ export default function SurveyPage() {
     const candidates = state.selectedCompanies;
     if (candidates.length < 2) return null;
 
+    const recentIds = state.comparisonHistory
+      .slice(-3) // Look at last 3 comparisons
+      .flatMap(h => h.pair);
+    const recentIdSet = new Set(recentIds);
+
     // Simple random pair logic - try to find one not seen
     let attempts = 0;
-    const maxAttempts = 50;
+    const maxAttempts = 100;
     
     while (attempts < maxAttempts) {
       const idx1 = Math.floor(Math.random() * candidates.length);
@@ -77,6 +82,11 @@ export default function SurveyPage() {
       const key = [a.id, b.id].sort().join("|");
 
       if (!state.completedPairs.has(key)) {
+        // If we have plenty of attempts left, try to avoid recently seen companies
+        if (attempts < maxAttempts / 2 && (recentIdSet.has(a.id) || recentIdSet.has(b.id))) {
+          attempts++;
+          continue;
+        }
         return [a, b] as [CompanyEntity, CompanyEntity];
       }
       attempts++;
@@ -87,6 +97,11 @@ export default function SurveyPage() {
   // --- EFFECT: Manage Pairwise Loop ---
   useEffect(() => {
     if (state.step === 4 && !activePair) {
+      if (state.pairwiseCount >= targetPairwiseCount) {
+        actions.nextStep();
+        return;
+      }
+      
       const next = getNextPair();
       if (next) {
         setActivePair(next);
@@ -95,7 +110,7 @@ export default function SurveyPage() {
         actions.nextStep();
       }
     }
-  }, [state.step, activePair, state.completedPairs]);
+  }, [state.step, activePair, state.completedPairs, state.pairwiseCount, targetPairwiseCount]);
 
 
   // --- HANDLERS ---

@@ -12,10 +12,10 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
     <div className="flex flex-col items-start w-full max-w-2xl mb-8">
       <div className="flex items-center justify-between w-full mb-2">
         <span className="text-sm font-semibold text-slate-800 uppercase tracking-wider">
-          Step {currentStep > totalSteps ? totalSteps : currentStep} of {totalSteps}
+          Step {currentStep + 1 > totalSteps ? totalSteps : currentStep + 1} of {totalSteps}
         </span>
         <span className="text-xs text-muted-foreground font-medium">
-          {Math.round(((currentStep) / totalSteps) * 100)}% Complete
+          {Math.round(((currentStep + 1) / totalSteps) * 100)}% Complete
         </span>
       </div>
       
@@ -25,7 +25,7 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
         <motion.div
           className="absolute top-0 left-0 h-full bg-[#96D2C0] rounded-full"
           initial={{ width: 0 }}
-          animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
+          animate={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
           transition={{ duration: 0.5, ease: "easeInOut" }}
         />
       </div>
@@ -34,8 +34,8 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
       <div className="flex justify-between w-full mt-4 px-1">
          {Array.from({ length: totalSteps }).map((_, idx) => {
            const stepNum = idx + 1;
-           const isActive = stepNum === currentStep;
-           const isCompleted = stepNum < currentStep;
+           const isActive = idx === currentStep;
+           const isCompleted = idx < currentStep;
 
            return (
              <div key={idx} className="flex flex-col items-center gap-2">
