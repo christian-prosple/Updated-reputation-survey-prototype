@@ -142,8 +142,17 @@ export default function SurveyPage() {
   };
 
   const handleUndo = () => {
+    const lastComparison = state.comparisonHistory[state.comparisonHistory.length - 1];
+    if (lastComparison) {
+      const [idA, idB] = lastComparison.pair;
+      const compA = state.selectedCompanies.find(c => c.id === idA);
+      const compB = state.selectedCompanies.find(c => c.id === idB);
+      
+      if (compA && compB) {
+        setActivePair([compA, compB]);
+      }
+    }
     actions.undoLastComparison();
-    setActivePair(null); // Reset to trigger re-selection from state
   };
 
   const handleFinishSurvey = () => {
