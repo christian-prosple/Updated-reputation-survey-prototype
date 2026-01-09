@@ -410,17 +410,50 @@ export function useSurvey() {
   };
 
   const suggestedRoles = useMemo(() => {
-    const roles = new Set<RoleType>();
+    const rolesPerDegree: Record<string, RoleType[]> = {};
     state.selectedDegrees.forEach(degree => {
-      DEGREE_TO_ROLES[degree].forEach(role => roles.add(role));
+      rolesPerDegree[degree] = [...DEGREE_TO_ROLES[degree]];
     });
-    
-    // Explicitly add "Law" if "Law, Legal Studies & Justice" is selected
+
+    // Explicitly handle "Law" if "Law, Legal Studies & Justice" is selected
     if (state.selectedDegrees.includes("Law, Legal Studies & Justice")) {
-      roles.add("Law");
+      if (!rolesPerDegree["Law, Legal Studies & Justice"]) {
+        rolesPerDegree["Law, Legal Studies & Justice"] = [];
+      }
+      if (!rolesPerDegree["Law, Legal Studies & Justice"].includes("Law")) {
+        rolesPerDegree["Law, Legal Studies & Justice"].push("Law");
+      }
     }
 
-    return Array.from(roles).sort();
+    const finalRoles: RoleType[] = [];
+    const degrees = Object.keys(rolesPerDegree);
+    
+    if (degrees.length > 0) {
+      // Round-robin selection to ensure even mix across degrees
+      let hasMore = true;
+      let degreeIdx = 0;
+      const pointers: Record<string, number> = {};
+      degrees.forEach(d => pointers[d] = 0);
+
+      while (finalRoles.length < 10 && hasMore) {
+        hasMore = false;
+        for (const degree of degrees) {
+          const roles = rolesPerDegree[degree];
+          const ptr = pointers[degree];
+          if (ptr < roles.length) {
+            const role = roles[ptr];
+            if (!finalRoles.includes(role)) {
+              finalRoles.push(role);
+            }
+            pointers[degree]++;
+            hasMore = true;
+          }
+          if (finalRoles.length >= 10) break;
+        }
+      }
+    }
+
+    return finalRoles; // Return in priority order (not sorted alphabetically)
   }, [state.selectedDegrees]);
 
   return {
