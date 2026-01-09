@@ -121,16 +121,23 @@ export const DEGREE_TO_ROLES: Record<DegreeType, RoleType[]> = {
 };
 
 export const COMPANIES_BY_ROLE: Record<string, string[]> = {
-  "Accounting & Advisory": ["PwC Australia", "EY Australia", "KPMG Australia", "Deloitte Australia", "BDO Australia", "Grant Thornton Australia"],
-  "Finance & Banking": ["Commonwealth Bank", "NAB Australia", "Westpac Group", "ANZ Bank", "Macquarie Group"],
-  "Law": ["Allens", "King & Wood Mallesons", "Herbert Smith Freehills", "Ashurst", "Clayton Utz", "Gilbert + Tobin"],
-  "Management Consulting": ["McKinsey & Company Australia", "Boston Consulting Group Australia", "Bain & Company Australia", "Accenture Australia", "Kearney", "Oliver Wyman"],
-  "Computer Science & Software Engineering": ["Google AU", "Atlassian", "Canva", "Microsoft Australia", "Amazon AU", "Jane Street", "Optiver"],
-  "Investment Banking": ["Goldman Sachs Australia", "Macquarie Group", "JPMorganChase Australia", "UBS Australia", "Morgan Stanley Australia"],
-  "Data Science & Analytics": ["Quantium", "Palantir Australia", "Google AU", "Commonwealth Bank"],
-  "Marketing": ["L'Oréal Australia", "Procter & Gamble", "Unilever", "Google AU", "Canva"],
-  "Engineering & Mathematics": ["Boeing Australia", "BHP", "Rio Tinto", "Woodside Energy", "Arup", "GHD"],
-  "Healthcare Administration & Management": ["Ramsay Health Care", "Sonic Healthcare", "NSW Health"],
+  "Accounting & Advisory": ["PwC Australia", "EY Australia", "KPMG Australia", "Deloitte Australia", "BDO Australia", "Grant Thornton Australia", "RSM Australia", "Pitcher Partners", "Grant Samuel", "McGrathNicol", "KordaMentha", "FTI Consulting", "Crowe Australia", "Moore Australia"],
+  "Finance & Banking": ["Commonwealth Bank", "NAB Australia", "Westpac Group", "ANZ Bank", "Macquarie Group", "Reserve Bank of Australia", "Australian Taxation Office (ATO)", "AustralianSuper", "AMP", "Munich Re", "Swiss Re Australia", "RGA", "JPMorganChase Australia"],
+  "Law": ["Allens", "King & Wood Mallesons", "Herbert Smith Freehills", "Ashurst", "Clayton Utz", "Gilbert + Tobin", "MinterEllison", "Corrs Chambers Westgarth", "Baker McKenzie", "White & Case", "K&L Gates", "Pinsent Masons"],
+  "Management Consulting": ["McKinsey & Company Australia", "Boston Consulting Group Australia", "Bain & Company Australia", "Accenture Australia", "Kearney", "Oliver Wyman", "L.E.K. Consulting", "EY-Parthenon", "OC&C Strategy Consultants", "Altman Solon Australia", "Partners in Performance", "Nous Group", "Strategy&", "Publicis Sapient"],
+  "Computer Science & Software Engineering": ["Google AU", "Atlassian", "Canva", "Microsoft Australia", "Amazon AU", "Jane Street", "Optiver", "Meta Australia", "Apple Australia", "TikTok Australia & New Zealand", "Xero Australia", "Salesforce Australia", "Adobe AU", "IBM Australia", "Dell Technologies", "WiseTech Global", "CyberCX", "Quantium"],
+  "Investment Banking": ["Goldman Sachs Australia", "Macquarie Group", "JPMorganChase Australia", "UBS Australia", "Morgan Stanley Australia", "Citi Group Australia", "Bank of America", "Barrenjoey (Barclays)", "Jefferies Australia", "Deutsche Bank", "Gresham", "Azure Capital (Natixis)"],
+  "Data Science & Analytics": ["Quantium", "Palantir Australia", "Google AU", "Commonwealth Bank", "CSIRO", "Taylor Fry", "Finity Consulting", "Rice Warner", "Munich Re"],
+  "Marketing": ["L'Oréal Australia", "Procter & Gamble", "Unilever", "Google AU", "Canva", "Ogilvy Australia", "Leo Burnett Australia", "Disney Studios Australia", "NBCUniversal Australia", "Village Roadshow Theme Parks", "Paramount Australia & New Zealand", "Octagon"],
+  "Aerospace Engineering & Aviation": ["Lockheed Martin", "Boeing Australia", "Airbus Australia", "Raytheon", "Northrop Grumman Australia", "BAE Systems Australia", "Qantas", "ADF Careers", "Thales Australia", "QinetiQ Australia", "Nova Systems", "ASC", "CAE Australia", "Rohde & Schwarz Australia"],
+  "Construction Management": ["Lendlease", "Multiplex Australia", "Mirvac", "John Holland", "CPB Contractors AU", "AECOM", "Laing O'Rourke", "Downer Group", "Bechtel Australia", "Custom Built New Homes & Renovations", "Built"],
+  "Environment & Sustainability": ["CSIRO", "Umwelt Australia", "Ecology & Heritage Partners", "Urbis", "Department of Transport and Main Roads", "Sunshine Coast Council (SCC)", "SLR Consulting", "GHD", "Worley", "Hydro Tasmania", "Clean Energy Regulator"],
+  "Architecture": ["BVN", "Woods Bagot", "Cox Architecture", "Hassell", "Architectus", "HDR", "Rothelowman Australia", "Hayball", "Gray Puksand", "DesignInc Australia", "i2C Architects", "Urbis", "Stantec Australia"],
+  "Education & Teaching": ["Teach For Australia", "Department of Education", "University of Sydney", "Haileybury College", "International Grammar School", "Goodstart Early Learning", "Only About Children", "G8 Education", "Carlile Swimming", "Aquabliss Swim School"],
+  "Medicine": ["CSIRO", "CSL", "Thermo Fisher Scientific Australia", "Cochlear", "GSK Australia", "ResMed", "Bayer Australia", "Medtronic Australia", "Stryker Australia", "Johnson & Johnson Australia", "GE HealthCare Australia", "Pfizer Australia", "AstraZeneca Australia", "Novartis", "Roche Australia", "Garvan Institute of Medical Research", "Viatris Australia"],
+  "Mining & Resources Engineering": ["Rio Tinto", "BHP", "BHP Australia", "Fortescue", "Rio Tinto", "Woodside Energy", "Chevron Australia", "Glencore", "Santos", "Orica", "INPEX Australia", "Shell", "ExxonMobil", "Alcoa Australia", "Iluka Resources"],
+  "Agriculture & Agribusiness": ["John Deere", "Cargill Australia", "GrainCorp Australia", "JBS Australia", "Department of Agriculture, Fisheries and Forestry (DAFF)", "Department of Primary Industries (Queensland)", "Nutrien Ag Solutions", "Elders", "Costa Australia", "Treasury Wine Estates", "Warakirri Asset Management", "Delta Agribusiness Group"],
+  "Animation & VFX": ["Animal Logic", "Weta FX", "DNEG", "Rising Sun Pictures", "Electronic Arts (EA)", "Activision Australia", "Disney Australia", "Paramount Australia & New Zealand", "Bus Stop Films", "3D Walkabout"]
 };
 
 // Proxied to handle missing roles gracefully
@@ -227,10 +234,15 @@ export function useSurvey() {
     const mandatoryCompanies: Record<string, string[]> = {
       "Management Consulting": ["McKinsey & Company Australia", "Boston Consulting Group Australia", "Bain & Company Australia"],
       "Computer Science & Software Engineering": ["Google AU", "Atlassian", "Canva"],
-      "Finance & Banking": ["Goldman Sachs Australia", "Commonwealth Bank"],
+      "Finance & Banking": ["Commonwealth Bank", "NAB Australia", "Westpac Group", "ANZ Bank", "Macquarie Group"],
       "Law": ["Allens", "King & Wood Mallesons", "Herbert Smith Freehills", "Ashurst", "Clayton Utz", "Gilbert + Tobin"],
       "Investment Banking": ["Goldman Sachs Australia", "Macquarie Group", "JPMorganChase Australia", "UBS Australia", "Morgan Stanley Australia"],
-      "Accounting & Advisory": ["PwC Australia", "EY Australia", "KPMG Australia", "Deloitte Australia"]
+      "Accounting & Advisory": ["PwC Australia", "EY Australia", "KPMG Australia", "Deloitte Australia"],
+      "Mining & Resources Engineering": ["BHP", "Rio Tinto", "Woodside Energy"],
+      "Medicine": ["CSIRO", "CSL", "Cochlear"],
+      "Architecture": ["BVN", "Woods Bagot", "Cox Architecture"],
+      "Engineering & Mathematics": ["Boeing Australia", "BHP", "Rio Tinto", "Arup Australia", "GHD"],
+      "Animation & VFX": ["Animal Logic", "Weta FX", "Disney Australia"]
     };
 
     const mandatoryNames = new Set<string>();
