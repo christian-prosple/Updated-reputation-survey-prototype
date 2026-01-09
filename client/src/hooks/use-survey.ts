@@ -106,7 +106,7 @@ export const ROLES = [
 export type RoleType = typeof ROLES[number];
 
 export const DEGREE_TO_ROLES: Record<DegreeType, RoleType[]> = {
-  "Business & Management": ["Business, Commerce & Management", "Finance & Banking", "Marketing", "Management Consulting", "HR & Recruitment", "Project Management", "Supply Chain & Logistics", "Accounting & Advisory"],
+  "Business & Management": ["Business, Commerce & Management", "Finance & Banking", "Marketing", "Management Consulting", "HR & Recruitment", "Project Management", "Supply Chain & Logistics", "Accounting & Advisory", "Investment Banking"],
   "Creative Arts": ["Animation & VFX", "Creative, Performing & Visual Arts", "Design & User Experience", "Fashion", "Film & TV Production", "Music & Audio Production", "Writing, Journalism & Publishing"],
   "Engineering & Mathematics": ["Aerospace Engineering & Aviation", "Biomedical Engineering & Sciences", "Chemical & Process Engineering", "Civil & Structural Engineering", "Electrical & Electronic Engineering", "Environmental Engineering", "Geotechnical Engineering", "Manufacturing and Industrial Engineering", "Materials Engineering", "Mechanical & Mechatronic Engineering", "Mining & Resources Engineering", "Mathematics & Statistics"],
   "Food, Hospitality & Personal Services": ["Events, Tourism & Hospitality", "Food Science & Technology", "Nutrition & Dietetics"],
