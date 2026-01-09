@@ -1,103 +1,142 @@
 import { useState, useMemo } from 'react';
 
 // --- DATA CONSTANTS ---
+export const DEGREES = [
+  "Business & Management",
+  "Creative Arts",
+  "Engineering & Mathematics",
+  "Food, Hospitality & Personal Services",
+  "Humanities, Arts, & Social Sciences",
+  "IT & Computer Science",
+  "Law, Legal Studies & Justice",
+  "Medicine & Health Sciences",
+  "Property & Built Environment",
+  "Sciences",
+  "Teaching & Education",
+  "Other"
+] as const;
+
+export type DegreeType = typeof DEGREES[number];
+
 export const ROLES = [
+  "Accounting & Advisory",
+  "Actuarial Studies, Insurance & Risk",
+  "Aerospace Engineering & Aviation",
+  "Agriculture & Agribusiness",
+  "Animation & VFX",
+  "Archaeology & History",
+  "Architecture",
+  "Artificial Intelligence & Machine Learning",
+  "Biology & Biochemistry",
+  "Biomedical Engineering & Sciences",
   "Business, Commerce & Management",
-  "Finance and Banking",
-  "Law",
-  "Management consulting",
+  "Chemical & Process Engineering",
+  "Chemistry",
+  "Civil & Structural Engineering",
+  "Communications & Public Relations",
   "Computer Science & Software Engineering",
-  "Investment banking",
-  "Accounting & Advisory"
+  "Construction Management",
+  "Creative, Performing & Visual Arts",
+  "Criminology & Forensic Science",
+  "Customer Success & Client Services",
+  "Cybersecurity",
+  "Data Science & Analytics",
+  "Design & User Experience",
+  "Economics",
+  "Education & Teaching",
+  "Electrical & Electronic Engineering",
+  "Environment & Sustainability",
+  "Environmental Engineering",
+  "Events, Tourism & Hospitality",
+  "Exercise & Sport Sciences",
+  "Fashion",
+  "Film & TV Production",
+  "Finance & Banking",
+  "Food Science & Technology",
+  "Game Design & Development",
+  "Geology & Earth Sciences",
+  "Geospatial & GIS",
+  "Geotechnical Engineering",
+  "Government & Public Administration",
+  "Healthcare Administration & Management",
+  "HR & Recruitment",
+  "Information Technology",
+  "Intelligence & National Security",
+  "Interior Design",
+  "International Development & NGOs",
+  "Investment Banking",
+  "Language & Linguistics",
+  "Law",
+  "Management Consulting",
+  "Manufacturing and Industrial Engineering",
+  "Marketing",
+  "Materials Engineering",
+  "Mathematics & Statistics",
+  "Mechanical & Mechatronic Engineering",
+  "Medicine",
+  "Midwifery",
+  "Mining & Resources Engineering",
+  "Music & Audio Production",
+  "Network & Telecommunications Engineering",
+  "Nursing",
+  "Nutrition & Dietetics",
+  "Occupational Health & Safety",
+  "Pharmacy & Pharmaceuticals",
+  "Physics",
+  "Physiotherapy & Occupational Therapy",
+  "Policy & International Relations",
+  "Private Equity & Hedge funds",
+  "Product Management",
+  "Project Management",
+  "Property Development & Management",
+  "Psychology & Counselling",
+  "Public Health",
+  "Sales & Business Development",
+  "Social Work",
+  "Supply Chain & Logistics",
+  "Surveying",
+  "Trading",
+  "Urban Planning",
+  "Venture Capital",
+  "Veterinary Science",
+  "Writing, Journalism & Publishing",
+  "Zoology"
 ] as const;
 
 export type RoleType = typeof ROLES[number];
 
-export const COMPANIES_BY_ROLE: Record<RoleType, string[]> = {
-  "Business, Commerce & Management": ["Deloitte Australia", "Commonwealth Bank", "Macquarie Group", "SAP Australia", "Oracle Australia", "PKF Australia", "WSP Australia", "Carter Newell Australia", "Nexia Sydney", "Liberty Financial", "Accenture Australia and New Zealand", "Westpac Group", "L'Oréal Australia and New Zealand", "Accru Felsers", "BAE Systems Australia", "Lockheed Martin Australia", "Northrop Grumman Australia", "Qantas", "Linfox ANZ", "Western Power"],
-  "Finance and Banking": ["Commonwealth Bank", "UBS Australia", "Goldman Sachs Australia", "Deloitte Australia", "PwC Australia", "NAB Australia", "Moody's Corporation Australia", "QBE Insurance Australia Pacific", "AustralianSuper", "Stanton Road Partners Australia", "Origin Energy Australia", "BASF Australia & New Zealand", "Nutrien Ag Solutions", "BlueScope Australia", "Chatham Financial", "Canopius Group Australia", "Moore Australia", "Pitcher Partners", "Qantas", "WiseTech Global"],
-  "Law": ["Allens", "King & Wood Mallesons", "Herbert Smith Freehills Kramer", "Ashurst", "Clayton Utz", "Gilbert + Tobin", "MinterEllison", "Corrs Chambers Westgarth", "Baker McKenzie", "White & Case", "Arcadis Australia Pacific", "Safewill", "LIgold", "George Migration", "Weir Legal and Consulting", "Bendigo Health", "McCabes Lawyers", "K&L Gates", "Pinsent Masons", "RELX Australia"],
-  "Management consulting": [
-    "McKinsey & Company Australia",
-    "Boston Consulting Group Australia",
-    "Bain & Company Australia",
-    "L.E.K. Consulting",
-    "Oliver Wyman Australia & New Zealand",
-    "EY-Parthenon Strategy (formerly EY Port Jackson Partners)",
-    "OC&C Strategy Consultants Australia",
-    "Altman Solon Australia",
-    "Kearney",
-    "Partners in Performance",
-    "Nous Group",
-    "Argon & Co",
-    "Visagio",
-    "NMG Consulting",
-    "TSA Riley",
-    "Escient",
-    "Cognizant Australia",
-    "Strategic Project Partners"
-  ],
-  "Computer Science & Software Engineering": [
-    "Google AU",
-    "Atlassian",
-    "Jane Street",
-    "Optiver",
-    "IMC Trading Australia",
-    "Canva",
-    "Amazon AU",
-    "Microsoft Australia",
-    "Meta Australia",
-    "Apple Australia",
-    "Commonwealth Bank",
-    "21CS Australia",
-    "NTI Australia",
-    "Kroolo",
-    "NetApp Australia",
-    "Crown Management Consultants",
-    "simPRO",
-    "Fontis Australia"
-  ],
-  "Investment banking": [
-    "Goldman Sachs Australia",
-    "Macquarie Group",
-    "JPMorganChase Australia",
-    "UBS Australia",
-    "Morgan Stanley Australia",
-    "Citi Group Australia",
-    "Bank of America",
-    "Barrenjoey (Barclays)",
-    "Jefferies Australia",
-    "Deutsche Bank",
-    "Gresham",
-    "Azure Capital (Natixis)",
-    "Grant Samuel",
-    "ICA Partners",
-    "Stanton Road Partners Australia",
-    "Flagstaff Partners",
-    "Allier Capital",
-    "Alchemist Capital Partners"
-  ],
-  "Accounting & Advisory": [
-    "PwC Australia",
-    "EY Australia",
-    "KPMG Australia",
-    "Deloitte Australia",
-    "Australian Taxation Office (ATO)",
-    "Grant Thornton Australia",
-    "BDO Australia",
-    "RSM Australia",
-    "Kelly+Partners",
-    "Byfields Business Advisers",
-    "Fordham",
-    "Altus Financial",
-    "Abound Group",
-    "Worrells",
-    "Sage Advising",
-    "Vincents Chartered Accountants",
-    "BlueSky Accounting",
-    "Scott Chartered Accountants"
-  ]
+export const DEGREE_TO_ROLES: Record<DegreeType, RoleType[]> = {
+  "Business & Management": ["Business, Commerce & Management", "Finance & Banking", "Marketing", "Management Consulting", "HR & Recruitment", "Project Management", "Supply Chain & Logistics", "Accounting & Advisory"],
+  "Creative Arts": ["Animation & VFX", "Creative, Performing & Visual Arts", "Design & User Experience", "Fashion", "Film & TV Production", "Music & Audio Production", "Writing, Journalism & Publishing"],
+  "Engineering & Mathematics": ["Aerospace Engineering & Aviation", "Biomedical Engineering & Sciences", "Chemical & Process Engineering", "Civil & Structural Engineering", "Electrical & Electronic Engineering", "Environmental Engineering", "Geotechnical Engineering", "Manufacturing and Industrial Engineering", "Materials Engineering", "Mechanical & Mechatronic Engineering", "Mining & Resources Engineering", "Mathematics & Statistics"],
+  "Food, Hospitality & Personal Services": ["Events, Tourism & Hospitality", "Food Science & Technology", "Nutrition & Dietetics"],
+  "Humanities, Arts, & Social Sciences": ["Archaeology & History", "Communications & Public Relations", "Economics", "Government & Public Administration", "International Development & NGOs", "Language & Linguistics", "Policy & International Relations", "Psychology & Counselling", "Social Work", "Writing, Journalism & Publishing"],
+  "IT & Computer Science": ["Artificial Intelligence & Machine Learning", "Computer Science & Software Engineering", "Cybersecurity", "Data Science & Analytics", "Information Technology", "Game Design & Development", "Network & Telecommunications Engineering", "Product Management"],
+  "Law, Legal Studies & Justice": ["Law", "Criminology & Forensic Science", "Intelligence & National Security", "Government & Public Administration"],
+  "Medicine & Health Sciences": ["Medicine", "Nursing", "Midwifery", "Pharmacy & Pharmaceuticals", "Physiotherapy & Occupational Therapy", "Public Health", "Exercise & Sport Sciences", "Healthcare Administration & Management"],
+  "Property & Built Environment": ["Architecture", "Construction Management", "Interior Design", "Property Development & Management", "Surveying", "Urban Planning"],
+  "Sciences": ["Biology & Biochemistry", "Chemistry", "Geology & Earth Sciences", "Physics", "Zoology", "Veterinary Science", "Environment & Sustainability", "Geospatial & GIS"],
+  "Teaching & Education": ["Education & Teaching"],
+  "Other": []
 };
+
+export const COMPANIES_BY_ROLE: Record<string, string[]> = {
+  "Accounting & Advisory": ["PwC Australia", "EY Australia", "KPMG Australia", "Deloitte Australia", "BDO Australia", "Grant Thornton Australia"],
+  "Finance & Banking": ["Commonwealth Bank", "NAB Australia", "Westpac Group", "ANZ Bank", "Macquarie Group"],
+  "Law": ["Allens", "King & Wood Mallesons", "Herbert Smith Freehills", "Ashurst", "Clayton Utz", "Gilbert + Tobin"],
+  "Management Consulting": ["McKinsey & Company Australia", "Boston Consulting Group Australia", "Bain & Company Australia", "Accenture Australia", "Kearney", "Oliver Wyman"],
+  "Computer Science & Software Engineering": ["Google AU", "Atlassian", "Canva", "Microsoft Australia", "Amazon AU", "Jane Street", "Optiver"],
+  "Investment Banking": ["Goldman Sachs Australia", "Macquarie Group", "JPMorganChase Australia", "UBS Australia", "Morgan Stanley Australia"],
+  "Data Science & Analytics": ["Quantium", "Palantir Australia", "Google AU", "Commonwealth Bank"],
+  "Marketing": ["L'Oréal Australia", "Procter & Gamble", "Unilever", "Google AU", "Canva"],
+  "Engineering & Mathematics": ["Boeing Australia", "BHP", "Rio Tinto", "Woodside Energy", "Arup", "GHD"],
+  "Healthcare Administration & Management": ["Ramsay Health Care", "Sonic Healthcare", "NSW Health"],
+};
+
+// Proxied to handle missing roles gracefully
+const SAFE_COMPANIES_BY_ROLE = new Proxy(COMPANIES_BY_ROLE, {
+  get: (target, prop: string) => target[prop] || ["Deloitte Australia", "Accenture Australia", "PwC Australia", "EY Australia", "KPMG Australia"]
+});
 
 // --- TYPES ---
 export interface CompanyEntity {
@@ -108,6 +147,7 @@ export interface CompanyEntity {
 
 export interface SurveyState {
   step: number;
+  selectedDegrees: DegreeType[];
   selectedRoles: RoleType[];
   roleOrder: RoleType[];
   displayedCompanies: CompanyEntity[]; // Unique entities
@@ -122,7 +162,8 @@ export interface SurveyState {
 // --- HOOK ---
 export function useSurvey() {
   const [state, setState] = useState<SurveyState>({
-    step: 1,
+    step: 0,
+    selectedDegrees: [],
     selectedRoles: [],
     roleOrder: [],
     displayedCompanies: [],
@@ -135,6 +176,16 @@ export function useSurvey() {
   });
 
   // --- ACTIONS ---
+
+  const selectDegree = (degree: DegreeType) => {
+    setState(prev => {
+      const exists = prev.selectedDegrees.includes(degree);
+      const nextDegrees = exists
+        ? prev.selectedDegrees.filter(d => d !== degree)
+        : [...prev.selectedDegrees, degree];
+      return { ...prev, selectedDegrees: nextDegrees };
+    });
+  };
 
   const selectRole = (role: RoleType) => {
     setState(prev => {
@@ -154,7 +205,8 @@ export function useSurvey() {
     // 1. Gather all unique company-role pairs
     const allEntities: CompanyEntity[] = [];
     state.selectedRoles.forEach(role => {
-      COMPANIES_BY_ROLE[role].forEach(name => {
+      const companies = SAFE_COMPANIES_BY_ROLE[role];
+      companies.forEach(name => {
         allEntities.push({
           name,
           role,
@@ -173,12 +225,12 @@ export function useSurvey() {
     });
 
     const mandatoryCompanies: Record<string, string[]> = {
-      "Management consulting": ["McKinsey & Company Australia", "Boston Consulting Group Australia", "Bain & Company Australia"],
+      "Management Consulting": ["McKinsey & Company Australia", "Boston Consulting Group Australia", "Bain & Company Australia"],
       "Computer Science & Software Engineering": ["Google AU", "Atlassian", "Canva"],
-      "Finance and Banking": ["Goldman Sachs Australia", "Commonwealth Bank"],
-      "Law": ["Allens", "King & Wood Mallesons", "Herbert Smith Freehills Kramer", "Ashurst", "Clayton Utz", "Gilbert + Tobin"],
-      "Investment banking": ["Goldman Sachs Australia", "Macquarie Group", "JPMorganChase Australia", "UBS Australia", "Morgan Stanley Australia"],
-      "Accounting & Advisory": ["PwC Australia", "EY Australia", "KPMG Australia", "Deloitte Australia", "Australian Taxation Office (ATO)"]
+      "Finance & Banking": ["Goldman Sachs Australia", "Commonwealth Bank"],
+      "Law": ["Allens", "King & Wood Mallesons", "Herbert Smith Freehills", "Ashurst", "Clayton Utz", "Gilbert + Tobin"],
+      "Investment Banking": ["Goldman Sachs Australia", "Macquarie Group", "JPMorganChase Australia", "UBS Australia", "Morgan Stanley Australia"],
+      "Accounting & Advisory": ["PwC Australia", "EY Australia", "KPMG Australia", "Deloitte Australia"]
     };
 
     const mandatoryNames = new Set<string>();
@@ -337,13 +389,22 @@ export function useSurvey() {
       if (prev.step === 3 && prev.selectedRoles.length <= 1) {
         return { ...prev, step: 1 };
       }
-      return { ...prev, step: Math.max(1, prev.step - 1) };
+      return { ...prev, step: Math.max(0, prev.step - 1) };
     });
   };
+
+  const suggestedRoles = useMemo(() => {
+    const roles = new Set<RoleType>();
+    state.selectedDegrees.forEach(degree => {
+      DEGREE_TO_ROLES[degree].forEach(role => roles.add(role));
+    });
+    return Array.from(roles).sort();
+  }, [state.selectedDegrees]);
 
   return {
     state,
     actions: {
+      selectDegree,
       selectRole,
       reorderRoles,
       generateCompanyPool,
@@ -356,6 +417,7 @@ export function useSurvey() {
       nextStep,
       prevStep,
       setStep,
-    }
+    },
+    suggestedRoles
   };
 }

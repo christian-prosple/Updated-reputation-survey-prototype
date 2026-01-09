@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSurvey, ROLES, RoleType, CompanyEntity } from "@/hooks/use-survey";
+import { useSurvey, ROLES, RoleType, CompanyEntity, DEGREES } from "@/hooks/use-survey";
 import { StepIndicator } from "@/components/StepIndicator";
 import { Button } from "@/components/ui/button-custom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
@@ -12,11 +12,12 @@ interface ManualCompany {
 }
 
 export default function SurveyPage() {
-  const { state, actions } = useSurvey();
+  const { state, actions, suggestedRoles } = useSurvey();
   const [activePair, setActivePair] = useState<[CompanyEntity, CompanyEntity] | null>(null);
 
   const [newCompany, setNewCompany] = useState<ManualCompany>({ name: "", role: ROLES[0] });
   const [isAdding, setIsAdding] = useState(false);
+  const [showFullTaxonomy, setShowFullTaxonomy] = useState(false);
 
   const handleAddManualCompany = () => {
     if (!newCompany.name.trim()) return;
@@ -146,6 +147,61 @@ export default function SurveyPage() {
 
   // --- RENDER STEPS ---
 
+  // STEP 0: DEGREE SELECTION
+  const renderStep0 = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
+          Degree Study
+        </h2>
+        <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+          What degree did you study or are currently studying? (Select all that apply)
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+        {DEGREES.map((degree) => {
+          const isSelected = state.selectedDegrees.includes(degree);
+          return (
+            <motion.div
+              key={degree}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              onClick={() => actions.selectDegree(degree)}
+              className={cn(
+                "cursor-pointer rounded-2xl p-4 border-2 transition-all duration-200 flex items-center gap-4 group",
+                isSelected 
+                  ? "border-primary bg-primary/5 shadow-md shadow-primary/10" 
+                  : "border-border bg-card hover:border-primary/50 hover:bg-slate-50"
+              )}
+            >
+              <div className={cn(
+                "w-6 h-6 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0",
+                isSelected ? "border-primary bg-primary text-slate-900" : "border-muted-foreground group-hover:border-primary"
+              )}>
+                {isSelected && <CheckCircle2 className="w-4 h-4" />}
+              </div>
+              <span className={cn("font-medium", isSelected ? "text-slate-900" : "text-foreground")}>
+                {degree}
+              </span>
+            </motion.div>
+          );
+        })}
+      </div>
+
+      <div className="flex justify-center mt-12 gap-4">
+        <Button 
+          onClick={() => actions.nextStep()} 
+          disabled={state.selectedDegrees.length === 0}
+          size="lg"
+          className="w-full max-w-[160px]"
+        >
+          Continue <ChevronRight className="ml-2 w-5 h-5" />
+        </Button>
+      </div>
+    </div>
+  );
+
   // STEP 1: ROLE SELECTION
   const renderStep1 = () => (
     <div className="space-y-6">
@@ -158,37 +214,84 @@ export default function SurveyPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 max-w-xl mx-auto">
-        {[...ROLES].sort().map((role) => {
-          const isSelected = state.selectedRoles.includes(role);
-          return (
-            <motion.div
-              key={role}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              onClick={() => actions.selectRole(role)}
-              className={cn(
-                "cursor-pointer rounded-2xl p-5 border-2 transition-all duration-200 flex items-center gap-4 group",
-                isSelected 
-                  ? "border-primary bg-primary/5 shadow-md shadow-primary/10" 
-                  : "border-border bg-card hover:border-primary/50 hover:bg-slate-50"
-              )}
-            >
-              <div className={cn(
-                "w-6 h-6 rounded border-2 flex items-center justify-center transition-colors",
-                isSelected ? "border-primary bg-primary text-slate-900" : "border-muted-foreground group-hover:border-primary"
-              )}>
-                {isSelected && <CheckCircle2 className="w-4 h-4" />}
+      <div className="space-y-8 max-w-2xl mx-auto">
+        <div className="space-y-4">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Suggested Options</h3>
+          <div className="grid gap-3">
+            {suggestedRoles.map((role) => {
+              const isSelected = state.selectedRoles.includes(role);
+              return (
+                <motion.div
+                  key={role}
+                  onClick={() => actions.selectRole(role)}
+                  className={cn(
+                    "cursor-pointer rounded-xl p-4 border-2 transition-all duration-200 flex items-center gap-4 group",
+                    isSelected 
+                      ? "border-primary bg-primary/5 shadow-sm" 
+                      : "border-border bg-card hover:border-primary/50"
+                  )}
+                >
+                  <div className={cn(
+                    "w-5 h-5 rounded border flex items-center justify-center transition-colors flex-shrink-0",
+                    isSelected ? "border-primary bg-primary text-slate-900" : "border-muted-foreground"
+                  )}>
+                    {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
+                  </div>
+                  <span className={cn("font-medium", isSelected ? "text-slate-900" : "text-foreground")}>
+                    {role}
+                  </span>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="pt-4 border-t">
+          {!showFullTaxonomy ? (
+            <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => setShowFullTaxonomy(true)}>
+              Show more options...
+            </Button>
+          ) : (
+            <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">All Roles</h3>
+              <div className="grid gap-3 max-h-64 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+                {[...ROLES].sort().map((role) => {
+                  if (suggestedRoles.includes(role)) return null;
+                  const isSelected = state.selectedRoles.includes(role);
+                  return (
+                    <div
+                      key={role}
+                      onClick={() => actions.selectRole(role)}
+                      className={cn(
+                        "cursor-pointer rounded-xl p-3 border transition-all duration-200 flex items-center gap-3",
+                        isSelected ? "border-primary bg-primary/5" : "border-border hover:bg-slate-50"
+                      )}
+                    >
+                      <div className={cn(
+                        "w-4 h-4 rounded border flex items-center justify-center transition-colors flex-shrink-0",
+                        isSelected ? "border-primary bg-primary text-slate-900" : "border-muted-foreground"
+                      )}>
+                        {isSelected && <CheckCircle2 className="w-3 h-3" />}
+                      </div>
+                      <span className="text-sm font-medium">{role}</span>
+                    </div>
+                  );
+                })}
               </div>
-              <span className={cn("font-medium text-lg", isSelected ? "text-slate-900" : "text-foreground")}>
-                {role}
-              </span>
-            </motion.div>
-          );
-        })}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex justify-center mt-12 gap-4">
+        <Button 
+          variant="outline" 
+          size="lg" 
+          onClick={() => actions.prevStep()}
+          className="w-full max-w-[160px] text-slate-900 border-slate-200"
+        >
+          <ChevronLeft className="mr-2 w-5 h-5" /> Back
+        </Button>
         <Button 
           onClick={handleRoleContinue} 
           disabled={state.selectedRoles.length === 0}
@@ -564,6 +667,7 @@ export default function SurveyPage() {
             transition={{ duration: 0.3 }}
             className="w-full h-full flex flex-col"
           >
+            {state.step === 0 && renderStep0()}
             {state.step === 1 && renderStep1()}
             {state.step === 2 && renderStep2()}
             {state.step === 3 && renderStep3()}
