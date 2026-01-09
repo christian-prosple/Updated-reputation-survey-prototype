@@ -414,6 +414,12 @@ export function useSurvey() {
     state.selectedDegrees.forEach(degree => {
       DEGREE_TO_ROLES[degree].forEach(role => roles.add(role));
     });
+    
+    // Explicitly add "Law" if "Law, Legal Studies & Justice" is selected
+    if (state.selectedDegrees.includes("Law, Legal Studies & Justice")) {
+      roles.add("Law");
+    }
+
     return Array.from(roles).sort();
   }, [state.selectedDegrees]);
 
