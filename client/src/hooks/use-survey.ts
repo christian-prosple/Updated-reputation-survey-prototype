@@ -121,6 +121,8 @@ export const DEGREE_TO_ROLES: Record<DegreeType, RoleType[]> = {
 };
 
 export const COMPANIES_BY_ROLE: Record<string, string[]> = {
+  "Product Management": ["Canva", "Atlassian Australia", "Airwallex", "TikTok Australia & New Zealand", "Microsoft Australia", "Macquarie Group", "Commonwealth Bank", "ZipCo", "Westpac Group", "HelloFresh", "Planet Innovation", "Luxury Escapes", "Telstra", "Vow"],
+  "Design & User Experience": ["Canva", "Atlassian Australia", "Airwallex", "TikTok Australia & New Zealand", "Microsoft Australia", "Macquarie Group", "Commonwealth Bank", "ZipCo", "Westpac Group", "HelloFresh", "Planet Innovation", "Luxury Escapes", "Telstra", "Vow"],
   "Accounting & Advisory": ["PwC Australia", "EY Australia", "KPMG Australia", "Deloitte Australia", "BDO Australia", "Grant Thornton Australia", "RSM Australia", "Pitcher Partners", "Grant Samuel", "McGrathNicol", "KordaMentha", "FTI Consulting", "Crowe Australia", "Moore Australia"],
   "Finance & Banking": ["Commonwealth Bank", "NAB Australia", "Westpac Group", "ANZ Bank", "Macquarie Group", "Reserve Bank of Australia", "Australian Taxation Office (ATO)", "AustralianSuper", "AMP", "Munich Re", "Swiss Re Australia", "RGA", "JPMorganChase Australia"],
   "Law": ["Allens", "King & Wood Mallesons", "Herbert Smith Freehills", "Ashurst", "Clayton Utz", "Gilbert + Tobin", "MinterEllison", "Corrs Chambers Westgarth", "Baker McKenzie", "White & Case", "K&L Gates", "Pinsent Masons"],
@@ -238,6 +240,8 @@ export function useSurvey() {
       "Law": ["Allens", "King & Wood Mallesons", "Herbert Smith Freehills", "Ashurst", "Clayton Utz", "Gilbert + Tobin"],
       "Investment Banking": ["Goldman Sachs Australia", "Macquarie Group", "JPMorganChase Australia", "UBS Australia", "Morgan Stanley Australia"],
       "Accounting & Advisory": ["PwC Australia", "EY Australia", "KPMG Australia", "Deloitte Australia"],
+      "Product Management": ["Canva", "Atlassian Australia", "Airwallex", "Microsoft Australia"],
+      "Design & User Experience": ["Canva", "Atlassian Australia", "Airwallex", "Microsoft Australia"],
       "Mining & Resources Engineering": ["BHP", "Rio Tinto", "Woodside Energy"],
       "Medicine": ["CSIRO", "CSL", "Cochlear"],
       "Architecture": ["BVN", "Woods Bagot", "Cox Architecture"],
