@@ -243,7 +243,7 @@ export default function SurveyPage() {
         <div className="space-y-4">
           <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Suggested Options</h3>
           <div className="grid gap-3">
-            {suggestedRoles.map((role) => {
+            {suggestedRoles.slice(0, 5).map((role) => {
               const isSelected = state.selectedRoles.includes(role);
               return (
                 <motion.div
@@ -298,7 +298,12 @@ export default function SurveyPage() {
                     role.toLowerCase().includes(roleSearchQuery.toLowerCase())
                   )
                   .map((role) => {
-                    if (suggestedRoles.includes(role) && !roleSearchQuery) return null;
+                    // Show in full taxonomy if:
+                    // 1. It's NOT in the top 5 suggested roles
+                    // 2. OR the user is searching
+                    const isTop5Suggested = suggestedRoles.slice(0, 5).includes(role);
+                    if (isTop5Suggested && !roleSearchQuery) return null;
+                    
                     const isSelected = state.selectedRoles.includes(role);
                     return (
                       <div
