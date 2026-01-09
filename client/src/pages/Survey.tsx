@@ -143,7 +143,7 @@ export default function SurveyPage() {
 
   const handleUndo = () => {
     actions.undoLastComparison();
-    // No longer resetting activePair to null to preserve current comparison
+    setActivePair(null); // Reset to trigger re-selection from state
   };
 
   const handleFinishSurvey = () => {
