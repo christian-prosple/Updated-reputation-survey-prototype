@@ -33,7 +33,7 @@ export default function SurveyPage() {
   };
 
   // --- DERIVED STATE ---
-  const totalSteps = 5; 
+  const totalSteps = 6; 
 
   const targetPairwiseCount = useMemo(() => {
     const n = state.selectedCompanies.length;
