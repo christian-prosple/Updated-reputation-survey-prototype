@@ -174,8 +174,9 @@ export default function SurveyPage() {
   // --- RENDER STEPS ---
 
   const handleRoleSelection = (role: string) => {
-    actions.selectRole(role);
+    actions.selectRole(role as RoleType);
     setRoleSearchQuery("");
+    setIsSearchFocused(true); // Explicitly keep focus state
   };
 
   // STEP 0: DEGREE SELECTION
@@ -306,7 +307,10 @@ export default function SurveyPage() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                onMouseDown={(e) => e.preventDefault()} // Prevent blur when clicking items
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
                 className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-slate-100 rounded-2xl shadow-xl max-h-[400px] overflow-hidden flex flex-col z-50"
               >
                 <div className="overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-slate-200">
