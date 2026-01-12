@@ -173,6 +173,11 @@ export default function SurveyPage() {
 
   // --- RENDER STEPS ---
 
+  const handleRoleSelection = (role: string) => {
+    actions.selectRole(role);
+    setRoleSearchQuery("");
+  };
+
   // STEP 0: DEGREE SELECTION
   const renderStep0 = () => (
     <div className="space-y-6">
@@ -306,7 +311,7 @@ export default function SurveyPage() {
                         return (
                           <div
                             key={role}
-                            onClick={() => actions.selectRole(role)}
+                            onClick={() => handleRoleSelection(role)}
                             className={cn(
                               "cursor-pointer rounded-xl p-3 flex items-center justify-between transition-colors",
                               isSelected ? "bg-primary/10" : "hover:bg-slate-50"
@@ -331,7 +336,7 @@ export default function SurveyPage() {
                         return (
                           <div
                             key={role}
-                            onClick={() => actions.selectRole(role)}
+                            onClick={() => handleRoleSelection(role)}
                             className={cn(
                               "cursor-pointer rounded-xl p-3 flex items-center justify-between transition-colors",
                               isSelected ? "bg-primary/10" : "hover:bg-slate-50"
@@ -358,7 +363,7 @@ export default function SurveyPage() {
                           return (
                             <div
                               key={role}
-                              onClick={() => actions.selectRole(role)}
+                              onClick={() => handleRoleSelection(role)}
                               className={cn(
                                 "cursor-pointer rounded-xl p-3 flex items-center justify-between transition-colors",
                                 isSelected ? "bg-primary/10" : "hover:bg-slate-50"
