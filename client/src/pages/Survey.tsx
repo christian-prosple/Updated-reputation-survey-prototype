@@ -176,7 +176,8 @@ export default function SurveyPage() {
   const handleRoleSelection = (role: string) => {
     actions.selectRole(role as RoleType);
     setRoleSearchQuery("");
-    setIsSearchFocused(true); // Explicitly keep focus state
+    // We don't need to do anything else, the dropdown should stay open
+    // because isSearchFocused is still true and we stopPropagation on the click
   };
 
   // STEP 0: DEGREE SELECTION
@@ -325,7 +326,10 @@ export default function SurveyPage() {
                         return (
                           <div
                             key={role}
-                            onClick={() => handleRoleSelection(role)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRoleSelection(role);
+                            }}
                             className={cn(
                               "cursor-pointer rounded-xl p-3 flex items-center justify-between transition-colors",
                               isSelected ? "bg-primary/10" : "hover:bg-slate-50"
@@ -350,7 +354,10 @@ export default function SurveyPage() {
                         return (
                           <div
                             key={role}
-                            onClick={() => handleRoleSelection(role)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRoleSelection(role);
+                            }}
                             className={cn(
                               "cursor-pointer rounded-xl p-3 flex items-center justify-between transition-colors",
                               isSelected ? "bg-primary/10" : "hover:bg-slate-50"
@@ -377,7 +384,10 @@ export default function SurveyPage() {
                           return (
                             <div
                               key={role}
-                              onClick={() => handleRoleSelection(role)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRoleSelection(role);
+                              }}
                               className={cn(
                                 "cursor-pointer rounded-xl p-3 flex items-center justify-between transition-colors",
                                 isSelected ? "bg-primary/10" : "hover:bg-slate-50"
