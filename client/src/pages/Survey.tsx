@@ -3,7 +3,7 @@ import { useSurvey, ROLES, RoleType, CompanyEntity, DEGREES } from "@/hooks/use-
 import { StepIndicator } from "@/components/StepIndicator";
 import { Button } from "@/components/ui/button-custom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
-import { ChevronRight, ChevronLeft, GripVertical, CheckCircle2, RefreshCw, Search } from "lucide-react";
+import { ChevronRight, ChevronLeft, GripVertical, CheckCircle2, RefreshCw, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ManualCompany {
@@ -239,94 +239,124 @@ export default function SurveyPage() {
         </p>
       </div>
 
-      <div className="space-y-8 max-w-2xl mx-auto">
-        <div className="space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Suggested Options</h3>
-          <div className="grid gap-3">
-            {suggestedRoles.slice(0, 5).map((role) => {
-              const isSelected = state.selectedRoles.includes(role);
-              return (
+      <div className="space-y-8 max-w-3xl mx-auto w-full">
+        {/* Search Bar with Selected Pills */}
+        <div className="relative space-y-3">
+          <div className={cn(
+            "min-h-[56px] w-full p-2 bg-white border-2 rounded-2xl flex flex-wrap gap-2 items-center transition-all duration-200",
+            roleSearchQuery ? "border-primary shadow-md" : "border-slate-200 shadow-sm focus-within:border-primary/50 focus-within:shadow-md"
+          )}>
+            <div className="flex items-center pl-2">
+              <Search className="w-5 h-5 text-slate-400" />
+            </div>
+            
+            <AnimatePresence>
+              {state.selectedRoles.map((role) => (
                 <motion.div
                   key={role}
-                  onClick={() => actions.selectRole(role)}
-                  className={cn(
-                    "cursor-pointer rounded-xl p-4 border-2 transition-all duration-200 flex items-center gap-4 group",
-                    isSelected 
-                      ? "border-primary bg-primary/5 shadow-sm" 
-                      : "border-border bg-card hover:border-primary/50"
-                  )}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="bg-primary/10 text-primary-foreground border border-primary/20 px-3 py-1.5 rounded-xl flex items-center gap-2 text-sm font-bold group"
                 >
-                  <div className={cn(
-                    "w-5 h-5 rounded border flex items-center justify-center transition-colors flex-shrink-0",
-                    isSelected ? "border-primary bg-primary text-slate-900" : "border-muted-foreground"
-                  )}>
-                    {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
-                  </div>
-                  <span className={cn("font-medium", isSelected ? "text-slate-900" : "text-foreground")}>
-                    {role}
-                  </span>
+                  <span className="text-slate-900">{role}</span>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      actions.selectRole(role);
+                    }}
+                    className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5 text-slate-600" />
+                  </button>
                 </motion.div>
-              );
-            })}
+              ))}
+            </AnimatePresence>
+
+            <input
+              type="text"
+              placeholder={state.selectedRoles.length === 0 ? "Search for roles..." : ""}
+              value={roleSearchQuery}
+              onChange={(e) => setRoleSearchQuery(e.target.value)}
+              className="flex-1 min-w-[120px] bg-transparent border-none outline-none py-2 px-2 text-slate-900 placeholder:text-slate-400"
+            />
           </div>
         </div>
 
-        <div className="pt-4 border-t">
-          {!showFullTaxonomy ? (
-            <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => setShowFullTaxonomy(true)}>
-              Show more options...
-            </Button>
-          ) : (
-            <div className="space-y-4 animate-in fade-in slide-in-from-top-2">
-              <div className="flex flex-col gap-4">
-                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">All Roles</h3>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <input
-                    type="text"
-                    placeholder="Search roles..."
-                    value={roleSearchQuery}
-                    onChange={(e) => setRoleSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                  />
-                </div>
-              </div>
-              <div className="grid gap-3 max-h-64 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
-                {[...ROLES]
-                  .sort()
-                  .filter(role => 
-                    role.toLowerCase().includes(roleSearchQuery.toLowerCase())
-                  )
-                  .map((role) => {
-                    // Show in full taxonomy if:
-                    // 1. It's NOT in the top 5 suggested roles
-                    // 2. OR the user is searching
-                    const isTop5Suggested = suggestedRoles.slice(0, 5).includes(role);
-                    if (isTop5Suggested && !roleSearchQuery) return null;
-                    
-                    const isSelected = state.selectedRoles.includes(role);
-                    return (
-                      <div
-                        key={role}
-                        onClick={() => actions.selectRole(role)}
-                        className={cn(
-                          "cursor-pointer rounded-xl p-3 border transition-all duration-200 flex items-center gap-3",
-                          isSelected ? "border-primary bg-primary/5" : "border-border hover:bg-slate-50"
-                        )}
-                      >
-                        <div className={cn(
-                          "w-4 h-4 rounded border flex items-center justify-center transition-colors flex-shrink-0",
-                          isSelected ? "border-primary bg-primary text-slate-900" : "border-muted-foreground"
-                        )}>
-                          {isSelected && <CheckCircle2 className="w-3 h-3" />}
-                        </div>
-                        <span className="text-sm font-medium">{role}</span>
-                      </div>
-                    );
-                  })}
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+          {/* Suggested List */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 px-1">Suggested for you</h3>
+            <div className="space-y-2">
+              {suggestedRoles.slice(0, 5).map((role) => {
+                const isSelected = state.selectedRoles.includes(role);
+                return (
+                  <motion.div
+                    key={role}
+                    whileHover={{ x: 4 }}
+                    onClick={() => actions.selectRole(role)}
+                    className={cn(
+                      "cursor-pointer rounded-xl p-4 border-2 transition-all duration-200 flex items-center justify-between group",
+                      isSelected 
+                        ? "border-primary bg-primary/5 shadow-sm" 
+                        : "border-border bg-card hover:border-primary/30"
+                    )}
+                  >
+                    <span className={cn("font-medium transition-colors", isSelected ? "text-slate-900 font-bold" : "text-slate-600")}>
+                      {role}
+                    </span>
+                    <div className={cn(
+                      "w-5 h-5 rounded border flex items-center justify-center transition-all",
+                      isSelected ? "border-primary bg-primary text-slate-900 scale-110" : "border-slate-300 opacity-0 group-hover:opacity-100"
+                    )}>
+                      {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
-          )}
+          </div>
+
+          {/* All Roles List */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 px-1">
+              {roleSearchQuery ? `Search results (${[...ROLES].filter(r => r.toLowerCase().includes(roleSearchQuery.toLowerCase())).length})` : "All Roles"}
+            </h3>
+            <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+              {[...ROLES]
+                .sort()
+                .filter(role => 
+                  role.toLowerCase().includes(roleSearchQuery.toLowerCase())
+                )
+                .map((role) => {
+                  const isTop5Suggested = suggestedRoles.slice(0, 5).includes(role);
+                  if (isTop5Suggested && !roleSearchQuery) return null;
+                  
+                  const isSelected = state.selectedRoles.includes(role);
+                  return (
+                    <motion.div
+                      key={role}
+                      whileHover={{ x: 4 }}
+                      onClick={() => actions.selectRole(role)}
+                      className={cn(
+                        "cursor-pointer rounded-xl p-3 border transition-all duration-200 flex items-center justify-between group",
+                        isSelected ? "border-primary bg-primary/5" : "border-border hover:bg-slate-50"
+                      )}
+                    >
+                      <span className={cn("text-sm font-medium transition-colors", isSelected ? "text-slate-900 font-bold" : "text-slate-600")}>
+                        {role}
+                      </span>
+                      <div className={cn(
+                        "w-4 h-4 rounded border flex items-center justify-center transition-all",
+                        isSelected ? "border-primary bg-primary text-slate-900" : "border-slate-300 opacity-0 group-hover:opacity-100"
+                      )}>
+                        {isSelected && <CheckCircle2 className="w-3 h-3" />}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+            </div>
+          </div>
         </div>
       </div>
 
