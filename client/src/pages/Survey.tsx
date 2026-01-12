@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useSurvey, ROLES, RoleType, CompanyEntity, DEGREES } from "@/hooks/use-survey";
 import { StepIndicator } from "@/components/StepIndicator";
 import { Button } from "@/components/ui/button-custom";
@@ -173,9 +173,15 @@ export default function SurveyPage() {
 
   // --- RENDER STEPS ---
 
+  const inputRef = useRef<HTMLInputElement>(null);
+
   const handleRoleSelection = (role: string) => {
     actions.selectRole(role);
     setRoleSearchQuery("");
+    // Ensure input stays focused after selection
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
   };
 
   // STEP 0: DEGREE SELECTION
@@ -280,6 +286,7 @@ export default function SurveyPage() {
             </AnimatePresence>
 
             <input
+              ref={inputRef}
               type="text"
               placeholder={state.selectedRoles.length === 0 ? "Search for roles..." : ""}
               value={roleSearchQuery}
