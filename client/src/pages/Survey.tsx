@@ -468,7 +468,7 @@ export default function SurveyPage() {
     <div className="flex flex-col h-full justify-center max-w-4xl mx-auto w-full">
       <div className="text-center mb-6">
         <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
-          Pairwise Comparison
+          Company comparison
         </h2>
         <p className="text-lg text-muted-foreground">
           Which of these two would you prefer to work for?
@@ -493,12 +493,12 @@ export default function SurveyPage() {
       </div>
 
       {activePair ? (
-        <div className="grid md:grid-cols-2 gap-8 items-stretch mb-12">
+        <div className="flex flex-col md:flex-row gap-8 items-center mb-12 relative">
            {/* Option A */}
            <motion.div 
              initial={{ opacity: 0, x: -20 }}
              animate={{ opacity: 1, x: 0 }}
-             className="flex flex-col h-full"
+             className="flex flex-col h-full w-full md:flex-1"
            >
              <button
                 onClick={() => handlePairChoice(activePair[0].id)}
@@ -517,8 +517,8 @@ export default function SurveyPage() {
              </button>
            </motion.div>
 
-           {/* VS Badge in middle (absolute on desktop, between on mobile) */}
-           <div className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full items-center justify-center font-bold text-slate-300 shadow-sm border border-slate-100 z-10">
+           {/* VS Badge in middle */}
+           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center font-bold text-slate-300 shadow-sm border border-slate-100 z-10 flex-shrink-0">
              VS
            </div>
 
@@ -526,7 +526,7 @@ export default function SurveyPage() {
            <motion.div 
              initial={{ opacity: 0, x: 20 }}
              animate={{ opacity: 1, x: 0 }}
-             className="flex flex-col h-full"
+             className="flex flex-col h-full w-full md:flex-1"
            >
              <button
                 onClick={() => handlePairChoice(activePair[1].id)}
