@@ -184,10 +184,7 @@ export default function SurveyPage() {
   const renderStep0 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
-          Degree Study
-        </h2>
-        <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
           What degree did you study or are currently studying? (Select all that apply)
         </p>
       </div>
@@ -239,10 +236,7 @@ export default function SurveyPage() {
   const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
-          Career Paths
-        </h2>
-        <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
           What role/s or career path/s are you most interested in pursuing?
         </p>
       </div>
@@ -434,10 +428,7 @@ export default function SurveyPage() {
   const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
-          Priorities
-        </h2>
-        <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
           Which roles are most attractive to you? Drag to sort them in order of preference.
         </p>
       </div>
@@ -482,10 +473,7 @@ export default function SurveyPage() {
     return (
       <div className="space-y-6 h-full flex flex-col">
         <div className="text-center mb-4">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
-            Employer Recognition
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+          <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
             Which of the following employers do you recognise? Select all that apply.
           </p>
         </div>
@@ -546,10 +534,7 @@ export default function SurveyPage() {
   const renderStep4 = () => (
     <div className="flex flex-col h-full justify-center max-w-4xl mx-auto w-full">
       <div className="text-center mb-6">
-        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
-          Company comparison
-        </h2>
-        <p className="text-lg text-muted-foreground">
+        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
           Which of these two would you prefer to work for?
         </p>
       </div>
@@ -661,10 +646,7 @@ export default function SurveyPage() {
   const renderStep5 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">
-          Top Shortlist
-        </h2>
-        <p className="text-lg text-muted-foreground max-w-lg mx-auto">
+        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
           Based on your responses we have generated a draft shortlist for you. Drag to sort them in order of preference before submitting your final rankings
         </p>
       </div>

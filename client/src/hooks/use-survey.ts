@@ -262,9 +262,9 @@ export function useSurvey() {
     // Shuffle non-mandatory names
     const shuffledNonMandatory = [...nonMandatoryNames].sort(() => Math.random() - 0.5);
     
-    // Pick until we have 20 total including mandatory ones
+    // Pick until we have 30 total including mandatory ones
     const finalSelection = Array.from(mandatoryNames).filter(name => uniqueNames.includes(name));
-    const needed = 20 - finalSelection.length;
+    const needed = 30 - finalSelection.length;
     
     if (needed > 0) {
       finalSelection.push(...shuffledNonMandatory.slice(0, needed));
