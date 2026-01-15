@@ -147,6 +147,31 @@ const SAFE_COMPANIES_BY_ROLE = new Proxy(COMPANIES_BY_ROLE, {
   get: (target, prop: string) => target[prop] || ["Deloitte Australia", "Accenture Australia", "PwC Australia", "EY Australia", "KPMG Australia"]
 });
 
+// Filler companies to reach 30 total - assigned random roles from user's selection
+const FILLER_COMPANIES = [
+  "Insurance Commission of Western Australia",
+  "Bottrell Business Consultants Australia",
+  "Lagardere AWPL",
+  "Ebury Australia",
+  "O'Brien",
+  "Novartis",
+  "Hewlett Packard Enterprise (HPE)",
+  "Kennedy Cross Australia",
+  "Corporate Carbon Australia",
+  "The Alternative",
+  "Tyroola Australia",
+  "FDM Group Australia",
+  "Delta Agribusiness Group",
+  "Pinnacle Rehab Australia",
+  "PaidRight Australia",
+  "The RepTrak Company Australia",
+  "ClearScore Australia",
+  "Legrand Australia",
+  "JLL Australia",
+  "Wilcorp",
+  "Dodgshun Medlin Australia"
+];
+
 // --- TYPES ---
 export interface CompanyEntity {
   name: string;
@@ -211,28 +236,12 @@ export function useSurvey() {
   };
 
   const generateCompanyPool = () => {
-    // 1. Gather all unique company-role pairs
-    const allEntities: CompanyEntity[] = [];
-    state.selectedRoles.forEach(role => {
-      const companies = SAFE_COMPANIES_BY_ROLE[role];
-      companies.forEach(name => {
-        allEntities.push({
-          name,
-          role,
-          id: `${name}|${role}`
-        });
-      });
-    });
-    
-    // Group entities by company name
-    const groupedByName: Record<string, CompanyEntity[]> = {};
-    allEntities.forEach(entity => {
-      if (!groupedByName[entity.name]) {
-        groupedByName[entity.name] = [];
-      }
-      groupedByName[entity.name].push(entity);
-    });
+    // Guard: need at least one role selected
+    if (state.selectedRoles.length === 0) {
+      return;
+    }
 
+    // Mandatory companies for specific roles
     const mandatoryCompanies: Record<string, string[]> = {
       "Management Consulting": ["McKinsey & Company Australia", "Boston Consulting Group Australia", "Bain & Company Australia"],
       "Computer Science & Software Engineering": ["Google AU", "Atlassian", "Canva"],
@@ -249,36 +258,80 @@ export function useSurvey() {
       "Animation & VFX": ["Animal Logic", "Weta FX", "Disney Australia"]
     };
 
-    const mandatoryNames = new Set<string>();
+    // 1. Gather mandatory company entities with their specific roles
+    const mandatoryEntities: CompanyEntity[] = [];
+    const usedNames = new Set<string>();
+    
     state.selectedRoles.forEach(role => {
       if (mandatoryCompanies[role]) {
-        mandatoryCompanies[role].forEach(name => mandatoryNames.add(name));
+        mandatoryCompanies[role].forEach(name => {
+          if (!usedNames.has(name)) {
+            usedNames.add(name);
+            mandatoryEntities.push({
+              name,
+              role,
+              id: `${name}|${role}`
+            });
+          }
+        });
       }
     });
 
-    const uniqueNames = Object.keys(groupedByName);
-    const nonMandatoryNames = uniqueNames.filter(name => !mandatoryNames.has(name));
+    // 2. Calculate how many filler companies we need
+    let needed = 30 - mandatoryEntities.length;
+    const fillerEntities: CompanyEntity[] = [];
+    
+    // 3. First use the 21 filler companies
+    const shuffledFillers = [...FILLER_COMPANIES].sort(() => Math.random() - 0.5);
+    shuffledFillers.forEach((name, index) => {
+      if (needed > 0 && !usedNames.has(name)) {
+        usedNames.add(name);
+        const role = state.selectedRoles[index % state.selectedRoles.length];
+        fillerEntities.push({
+          name,
+          role,
+          id: `${name}|${role}`
+        });
+        needed--;
+      }
+    });
 
-    // Shuffle non-mandatory names
-    const shuffledNonMandatory = [...nonMandatoryNames].sort(() => Math.random() - 0.5);
-    
-    // Pick until we have 30 total including mandatory ones
-    const finalSelection = Array.from(mandatoryNames).filter(name => uniqueNames.includes(name));
-    const needed = 30 - finalSelection.length;
-    
+    // 4. If still need more, draw from role-based companies
     if (needed > 0) {
-      finalSelection.push(...shuffledNonMandatory.slice(0, needed));
+      const roleCompanies: string[] = [];
+      state.selectedRoles.forEach(role => {
+        const companies = SAFE_COMPANIES_BY_ROLE[role];
+        companies.forEach((name: string) => {
+          if (!usedNames.has(name)) {
+            roleCompanies.push(name);
+          }
+        });
+      });
+      
+      const shuffledRoleCompanies = Array.from(new Set(roleCompanies)).sort(() => Math.random() - 0.5);
+      shuffledRoleCompanies.slice(0, needed).forEach((name, index) => {
+        usedNames.add(name);
+        const role = state.selectedRoles[index % state.selectedRoles.length];
+        fillerEntities.push({
+          name,
+          role,
+          id: `${name}|${role}`
+        });
+      });
     }
 
-    // Shuffle the final selection so mandatory ones aren't always at the start
-    const finalShuffled = [...finalSelection].sort(() => Math.random() - 0.5);
+    // 5. Combine mandatory + fillers and ensure exactly 30
+    const allEntities = [...mandatoryEntities, ...fillerEntities];
     
-    // The pool contains ALL role-specific entities for those names
-    const pool = finalShuffled.flatMap(name => groupedByName[name]);
+    // Cap at 30 if we somehow have more (e.g., many mandatory companies from multiple roles)
+    const cappedEntities = allEntities.slice(0, 30);
+    
+    // Shuffle the final pool
+    const shuffledPool = cappedEntities.sort(() => Math.random() - 0.5);
     
     setState(prev => ({
       ...prev,
-      displayedCompanies: pool,
+      displayedCompanies: shuffledPool,
       selectedCompanies: [],
       pairwiseWins: {},
       completedPairs: new Set(),
