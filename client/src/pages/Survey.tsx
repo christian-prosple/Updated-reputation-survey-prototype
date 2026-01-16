@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSurvey, ROLES, RoleType, CompanyEntity, DEGREES } from "@/hooks/use-survey";
+import { useSurvey, ROLES, RoleType, CompanyEntity, DEGREES, GENDERS, EDUCATION_STATUSES } from "@/hooks/use-survey";
 import { StepIndicator } from "@/components/StepIndicator";
 import { Button } from "@/components/ui/button-custom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
@@ -36,7 +36,7 @@ export default function SurveyPage() {
   };
 
   // --- DERIVED STATE ---
-  const totalSteps = 6; 
+  const totalSteps = 7; 
 
   const targetPairwiseCount = useMemo(() => {
     const n = state.selectedCompanies.length;
@@ -45,16 +45,16 @@ export default function SurveyPage() {
     return Math.min(20, maxPossible);
   }, [state.selectedCompanies.length]);
 
-  // --- EFFECT: Initialize Companies for Step 3 ---
+  // --- EFFECT: Initialize Companies for Step 4 ---
   useEffect(() => {
-    if (state.step === 3 && state.displayedCompanies.length === 0) {
+    if (state.step === 4 && state.displayedCompanies.length === 0) {
       actions.generateCompanyPool();
     }
   }, [state.step]);
 
-  // --- EFFECT: Initialize Final Ranking for Step 5 ---
+  // --- EFFECT: Initialize Final Ranking for Step 6 ---
   useEffect(() => {
-    if (state.step === 5 && state.finalRanking.length === 0) {
+    if (state.step === 6 && state.finalRanking.length === 0) {
       actions.generateFinalRanking();
     }
   }, [state.step]);
@@ -97,7 +97,7 @@ export default function SurveyPage() {
 
   // --- EFFECT: Manage Pairwise Loop ---
   useEffect(() => {
-    if (state.step === 4 && !activePair) {
+    if (state.step === 5 && !activePair) {
       if (state.pairwiseCount >= targetPairwiseCount) {
         actions.nextStep();
         return;
@@ -107,7 +107,7 @@ export default function SurveyPage() {
       if (next) {
         setActivePair(next);
       } else {
-        // No more pairs? Auto-advance to step 5
+        // No more pairs? Auto-advance to step 6
         actions.nextStep();
       }
     }
@@ -180,8 +180,183 @@ export default function SurveyPage() {
     // because isSearchFocused is still true and we stopPropagation on the click
   };
 
-  // STEP 0: DEGREE SELECTION
+  // Generate month and year options
+  const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 10 }, (_, i) => String(currentYear - 5 + i));
+
+  // Check if personal info is complete enough to continue
+  const isPersonalInfoValid = () => {
+    const { email, gender, customGender, educationStatus, country, university } = state.personalInfo;
+    const hasValidEmail = email.includes("@") && email.includes(".");
+    const hasValidGender = gender === "custom" ? customGender.trim().length > 0 : gender.length > 0;
+    return hasValidEmail && hasValidGender && educationStatus && country.trim() && university.trim();
+  };
+
+  // STEP 0: PERSONAL INFO
   const renderStep0 = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
+          Let's start with a bit about you
+        </p>
+      </div>
+
+      <div className="max-w-xl mx-auto space-y-6">
+        {/* Email */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Email</label>
+          <input
+            type="email"
+            value={state.personalInfo.email}
+            onChange={(e) => actions.updatePersonalInfo("email", e.target.value)}
+            placeholder="your.email@example.com"
+            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
+            data-testid="input-email"
+          />
+        </div>
+
+        {/* Gender */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Gender</label>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {GENDERS.map((g) => (
+              <button
+                key={g}
+                onClick={() => actions.updatePersonalInfo("gender", g)}
+                className={cn(
+                  "p-3 border-2 rounded-xl text-sm font-medium transition-all",
+                  state.personalInfo.gender === g
+                    ? "border-primary bg-primary/5 text-slate-900"
+                    : "border-slate-200 hover:border-slate-300 text-slate-600"
+                )}
+                data-testid={`button-gender-${g.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                {g}
+              </button>
+            ))}
+            <button
+              onClick={() => actions.updatePersonalInfo("gender", "custom")}
+              className={cn(
+                "p-3 border-2 rounded-xl text-sm font-medium transition-all",
+                state.personalInfo.gender === "custom"
+                  ? "border-primary bg-primary/5 text-slate-900"
+                  : "border-slate-200 hover:border-slate-300 text-slate-600"
+              )}
+              data-testid="button-gender-custom"
+            >
+              Let me type
+            </button>
+          </div>
+          {state.personalInfo.gender === "custom" && (
+            <input
+              type="text"
+              value={state.personalInfo.customGender}
+              onChange={(e) => actions.updatePersonalInfo("customGender", e.target.value)}
+              placeholder="Enter your gender..."
+              className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors mt-2"
+              data-testid="input-custom-gender"
+            />
+          )}
+        </div>
+
+        {/* Education Status */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Education status</label>
+          <div className="grid grid-cols-3 gap-2">
+            {EDUCATION_STATUSES.map((status) => (
+              <button
+                key={status}
+                onClick={() => actions.updatePersonalInfo("educationStatus", status)}
+                className={cn(
+                  "p-3 border-2 rounded-xl text-sm font-medium transition-all",
+                  state.personalInfo.educationStatus === status
+                    ? "border-primary bg-primary/5 text-slate-900"
+                    : "border-slate-200 hover:border-slate-300 text-slate-600"
+                )}
+                data-testid={`button-education-${status.toLowerCase()}`}
+              >
+                {status}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Graduation Date */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Graduation date (expected or actual)</label>
+          <div className="grid grid-cols-2 gap-3">
+            <select
+              value={state.personalInfo.graduationMonth}
+              onChange={(e) => actions.updatePersonalInfo("graduationMonth", e.target.value)}
+              className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white"
+              data-testid="select-graduation-month"
+            >
+              <option value="">Month</option>
+              {months.map((m) => (
+                <option key={m} value={m}>{m}</option>
+              ))}
+            </select>
+            <select
+              value={state.personalInfo.graduationYear}
+              onChange={(e) => actions.updatePersonalInfo("graduationYear", e.target.value)}
+              className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white"
+              data-testid="select-graduation-year"
+            >
+              <option value="">Year</option>
+              {years.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Country */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">Country</label>
+          <input
+            type="text"
+            value={state.personalInfo.country}
+            onChange={(e) => actions.updatePersonalInfo("country", e.target.value)}
+            placeholder="e.g. Australia"
+            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
+            data-testid="input-country"
+          />
+        </div>
+
+        {/* University */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">University</label>
+          <input
+            type="text"
+            value={state.personalInfo.university}
+            onChange={(e) => actions.updatePersonalInfo("university", e.target.value)}
+            placeholder="e.g. University of Melbourne"
+            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
+            data-testid="input-university"
+          />
+        </div>
+      </div>
+
+      <div className="flex justify-center mt-12 gap-4">
+        <Button 
+          onClick={() => actions.nextStep()} 
+          disabled={!isPersonalInfoValid()}
+          size="lg"
+          className="w-full max-w-[160px]"
+          data-testid="button-continue-personal"
+        >
+          Continue <ChevronRight className="ml-2 w-5 h-5" />
+        </Button>
+      </div>
+    </div>
+  );
+
+  // STEP 1: DEGREE SELECTION
+  const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
@@ -221,6 +396,14 @@ export default function SurveyPage() {
 
       <div className="flex justify-center mt-12 gap-4">
         <Button 
+          variant="outline" 
+          size="lg" 
+          onClick={() => actions.prevStep()}
+          className="w-full max-w-[160px] text-slate-900 border-slate-200"
+        >
+          <ChevronLeft className="mr-2 w-5 h-5" /> Back
+        </Button>
+        <Button 
           onClick={() => actions.nextStep()} 
           disabled={state.selectedDegrees.length === 0}
           size="lg"
@@ -232,8 +415,8 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 1: ROLE SELECTION
-  const renderStep1 = () => (
+  // STEP 2: ROLE SELECTION
+  const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
@@ -424,8 +607,8 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 2: ROLE ORDERING
-  const renderStep2 = () => (
+  // STEP 3: ROLE ORDERING
+  const renderStep3 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
@@ -465,8 +648,8 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 3: COMPANY SELECTION
-  const renderStep3 = () => {
+  // STEP 4: COMPANY SELECTION
+  const renderStep4 = () => {
     // Get unique company names from displayed entities
     const uniqueCompanyNames = Array.from(new Set(state.displayedCompanies.map(c => c.name)));
     
@@ -530,8 +713,8 @@ export default function SurveyPage() {
     );
   };
 
-  // STEP 4: PAIRWISE LOOP
-  const renderStep4 = () => (
+  // STEP 5: PAIRWISE LOOP
+  const renderStep5 = () => (
     <div className="flex flex-col h-full justify-center max-w-4xl mx-auto w-full">
       <div className="text-center mb-6">
         <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
@@ -642,8 +825,8 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 5: FINAL RANKING
-  const renderStep5 = () => (
+  // STEP 6: FINAL RANKING
+  const renderStep6 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
@@ -732,8 +915,8 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 6: THANK YOU
-  const renderStep6 = () => (
+  // STEP 7: THANK YOU
+  const renderStep7 = () => (
     <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500">
       <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-8">
         <CheckCircle2 className="w-10 h-10" />
@@ -767,7 +950,7 @@ export default function SurveyPage() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center py-8 md:py-12 px-4 md:px-8 max-w-6xl mx-auto w-full">
-        {state.step <= 5 && <StepIndicator currentStep={state.step} totalSteps={totalSteps} />}
+        {state.step <= 6 && <StepIndicator currentStep={state.step} totalSteps={totalSteps} />}
         
         <AnimatePresence mode="wait">
           <motion.div
@@ -785,6 +968,7 @@ export default function SurveyPage() {
             {state.step === 4 && renderStep4()}
             {state.step === 5 && renderStep5()}
             {state.step === 6 && renderStep6()}
+            {state.step === 7 && renderStep7()}
           </motion.div>
         </AnimatePresence>
       </main>
