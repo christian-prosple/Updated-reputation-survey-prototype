@@ -186,7 +186,7 @@ export default function SurveyPage() {
     "July", "August", "September", "October", "November", "December"
   ];
   const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 10 }, (_, i) => String(currentYear - 5 + i));
+  const years = Array.from({ length: currentYear - 2015 + 6 }, (_, i) => String(2015 + i));
 
   // Check if personal info is complete enough to continue
   const isPersonalInfoValid = () => {
@@ -222,35 +222,18 @@ export default function SurveyPage() {
         {/* Gender */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">Gender</label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <select
+            value={state.personalInfo.gender}
+            onChange={(e) => actions.updatePersonalInfo("gender", e.target.value)}
+            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white"
+            data-testid="select-gender"
+          >
+            <option value="">Select gender</option>
             {GENDERS.map((g) => (
-              <button
-                key={g}
-                onClick={() => actions.updatePersonalInfo("gender", g)}
-                className={cn(
-                  "p-3 border-2 rounded-xl text-sm font-medium transition-all",
-                  state.personalInfo.gender === g
-                    ? "border-primary bg-primary/5 text-slate-900"
-                    : "border-slate-200 hover:border-slate-300 text-slate-600"
-                )}
-                data-testid={`button-gender-${g.toLowerCase().replace(/\s+/g, '-')}`}
-              >
-                {g}
-              </button>
+              <option key={g} value={g}>{g}</option>
             ))}
-            <button
-              onClick={() => actions.updatePersonalInfo("gender", "custom")}
-              className={cn(
-                "p-3 border-2 rounded-xl text-sm font-medium transition-all",
-                state.personalInfo.gender === "custom"
-                  ? "border-primary bg-primary/5 text-slate-900"
-                  : "border-slate-200 hover:border-slate-300 text-slate-600"
-              )}
-              data-testid="button-gender-custom"
-            >
-              Let me type
-            </button>
-          </div>
+            <option value="custom">Let me type</option>
+          </select>
           {state.personalInfo.gender === "custom" && (
             <input
               type="text"
@@ -285,34 +268,36 @@ export default function SurveyPage() {
           </div>
         </div>
 
-        {/* Graduation Date */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Graduation date (expected or actual)</label>
-          <div className="grid grid-cols-2 gap-3">
-            <select
-              value={state.personalInfo.graduationMonth}
-              onChange={(e) => actions.updatePersonalInfo("graduationMonth", e.target.value)}
-              className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white"
-              data-testid="select-graduation-month"
-            >
-              <option value="">Month</option>
-              {months.map((m) => (
-                <option key={m} value={m}>{m}</option>
-              ))}
-            </select>
-            <select
-              value={state.personalInfo.graduationYear}
-              onChange={(e) => actions.updatePersonalInfo("graduationYear", e.target.value)}
-              className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white"
-              data-testid="select-graduation-year"
-            >
-              <option value="">Year</option>
-              {years.map((y) => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
+        {/* Graduation Date - hidden when Neither is selected */}
+        {state.personalInfo.educationStatus !== "Neither" && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">Graduation date (expected or actual)</label>
+            <div className="grid grid-cols-2 gap-3">
+              <select
+                value={state.personalInfo.graduationMonth}
+                onChange={(e) => actions.updatePersonalInfo("graduationMonth", e.target.value)}
+                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white"
+                data-testid="select-graduation-month"
+              >
+                <option value="">Month</option>
+                {months.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+              <select
+                value={state.personalInfo.graduationYear}
+                onChange={(e) => actions.updatePersonalInfo("graduationYear", e.target.value)}
+                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white"
+                data-testid="select-graduation-year"
+              >
+                <option value="">Year</option>
+                {years.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Country */}
         <div className="space-y-2">
