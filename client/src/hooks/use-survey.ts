@@ -173,6 +173,23 @@ const FILLER_COMPANIES = [
 ];
 
 // --- TYPES ---
+export const GENDERS = ["Female", "Male", "Non-binary", "Prefer not to say"] as const;
+export type GenderType = typeof GENDERS[number] | string;
+
+export const EDUCATION_STATUSES = ["Studying", "Graduated", "Neither"] as const;
+export type EducationStatusType = typeof EDUCATION_STATUSES[number];
+
+export interface PersonalInfo {
+  email: string;
+  gender: GenderType;
+  customGender: string;
+  educationStatus: EducationStatusType | "";
+  graduationMonth: string;
+  graduationYear: string;
+  country: string;
+  university: string;
+}
+
 export interface CompanyEntity {
   name: string;
   role: RoleType;
@@ -181,6 +198,7 @@ export interface CompanyEntity {
 
 export interface SurveyState {
   step: number;
+  personalInfo: PersonalInfo;
   selectedDegrees: DegreeType[];
   selectedRoles: RoleType[];
   roleOrder: RoleType[];
@@ -197,6 +215,16 @@ export interface SurveyState {
 export function useSurvey() {
   const [state, setState] = useState<SurveyState>({
     step: 0,
+    personalInfo: {
+      email: "",
+      gender: "",
+      customGender: "",
+      educationStatus: "",
+      graduationMonth: "",
+      graduationYear: "",
+      country: "",
+      university: ""
+    },
     selectedDegrees: [],
     selectedRoles: [],
     roleOrder: [],
@@ -430,22 +458,29 @@ export function useSurvey() {
     setState(prev => ({ ...prev, finalRanking: newRanking }));
   };
 
+  const updatePersonalInfo = (field: keyof PersonalInfo, value: string) => {
+    setState(prev => ({
+      ...prev,
+      personalInfo: { ...prev.personalInfo, [field]: value }
+    }));
+  };
+
   const nextStep = () => {
     setState(prev => {
       const next = prev.step + 1;
       
       // LOGIC GATES FOR STEP TRANSITIONS
-      if (prev.step === 1) {
-        // If only 1 role, skip reordering (step 2) and go to 3
+      // Step 2 is role selection - if only 1 role, skip reordering (step 3) and go to 4
+      if (prev.step === 2) {
         if (prev.selectedRoles.length <= 1) {
-           return { ...prev, step: 3, roleOrder: prev.selectedRoles };
+           return { ...prev, step: 4, roleOrder: prev.selectedRoles };
         }
         // If >1 role, initialize order with selection order
-        return { ...prev, step: 2, roleOrder: prev.selectedRoles };
+        return { ...prev, step: 3, roleOrder: prev.selectedRoles };
       }
 
-      // Cap at step 6 (Thank You)
-      return { ...prev, step: Math.min(next, 6) };
+      // Cap at step 7 (Thank You)
+      return { ...prev, step: Math.min(next, 7) };
     });
   };
   
@@ -454,9 +489,9 @@ export function useSurvey() {
 
   const prevStep = () => {
     setState(prev => {
-      // Logic to reverse the skip from step 1 to 3
-      if (prev.step === 3 && prev.selectedRoles.length <= 1) {
-        return { ...prev, step: 1 };
+      // Logic to reverse the skip from step 2 to 4
+      if (prev.step === 4 && prev.selectedRoles.length <= 1) {
+        return { ...prev, step: 2 };
       }
       return { ...prev, step: Math.max(0, prev.step - 1) };
     });
@@ -522,6 +557,7 @@ export function useSurvey() {
       undoLastComparison,
       generateFinalRanking,
       updateFinalRanking,
+      updatePersonalInfo,
       nextStep,
       prevStep,
       setStep,
