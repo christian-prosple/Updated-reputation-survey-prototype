@@ -340,12 +340,41 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 1: DEGREE SELECTION
-  const renderStep1 = () => (
+  // STEP 1: DEGREE SELECTION (or end survey for "Neither")
+  const renderStep1 = () => {
+    // If user selected "Neither", end the survey
+    if (state.personalInfo.educationStatus === "Neither") {
+      return (
+        <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500">
+          <div className="w-20 h-20 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center mb-8">
+            <CheckCircle2 className="w-10 h-10" />
+          </div>
+          <h2 className="text-3xl font-bold text-slate-800 mb-4">Thank you for your interest!</h2>
+          <p className="text-lg text-muted-foreground max-w-md mb-8">
+            This survey is designed for students and recent graduates. We appreciate you taking the time to start it.
+          </p>
+          <Button 
+            variant="outline" 
+            size="lg" 
+            onClick={() => actions.prevStep()}
+            className="text-slate-900 border-slate-200"
+          >
+            <ChevronLeft className="mr-2 w-5 h-5" /> Go Back
+          </Button>
+        </div>
+      );
+    }
+
+    // Dynamic question text based on education status
+    const questionText = state.personalInfo.educationStatus === "Studying"
+      ? "What degree are you currently studying? (Select all that apply)"
+      : "What degree did you study? (Select all that apply)";
+
+    return (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
-          What degree did you study or are currently studying? (Select all that apply)
+          {questionText}
         </p>
       </div>
 
@@ -398,7 +427,8 @@ export default function SurveyPage() {
         </Button>
       </div>
     </div>
-  );
+    );
+  };
 
   // STEP 2: ROLE SELECTION
   const renderStep2 = () => (
