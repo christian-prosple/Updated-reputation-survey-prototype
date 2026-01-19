@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSurvey, ROLES, RoleType, CompanyEntity, DEGREES, GENDERS, EDUCATION_STATUSES } from "@/hooks/use-survey";
+import { useSurvey, ROLES, RoleType, CompanyEntity, DEGREES, GENDERS, EDUCATION_STATUSES, ALL_COMPANY_NAMES } from "@/hooks/use-survey";
 import { StepIndicator } from "@/components/StepIndicator";
 import { Button } from "@/components/ui/button-custom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
@@ -20,6 +20,7 @@ export default function SurveyPage() {
   const [showFullTaxonomy, setShowFullTaxonomy] = useState(false);
   const [roleSearchQuery, setRoleSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [isCompanySearchFocused, setIsCompanySearchFocused] = useState(false);
 
   const handleAddManualCompany = () => {
     if (!newCompany.name.trim()) return;
@@ -856,18 +857,52 @@ export default function SurveyPage() {
               + Add another company
             </Button>
           ) : (
-            <div className="bg-white border rounded-xl p-4 shadow-sm w-full space-y-4 animate-in fade-in slide-in-from-top-2">
+            <div 
+              className="bg-white border rounded-xl p-4 shadow-sm w-full space-y-4 animate-in fade-in slide-in-from-top-2"
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
+                <div className="space-y-2 relative">
                   <label className="text-xs font-bold uppercase text-muted-foreground">Company Name</label>
                   <input 
                     type="text"
                     value={newCompany.name}
                     onChange={(e) => setNewCompany(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full p-2 border rounded-md text-sm focus:ring-1 focus:ring-primary outline-none"
-                    placeholder="Enter company name..."
+                    onFocus={() => setIsCompanySearchFocused(true)}
+                    className={cn(
+                      "w-full p-2 border rounded-md text-sm outline-none transition-all",
+                      isCompanySearchFocused ? "ring-2 ring-primary border-primary" : ""
+                    )}
+                    placeholder="Search or type company name..."
                     autoFocus
+                    data-testid="input-company-name"
                   />
+                  {/* Company search dropdown */}
+                  {isCompanySearchFocused && newCompany.name.length > 0 && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-xl max-h-48 overflow-y-auto z-50">
+                      {ALL_COMPANY_NAMES
+                        .filter(name => name.toLowerCase().includes(newCompany.name.toLowerCase()))
+                        .slice(0, 8)
+                        .map((name) => (
+                          <div
+                            key={name}
+                            onClick={() => {
+                              setNewCompany(prev => ({ ...prev, name }));
+                              setIsCompanySearchFocused(false);
+                            }}
+                            className="px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm border-b last:border-b-0"
+                            data-testid={`company-option-${name.toLowerCase().replace(/\s+/g, '-')}`}
+                          >
+                            {name}
+                          </div>
+                        ))}
+                      {ALL_COMPANY_NAMES.filter(name => name.toLowerCase().includes(newCompany.name.toLowerCase())).length === 0 && (
+                        <div className="px-3 py-2 text-sm text-muted-foreground">
+                          No matches found - your entry "{newCompany.name}" will be used
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <label className="text-xs font-bold uppercase text-muted-foreground">Industry / Role</label>
@@ -875,6 +910,7 @@ export default function SurveyPage() {
                     value={newCompany.role}
                     onChange={(e) => setNewCompany(prev => ({ ...prev, role: e.target.value as RoleType }))}
                     className="w-full p-2 border rounded-md text-sm focus:ring-1 focus:ring-primary outline-none bg-white"
+                    data-testid="select-company-role"
                   >
                     {ROLES.map(role => (
                       <option key={role} value={role}>{role}</option>
@@ -883,8 +919,8 @@ export default function SurveyPage() {
                 </div>
               </div>
               <div className="flex justify-end gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setIsAdding(false)}>Cancel</Button>
-                <Button size="sm" onClick={handleAddManualCompany} disabled={!newCompany.name.trim()}>Add to List</Button>
+                <Button variant="ghost" size="sm" onClick={() => { setIsAdding(false); setIsCompanySearchFocused(false); }}>Cancel</Button>
+                <Button size="sm" onClick={() => { handleAddManualCompany(); setIsCompanySearchFocused(false); }} disabled={!newCompany.name.trim()}>Add to List</Button>
               </div>
             </div>
           )}

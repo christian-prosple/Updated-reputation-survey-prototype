@@ -148,7 +148,7 @@ const SAFE_COMPANIES_BY_ROLE = new Proxy(COMPANIES_BY_ROLE, {
 });
 
 // Filler companies to reach 30 total - assigned random roles from user's selection
-const FILLER_COMPANIES = [
+export const FILLER_COMPANIES = [
   "Insurance Commission of Western Australia",
   "Bottrell Business Consultants Australia",
   "Lagardere AWPL",
@@ -171,6 +171,12 @@ const FILLER_COMPANIES = [
   "Wilcorp",
   "Dodgshun Medlin Australia"
 ];
+
+// Create a master list of all unique company names
+export const ALL_COMPANY_NAMES: string[] = Array.from(new Set([
+  ...FILLER_COMPANIES,
+  ...Object.values(COMPANIES_BY_ROLE).flat()
+])).sort();
 
 // --- TYPES ---
 export const GENDERS = ["Female", "Male", "Non-binary", "Prefer not to say"] as const;
