@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSurvey, ROLES, RoleType, CompanyEntity, DEGREES, GENDERS, EDUCATION_STATUSES, ALL_COMPANY_NAMES } from "@/hooks/use-survey";
+import { useSurvey, ROLES, RoleType, CompanyEntity, DEGREES, GENDERS, EDUCATION_STATUSES, ALL_COMPANY_NAMES, COMPANIES_BY_ROLE } from "@/hooks/use-survey";
 import { StepIndicator } from "@/components/StepIndicator";
 import { Button } from "@/components/ui/button-custom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
@@ -21,6 +21,24 @@ export default function SurveyPage() {
   const [roleSearchQuery, setRoleSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isCompanySearchFocused, setIsCompanySearchFocused] = useState(false);
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+
+  // Get suggested roles based on selected company name
+  const getSuggestedRolesForCompany = (companyName: string): RoleType[] => {
+    const matchedRoles: RoleType[] = [];
+    for (const [role, companies] of Object.entries(COMPANIES_BY_ROLE)) {
+      if (companies.includes(companyName)) {
+        matchedRoles.push(role as RoleType);
+      }
+    }
+    // If we found matches, return up to 3
+    if (matchedRoles.length > 0) {
+      return matchedRoles.slice(0, 3);
+    }
+    // Otherwise return 3 random roles
+    const shuffled = [...ROLES].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 3);
+  };
 
   const handleAddManualCompany = () => {
     if (!newCompany.name.trim()) return;
@@ -904,23 +922,70 @@ export default function SurveyPage() {
                     </div>
                   )}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 relative">
                   <label className="text-xs font-bold uppercase text-muted-foreground">Industry / Role</label>
-                  <select 
-                    value={newCompany.role}
-                    onChange={(e) => setNewCompany(prev => ({ ...prev, role: e.target.value as RoleType }))}
-                    className="w-full p-2 border rounded-md text-sm focus:ring-1 focus:ring-primary outline-none bg-white"
+                  <button
+                    type="button"
+                    onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+                    className={cn(
+                      "w-full p-2 border rounded-md text-sm text-left bg-white flex items-center justify-between transition-all",
+                      isRoleDropdownOpen ? "ring-2 ring-primary border-primary" : ""
+                    )}
                     data-testid="select-company-role"
                   >
-                    {ROLES.map(role => (
-                      <option key={role} value={role}>{role}</option>
-                    ))}
-                  </select>
+                    <span className="truncate">{newCompany.role}</span>
+                    <ChevronRight className={cn("w-4 h-4 text-muted-foreground transition-transform", isRoleDropdownOpen ? "rotate-90" : "")} />
+                  </button>
+                  
+                  {/* Role dropdown with sections */}
+                  {isRoleDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-xl max-h-64 overflow-y-auto z-50">
+                      {/* Suggested Roles Section */}
+                      <div className="px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 bg-slate-50 border-b sticky top-0">
+                        Suggested Roles
+                      </div>
+                      {getSuggestedRolesForCompany(newCompany.name).map((role) => (
+                        <div
+                          key={`suggested-${role}`}
+                          onClick={() => {
+                            setNewCompany(prev => ({ ...prev, role }));
+                            setIsRoleDropdownOpen(false);
+                          }}
+                          className={cn(
+                            "px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm border-b last:border-b-0",
+                            newCompany.role === role ? "bg-primary/10 font-medium" : ""
+                          )}
+                        >
+                          {role}
+                        </div>
+                      ))}
+                      
+                      {/* All Roles Section */}
+                      <div className="px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 bg-slate-50 border-b border-t sticky top-0">
+                        All Roles
+                      </div>
+                      {ROLES.filter(role => !getSuggestedRolesForCompany(newCompany.name).includes(role)).map((role) => (
+                        <div
+                          key={`all-${role}`}
+                          onClick={() => {
+                            setNewCompany(prev => ({ ...prev, role }));
+                            setIsRoleDropdownOpen(false);
+                          }}
+                          className={cn(
+                            "px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm border-b last:border-b-0",
+                            newCompany.role === role ? "bg-primary/10 font-medium" : ""
+                          )}
+                        >
+                          {role}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex justify-end gap-2">
-                <Button variant="ghost" size="sm" onClick={() => { setIsAdding(false); setIsCompanySearchFocused(false); }}>Cancel</Button>
-                <Button size="sm" onClick={() => { handleAddManualCompany(); setIsCompanySearchFocused(false); }} disabled={!newCompany.name.trim()}>Add to List</Button>
+                <Button variant="ghost" size="sm" onClick={() => { setIsAdding(false); setIsCompanySearchFocused(false); setIsRoleDropdownOpen(false); }}>Cancel</Button>
+                <Button size="sm" onClick={() => { handleAddManualCompany(); setIsCompanySearchFocused(false); setIsRoleDropdownOpen(false); }} disabled={!newCompany.name.trim()}>Add to List</Button>
               </div>
             </div>
           )}
