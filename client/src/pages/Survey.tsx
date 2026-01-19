@@ -15,7 +15,7 @@ export default function SurveyPage() {
   const { state, actions, suggestedRoles } = useSurvey();
   const [activePair, setActivePair] = useState<[CompanyEntity, CompanyEntity] | null>(null);
 
-  const [newCompany, setNewCompany] = useState<ManualCompany>({ name: "", role: ROLES[0] });
+  const [newCompany, setNewCompany] = useState<ManualCompany>({ name: "", role: "" });
   const [isAdding, setIsAdding] = useState(false);
   const [showFullTaxonomy, setShowFullTaxonomy] = useState(false);
   const [roleSearchQuery, setRoleSearchQuery] = useState("");
@@ -50,7 +50,7 @@ export default function SurveyPage() {
     };
     
     actions.updateFinalRanking([entity, ...state.finalRanking]);
-    setNewCompany({ name: "", role: ROLES[0] });
+    setNewCompany({ name: "", role: "" });
     setIsAdding(false);
   };
 
@@ -933,7 +933,7 @@ export default function SurveyPage() {
                     )}
                     data-testid="select-company-role"
                   >
-                    <span className="truncate">{newCompany.role}</span>
+                    <span className={cn("truncate", !newCompany.role && "text-muted-foreground")}>{newCompany.role || "Select role"}</span>
                     <ChevronRight className={cn("w-4 h-4 text-muted-foreground transition-transform", isRoleDropdownOpen ? "rotate-90" : "")} />
                   </button>
                   
@@ -985,7 +985,7 @@ export default function SurveyPage() {
               </div>
               <div className="flex justify-end gap-2">
                 <Button variant="ghost" size="sm" onClick={() => { setIsAdding(false); setIsCompanySearchFocused(false); setIsRoleDropdownOpen(false); }}>Cancel</Button>
-                <Button size="sm" onClick={() => { handleAddManualCompany(); setIsCompanySearchFocused(false); setIsRoleDropdownOpen(false); }} disabled={!newCompany.name.trim()}>Add to List</Button>
+                <Button size="sm" onClick={() => { handleAddManualCompany(); setIsCompanySearchFocused(false); setIsRoleDropdownOpen(false); }} disabled={!newCompany.name.trim() || !newCompany.role}>Add to List</Button>
               </div>
             </div>
           )}
