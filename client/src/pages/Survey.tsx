@@ -578,7 +578,7 @@ export default function SurveyPage() {
         </p>
       </div>
 
-      <div className="max-w-xl mx-auto space-y-6">
+      <div className="max-w-xl mx-auto space-y-6 pb-32">
         {/* Email */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">Email (So we can send you a thank you gift)</label>
