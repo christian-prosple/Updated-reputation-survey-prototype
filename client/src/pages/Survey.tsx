@@ -3,7 +3,7 @@ import { useSurvey, ROLES, RoleType, CompanyEntity, DEGREES, GENDERS, EDUCATION_
 import { StepIndicator } from "@/components/StepIndicator";
 import { Button } from "@/components/ui/button-custom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
-import { ChevronRight, ChevronLeft, GripVertical, CheckCircle2, RefreshCw, Search, X } from "lucide-react";
+import { ChevronRight, ChevronLeft, ChevronDown, GripVertical, CheckCircle2, RefreshCw, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ManualCompany {
@@ -642,16 +642,22 @@ export default function SurveyPage() {
         {/* Education Level - searchable dropdown */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
           <label className="text-sm font-medium text-slate-700">Education level</label>
-          <input
-            type="text"
-            value={state.personalInfo.educationLevel}
-            onChange={(e) => actions.updatePersonalInfo("educationLevel", e.target.value)}
-            onFocus={() => setIsEducationLevelFocused(true)}
-            onClick={() => setIsEducationLevelFocused(true)}
-            placeholder="Select education level"
-            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
-            data-testid="input-education-level"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              value={state.personalInfo.educationLevel}
+              onChange={(e) => actions.updatePersonalInfo("educationLevel", e.target.value)}
+              onFocus={() => setIsEducationLevelFocused(true)}
+              onClick={() => setIsEducationLevelFocused(true)}
+              placeholder="Select education level"
+              className={cn(
+                "w-full p-3 pr-10 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white",
+                state.personalInfo.educationLevel ? "text-slate-900" : "text-slate-500"
+              )}
+              data-testid="input-education-level"
+            />
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+          </div>
           
           {/* Education level dropdown suggestions */}
           {isEducationLevelFocused && (
