@@ -289,44 +289,48 @@ const COMPANY_DOMAINS: Record<string, string> = {
   "Stantec Australia": "stantec.com",
 };
 
-// Helper to get company logo URL
+// Helper to get company logo URL - try multiple sources
 const getCompanyLogoUrl = (companyName: string): string => {
   const domain = COMPANY_DOMAINS[companyName];
   if (domain) {
-    return `https://logo.clearbit.com/${domain}`;
+    // Use Google's favicon service which is more reliable
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
   }
   // Fallback: try to guess the domain from company name
   const guessedDomain = companyName.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com';
-  return `https://logo.clearbit.com/${guessedDomain}`;
+  return `https://www.google.com/s2/favicons?domain=${guessedDomain}&sz=128`;
 };
 
 // Component to display company logo with fallback
 const CompanyLogo = ({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) => {
+  const [hasError, setHasError] = useState(false);
+  
   const sizeClasses = {
     sm: "w-6 h-6",
     md: "w-8 h-8", 
     lg: "w-12 h-12"
   };
   
+  const textSizeClasses = {
+    sm: "text-[10px]",
+    md: "text-xs",
+    lg: "text-sm"
+  };
+  
+  const initials = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  
   return (
     <div className={`${sizeClasses[size]} rounded-full bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0 border border-slate-200`}>
-      <img 
-        src={getCompanyLogoUrl(name)}
-        alt={`${name} logo`}
-        className="w-full h-full object-contain"
-        onError={(e) => {
-          // On error, show initials fallback
-          const target = e.target as HTMLImageElement;
-          target.style.display = 'none';
-          const parent = target.parentElement;
-          if (parent && !parent.querySelector('.fallback-initials')) {
-            const fallback = document.createElement('span');
-            fallback.className = 'fallback-initials text-xs font-bold text-slate-500';
-            fallback.textContent = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
-            parent.appendChild(fallback);
-          }
-        }}
-      />
+      {!hasError ? (
+        <img 
+          src={getCompanyLogoUrl(name)}
+          alt={`${name} logo`}
+          className="w-full h-full object-cover"
+          onError={() => setHasError(true)}
+        />
+      ) : (
+        <span className={`${textSizeClasses[size]} font-bold text-slate-500`}>{initials}</span>
+      )}
     </div>
   );
 };
