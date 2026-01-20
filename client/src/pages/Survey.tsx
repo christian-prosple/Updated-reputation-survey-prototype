@@ -601,7 +601,7 @@ export default function SurveyPage() {
             className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white"
             data-testid="select-gender"
           >
-            <option value="">Select gender</option>
+            <option value="" disabled>Select gender</option>
             {GENDERS.map((g) => (
               <option key={g} value={g}>{g}</option>
             ))}
@@ -641,7 +641,7 @@ export default function SurveyPage() {
               className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white"
               data-testid="select-education-level"
             >
-              <option value="">Select education level</option>
+              <option value="" disabled>Select education level</option>
               {EDUCATION_LEVELS.map((level) => (
                 <option key={level} value={level}>{level}</option>
               ))}
