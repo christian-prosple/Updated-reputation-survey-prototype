@@ -347,6 +347,7 @@ export default function SurveyPage() {
   const [isCompanySearchFocused, setIsCompanySearchFocused] = useState(false);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const [isCountrySearchFocused, setIsCountrySearchFocused] = useState(false);
+  const [isEducationLevelFocused, setIsEducationLevelFocused] = useState(false);
 
   // Get suggested roles based on selected company name
   const getSuggestedRolesForCompany = (companyName: string): RoleType[] => {
@@ -532,6 +533,32 @@ export default function SurveyPage() {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 2015 + 6 }, (_, i) => String(2015 + i));
 
+  // Education level options
+  const EDUCATION_LEVELS = [
+    "Accelerated master's",
+    "Advanced certificate",
+    "Associate's",
+    "Bachelor's",
+    "Bachelor's (Honours)",
+    "Certificate",
+    "Community / Technical college",
+    "Diploma",
+    "Doctorate",
+    "Doctorate (PhD)",
+    "High School Certificate",
+    "Juris Doctor",
+    "M.D.",
+    "Masters (Coursework)",
+    "Masters (Research)",
+    "Master's of Business Administration",
+    "Non-award",
+    "Postdoctoral studies",
+    "Professional Certificate",
+    "Short course or microcredential",
+    "Technical diploma",
+    "Non-degree seeking"
+  ];
+
   // Check if personal info is complete enough to continue
   const isPersonalInfoValid = () => {
     const { email, gender, customGender, educationStatus, country, university } = state.personalInfo;
@@ -612,6 +639,48 @@ export default function SurveyPage() {
           </div>
         </div>
 
+        {/* Education Level - searchable dropdown */}
+        <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
+          <label className="text-sm font-medium text-slate-700">Education level</label>
+          <input
+            type="text"
+            value={state.personalInfo.educationLevel}
+            onChange={(e) => actions.updatePersonalInfo("educationLevel", e.target.value)}
+            onFocus={() => setIsEducationLevelFocused(true)}
+            onClick={() => setIsEducationLevelFocused(true)}
+            placeholder="Select education level"
+            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
+            data-testid="input-education-level"
+          />
+          
+          {/* Education level dropdown suggestions */}
+          {isEducationLevelFocused && (
+            <div 
+              className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-64 overflow-y-auto z-50"
+            >
+              {EDUCATION_LEVELS
+                .filter(level => !state.personalInfo.educationLevel || level.toLowerCase().includes(state.personalInfo.educationLevel.toLowerCase()))
+                .map((level) => (
+                  <div
+                    key={level}
+                    onClick={() => {
+                      actions.updatePersonalInfo("educationLevel", level);
+                      setIsEducationLevelFocused(false);
+                    }}
+                    className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0 text-sm font-medium text-slate-700"
+                  >
+                    {level}
+                  </div>
+                ))}
+              {state.personalInfo.educationLevel && EDUCATION_LEVELS.filter(level => level.toLowerCase().includes(state.personalInfo.educationLevel.toLowerCase())).length === 0 && (
+                <div className="px-4 py-3 text-sm text-muted-foreground">
+                  No matching education levels found
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
         {/* Graduation Date - hidden when Neither is selected */}
         {state.personalInfo.educationStatus !== "Neither" && (
           <div className="space-y-2">
@@ -642,6 +711,19 @@ export default function SurveyPage() {
             </div>
           </div>
         )}
+
+        {/* School */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">School</label>
+          <input
+            type="text"
+            value={state.personalInfo.university}
+            onChange={(e) => actions.updatePersonalInfo("university", e.target.value)}
+            placeholder="e.g. University of Melbourne"
+            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
+            data-testid="input-school"
+          />
+        </div>
 
         {/* Country */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
@@ -688,19 +770,6 @@ export default function SurveyPage() {
               )}
             </div>
           )}
-        </div>
-
-        {/* University */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">University</label>
-          <input
-            type="text"
-            value={state.personalInfo.university}
-            onChange={(e) => actions.updatePersonalInfo("university", e.target.value)}
-            placeholder="e.g. University of Melbourne"
-            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
-            data-testid="input-university"
-          />
         </div>
       </div>
 
@@ -1411,7 +1480,7 @@ export default function SurveyPage() {
   return (
     <div 
       className="min-h-screen bg-slate-50/50 flex flex-col font-sans text-slate-900"
-      onClick={() => { setIsSearchFocused(false); setIsCountrySearchFocused(false); }}
+      onClick={() => { setIsSearchFocused(false); setIsCountrySearchFocused(false); setIsEducationLevelFocused(false); }}
     >
       {/* Header */}
       <header className="bg-white border-b sticky top-0 z-50">

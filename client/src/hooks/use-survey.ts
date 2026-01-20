@@ -190,6 +190,7 @@ export interface PersonalInfo {
   gender: GenderType;
   customGender: string;
   educationStatus: EducationStatusType | "";
+  educationLevel: string;
   graduationMonth: string;
   graduationYear: string;
   country: string;
@@ -226,6 +227,7 @@ export function useSurvey() {
       gender: "",
       customGender: "",
       educationStatus: "",
+      educationLevel: "",
       graduationMonth: "",
       graduationYear: "",
       country: "",
