@@ -639,52 +639,20 @@ export default function SurveyPage() {
           </div>
         </div>
 
-        {/* Education Level - searchable dropdown */}
-        <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
+        {/* Education Level */}
+        <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">Education level</label>
-          <div className="relative">
-            <input
-              type="text"
-              value={state.personalInfo.educationLevel}
-              onChange={(e) => actions.updatePersonalInfo("educationLevel", e.target.value)}
-              onFocus={() => setIsEducationLevelFocused(true)}
-              onClick={() => setIsEducationLevelFocused(true)}
-              placeholder="Select education level"
-              className={cn(
-                "w-full p-3 pr-10 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white",
-                state.personalInfo.educationLevel ? "text-slate-900" : "text-slate-500"
-              )}
-              data-testid="input-education-level"
-            />
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
-          </div>
-          
-          {/* Education level dropdown suggestions */}
-          {isEducationLevelFocused && (
-            <div 
-              className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-64 overflow-y-auto z-50"
-            >
-              {EDUCATION_LEVELS
-                .filter(level => !state.personalInfo.educationLevel || level.toLowerCase().includes(state.personalInfo.educationLevel.toLowerCase()))
-                .map((level) => (
-                  <div
-                    key={level}
-                    onClick={() => {
-                      actions.updatePersonalInfo("educationLevel", level);
-                      setIsEducationLevelFocused(false);
-                    }}
-                    className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0 text-sm font-medium text-slate-700"
-                  >
-                    {level}
-                  </div>
-                ))}
-              {state.personalInfo.educationLevel && EDUCATION_LEVELS.filter(level => level.toLowerCase().includes(state.personalInfo.educationLevel.toLowerCase())).length === 0 && (
-                <div className="px-4 py-3 text-sm text-muted-foreground">
-                  No matching education levels found
-                </div>
-              )}
-            </div>
-          )}
+          <select
+            value={state.personalInfo.educationLevel}
+            onChange={(e) => actions.updatePersonalInfo("educationLevel", e.target.value)}
+            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white"
+            data-testid="select-education-level"
+          >
+            <option value="">Select education level</option>
+            {EDUCATION_LEVELS.map((level) => (
+              <option key={level} value={level}>{level}</option>
+            ))}
+          </select>
         </div>
 
         {/* Graduation Date - hidden when Neither is selected */}
