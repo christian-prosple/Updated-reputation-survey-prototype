@@ -581,7 +581,7 @@ export default function SurveyPage() {
       <div className="max-w-xl mx-auto space-y-6">
         {/* Email */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Email</label>
+          <label className="text-sm font-medium text-slate-700">Email (So we can send you a thank you gift)</label>
           <input
             type="email"
             value={state.personalInfo.email}
