@@ -11,6 +11,53 @@ interface ManualCompany {
   role: string;
 }
 
+// Countries with ISO codes for flags
+const COUNTRIES = [
+  { name: "Australia", code: "AU" },
+  { name: "Austria", code: "AT" },
+  { name: "Belgium", code: "BE" },
+  { name: "Brazil", code: "BR" },
+  { name: "Canada", code: "CA" },
+  { name: "China", code: "CN" },
+  { name: "Denmark", code: "DK" },
+  { name: "Finland", code: "FI" },
+  { name: "France", code: "FR" },
+  { name: "Germany", code: "DE" },
+  { name: "Hong Kong", code: "HK" },
+  { name: "India", code: "IN" },
+  { name: "Indonesia", code: "ID" },
+  { name: "Ireland", code: "IE" },
+  { name: "Israel", code: "IL" },
+  { name: "Italy", code: "IT" },
+  { name: "Japan", code: "JP" },
+  { name: "Malaysia", code: "MY" },
+  { name: "Mexico", code: "MX" },
+  { name: "Netherlands", code: "NL" },
+  { name: "New Zealand", code: "NZ" },
+  { name: "Norway", code: "NO" },
+  { name: "Philippines", code: "PH" },
+  { name: "Poland", code: "PL" },
+  { name: "Portugal", code: "PT" },
+  { name: "Saudi Arabia", code: "SA" },
+  { name: "Singapore", code: "SG" },
+  { name: "South Africa", code: "ZA" },
+  { name: "South Korea", code: "KR" },
+  { name: "Spain", code: "ES" },
+  { name: "Sweden", code: "SE" },
+  { name: "Switzerland", code: "CH" },
+  { name: "Taiwan", code: "TW" },
+  { name: "Thailand", code: "TH" },
+  { name: "Turkey", code: "TR" },
+  { name: "United Arab Emirates", code: "AE" },
+  { name: "United Kingdom", code: "GB" },
+  { name: "United States", code: "US" },
+  { name: "Vietnam", code: "VN" },
+];
+
+// Helper to get flag URL from country code
+const getFlagUrl = (code: string) => 
+  `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
+
 export default function SurveyPage() {
   const { state, actions, suggestedRoles } = useSurvey();
   const [activePair, setActivePair] = useState<[CompanyEntity, CompanyEntity] | null>(null);
@@ -22,6 +69,7 @@ export default function SurveyPage() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isCompanySearchFocused, setIsCompanySearchFocused] = useState(false);
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const [isCountrySearchFocused, setIsCountrySearchFocused] = useState(false);
 
   // Get suggested roles based on selected company name
   const getSuggestedRolesForCompany = (companyName: string): RoleType[] => {
@@ -319,16 +367,51 @@ export default function SurveyPage() {
         )}
 
         {/* Country */}
-        <div className="space-y-2">
+        <div className="space-y-2 relative">
           <label className="text-sm font-medium text-slate-700">Country</label>
           <input
             type="text"
             value={state.personalInfo.country}
             onChange={(e) => actions.updatePersonalInfo("country", e.target.value)}
+            onFocus={() => setIsCountrySearchFocused(true)}
             placeholder="e.g. Australia"
             className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
             data-testid="input-country"
           />
+          
+          {/* Country dropdown suggestions */}
+          {isCountrySearchFocused && state.personalInfo.country && (
+            <div 
+              className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-64 overflow-y-auto z-50"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {COUNTRIES
+                .filter(c => c.name.toLowerCase().includes(state.personalInfo.country.toLowerCase()))
+                .slice(0, 8)
+                .map((country) => (
+                  <div
+                    key={country.code}
+                    onClick={() => {
+                      actions.updatePersonalInfo("country", country.name);
+                      setIsCountrySearchFocused(false);
+                    }}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0"
+                  >
+                    <img 
+                      src={getFlagUrl(country.code)} 
+                      alt={`${country.name} flag`}
+                      className="w-8 h-8 rounded-full object-cover border border-slate-200"
+                    />
+                    <span className="text-sm font-medium text-slate-700">{country.name}</span>
+                  </div>
+                ))}
+              {COUNTRIES.filter(c => c.name.toLowerCase().includes(state.personalInfo.country.toLowerCase())).length === 0 && (
+                <div className="px-4 py-3 text-sm text-muted-foreground">
+                  No matching countries found
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* University */}
@@ -1047,7 +1130,7 @@ export default function SurveyPage() {
   return (
     <div 
       className="min-h-screen bg-slate-50/50 flex flex-col font-sans text-slate-900"
-      onClick={() => setIsSearchFocused(false)}
+      onClick={() => { setIsSearchFocused(false); setIsCountrySearchFocused(false); }}
     >
       {/* Header */}
       <header className="bg-white border-b sticky top-0 z-50">
