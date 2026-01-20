@@ -633,19 +633,46 @@ export default function SurveyPage() {
 
         {/* Education Level - hidden when Neither is selected */}
         {state.personalInfo.educationStatus !== "Neither" && (
-          <div className="space-y-2">
+          <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
             <label className="text-sm font-medium text-slate-700">Education level</label>
-            <select
-              value={state.personalInfo.educationLevel}
-              onChange={(e) => actions.updatePersonalInfo("educationLevel", e.target.value)}
-              className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white"
-              data-testid="select-education-level"
-            >
-              <option value="" disabled hidden>Select education level</option>
-              {EDUCATION_LEVELS.map((level) => (
-                <option key={level} value={level}>{level}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsEducationLevelFocused(!isEducationLevelFocused)}
+                className={cn(
+                  "w-full p-3 pr-10 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between",
+                  isEducationLevelFocused ? "border-primary" : "border-slate-200",
+                  state.personalInfo.educationLevel ? "text-slate-900" : "text-slate-500"
+                )}
+                data-testid="select-education-level"
+              >
+                <span>{state.personalInfo.educationLevel || "Select education level"}</span>
+                <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform", isEducationLevelFocused && "rotate-180")} />
+              </button>
+            </div>
+            
+            {/* Education level dropdown */}
+            {isEducationLevelFocused && (
+              <div 
+                className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50"
+              >
+                {EDUCATION_LEVELS.map((level) => (
+                  <div
+                    key={level}
+                    onClick={() => {
+                      actions.updatePersonalInfo("educationLevel", level);
+                      setIsEducationLevelFocused(false);
+                    }}
+                    className={cn(
+                      "px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0 text-sm font-medium",
+                      state.personalInfo.educationLevel === level ? "bg-primary/10 text-slate-900" : "text-slate-700"
+                    )}
+                  >
+                    {level}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
