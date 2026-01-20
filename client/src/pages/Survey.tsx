@@ -1150,8 +1150,8 @@ export default function SurveyPage() {
                 <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-4">
                   {activePair[0].name}
                 </h3>
-                <p className="mt-2 text-sm text-muted-foreground font-medium uppercase tracking-tight">
-                  {activePair[0].role}
+                <p className="mt-2 text-sm text-muted-foreground font-medium">
+                  Role: {activePair[0].role}
                 </p>
                 <span className="mt-4 text-sm font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity">
                   Select this company →
@@ -1179,8 +1179,8 @@ export default function SurveyPage() {
                 <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-4">
                   {activePair[1].name}
                 </h3>
-                <p className="mt-2 text-sm text-muted-foreground font-medium uppercase tracking-tight">
-                  {activePair[1].role}
+                <p className="mt-2 text-sm text-muted-foreground font-medium">
+                  Role: {activePair[1].role}
                 </p>
                 <span className="mt-4 text-sm font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity">
                   Select this company →
@@ -1365,7 +1365,7 @@ export default function SurveyPage() {
                 
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg">{entity.name}</h3>
-                  <p className="text-sm text-muted-foreground">{entity.role}</p>
+                  <p className="text-sm text-muted-foreground">Role: {entity.role}</p>
                 </div>
 
                 <GripVertical className="text-muted-foreground/50" />
