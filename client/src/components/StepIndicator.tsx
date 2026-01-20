@@ -7,7 +7,7 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
   return (
     <div className="flex items-center gap-2 w-full max-w-2xl mb-8">
       {Array.from({ length: totalSteps }).map((_, idx) => {
-        const isCompleted = idx < currentStep;
+        const isCompleted = idx <= currentStep;
         
         return (
           <div
