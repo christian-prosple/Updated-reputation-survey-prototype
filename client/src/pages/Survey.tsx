@@ -561,9 +561,9 @@ export default function SurveyPage() {
 
   // Check if personal info is complete enough to continue
   const isPersonalInfoValid = () => {
-    const { email, gender, customGender, educationStatus, country, university } = state.personalInfo;
+    const { email, gender, educationStatus, country, university } = state.personalInfo;
     const hasValidEmail = email.includes("@") && email.includes(".");
-    const hasValidGender = gender === "custom" ? customGender.trim().length > 0 : gender.length > 0;
+    const hasValidGender = gender.length > 0;
     // If "Neither" is selected, don't require school
     const hasValidSchool = educationStatus === "Neither" || university.trim().length > 0;
     return hasValidEmail && hasValidGender && educationStatus && country.trim() && hasValidSchool;
@@ -605,18 +605,8 @@ export default function SurveyPage() {
             {GENDERS.map((g) => (
               <option key={g} value={g}>{g}</option>
             ))}
-            <option value="custom">Let me type</option>
+            <option value="Other">Other</option>
           </select>
-          {state.personalInfo.gender === "custom" && (
-            <input
-              type="text"
-              value={state.personalInfo.customGender}
-              onChange={(e) => actions.updatePersonalInfo("customGender", e.target.value)}
-              placeholder="Enter your gender..."
-              className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors mt-2"
-              data-testid="input-custom-gender"
-            />
-          )}
         </div>
 
         {/* Education Status */}
