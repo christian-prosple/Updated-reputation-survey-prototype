@@ -58,6 +58,162 @@ const COUNTRIES = [
 const getFlagUrl = (code: string) => 
   `https://flagcdn.com/w40/${code.toLowerCase()}.png`;
 
+// Company domain mapping for logo fetching
+const COMPANY_DOMAINS: Record<string, string> = {
+  "Commonwealth Bank": "commbank.com.au",
+  "Westpac": "westpac.com.au",
+  "NAB": "nab.com.au",
+  "ANZ": "anz.com.au",
+  "Macquarie Group": "macquarie.com",
+  "Deloitte": "deloitte.com",
+  "PwC": "pwc.com",
+  "EY": "ey.com",
+  "KPMG": "kpmg.com",
+  "McKinsey & Company": "mckinsey.com",
+  "BCG": "bcg.com",
+  "Bain & Company": "bain.com",
+  "Accenture": "accenture.com",
+  "Google": "google.com",
+  "Microsoft": "microsoft.com",
+  "Amazon": "amazon.com",
+  "Apple": "apple.com",
+  "Meta": "meta.com",
+  "Netflix": "netflix.com",
+  "Atlassian": "atlassian.com",
+  "Canva": "canva.com",
+  "Salesforce": "salesforce.com",
+  "IBM": "ibm.com",
+  "Oracle": "oracle.com",
+  "SAP": "sap.com",
+  "Cisco": "cisco.com",
+  "Intel": "intel.com",
+  "NVIDIA": "nvidia.com",
+  "Adobe": "adobe.com",
+  "Spotify": "spotify.com",
+  "Uber": "uber.com",
+  "Airbnb": "airbnb.com",
+  "Stripe": "stripe.com",
+  "Square": "squareup.com",
+  "PayPal": "paypal.com",
+  "Visa": "visa.com",
+  "Mastercard": "mastercard.com",
+  "American Express": "americanexpress.com",
+  "Goldman Sachs": "goldmansachs.com",
+  "JPMorgan Chase": "jpmorganchase.com",
+  "Morgan Stanley": "morganstanley.com",
+  "Citi": "citi.com",
+  "HSBC": "hsbc.com",
+  "Barclays": "barclays.com",
+  "Credit Suisse": "credit-suisse.com",
+  "UBS": "ubs.com",
+  "Deutsche Bank": "db.com",
+  "BNP Paribas": "bnpparibas.com",
+  "Qantas": "qantas.com",
+  "Virgin Australia": "virginaustralia.com",
+  "Telstra": "telstra.com.au",
+  "Optus": "optus.com.au",
+  "BHP": "bhp.com",
+  "Rio Tinto": "riotinto.com",
+  "Woodside": "woodside.com",
+  "Santos": "santos.com",
+  "Wesfarmers": "wesfarmers.com.au",
+  "Woolworths": "woolworths.com.au",
+  "Coles": "coles.com.au",
+  "CSL": "csl.com",
+  "Cochlear": "cochlear.com",
+  "ResMed": "resmed.com",
+  "Transurban": "transurban.com",
+  "Lendlease": "lendlease.com",
+  "Mirvac": "mirvac.com",
+  "Stockland": "stockland.com.au",
+  "AMP": "amp.com.au",
+  "Suncorp": "suncorp.com.au",
+  "QBE Insurance": "qbe.com",
+  "IAG": "iag.com.au",
+  "Medibank": "medibank.com.au",
+  "NIB": "nib.com.au",
+  "Bupa": "bupa.com.au",
+  "Herbert Smith Freehills": "herbertsmithfreehills.com",
+  "King & Wood Mallesons": "kwm.com",
+  "Allens": "allens.com.au",
+  "Clayton Utz": "claytonutz.com",
+  "Ashurst": "ashurst.com",
+  "MinterEllison": "minterellison.com",
+  "Gilbert + Tobin": "gtlaw.com.au",
+  "Baker McKenzie": "bakermckenzie.com",
+  "DLA Piper": "dlapiper.com",
+  "Norton Rose Fulbright": "nortonrosefulbright.com",
+  "Tesla": "tesla.com",
+  "SpaceX": "spacex.com",
+  "Boeing": "boeing.com",
+  "Lockheed Martin": "lockheedmartin.com",
+  "Raytheon": "rtx.com",
+  "General Electric": "ge.com",
+  "Siemens": "siemens.com",
+  "Honeywell": "honeywell.com",
+  "3M": "3m.com",
+  "Johnson & Johnson": "jnj.com",
+  "Pfizer": "pfizer.com",
+  "Merck": "merck.com",
+  "Novartis": "novartis.com",
+  "Roche": "roche.com",
+  "AstraZeneca": "astrazeneca.com",
+  "GlaxoSmithKline": "gsk.com",
+  "Unilever": "unilever.com",
+  "Procter & Gamble": "pg.com",
+  "Nestle": "nestle.com",
+  "Coca-Cola": "coca-cola.com",
+  "PepsiCo": "pepsico.com",
+  "McDonald's": "mcdonalds.com",
+  "Starbucks": "starbucks.com",
+  "Nike": "nike.com",
+  "Adidas": "adidas.com",
+  "LVMH": "lvmh.com",
+  "L'Oreal": "loreal.com",
+};
+
+// Helper to get company logo URL
+const getCompanyLogoUrl = (companyName: string): string => {
+  const domain = COMPANY_DOMAINS[companyName];
+  if (domain) {
+    return `https://logo.clearbit.com/${domain}`;
+  }
+  // Fallback: try to guess the domain from company name
+  const guessedDomain = companyName.toLowerCase().replace(/[^a-z0-9]/g, '') + '.com';
+  return `https://logo.clearbit.com/${guessedDomain}`;
+};
+
+// Component to display company logo with fallback
+const CompanyLogo = ({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) => {
+  const sizeClasses = {
+    sm: "w-6 h-6",
+    md: "w-8 h-8", 
+    lg: "w-12 h-12"
+  };
+  
+  return (
+    <div className={`${sizeClasses[size]} rounded-full bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0 border border-slate-200`}>
+      <img 
+        src={getCompanyLogoUrl(name)}
+        alt={`${name} logo`}
+        className="w-full h-full object-contain"
+        onError={(e) => {
+          // On error, show initials fallback
+          const target = e.target as HTMLImageElement;
+          target.style.display = 'none';
+          const parent = target.parentElement;
+          if (parent && !parent.querySelector('.fallback-initials')) {
+            const fallback = document.createElement('span');
+            fallback.className = 'fallback-initials text-xs font-bold text-slate-500';
+            fallback.textContent = name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase();
+            parent.appendChild(fallback);
+          }
+        }}
+      />
+    </div>
+  );
+};
+
 export default function SurveyPage() {
   const { state, actions, suggestedRoles } = useSurvey();
   const [activePair, setActivePair] = useState<[CompanyEntity, CompanyEntity] | null>(null);
@@ -797,6 +953,7 @@ export default function SurveyPage() {
                 )}>
                   {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
                 </div>
+                <CompanyLogo name={name} size="sm" />
                 <div className="flex flex-col min-w-0">
                   <span className={cn("text-sm font-bold leading-tight truncate", isSelected ? "text-slate-900" : "text-foreground")}>
                     {name}
@@ -868,7 +1025,8 @@ export default function SurveyPage() {
                 className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-3xl p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[240px]"
              >
                 <div className="absolute top-4 left-4 bg-slate-100 text-slate-500 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Option A</div>
-                <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors">
+                <CompanyLogo name={activePair[0].name} size="lg" />
+                <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-4">
                   {activePair[0].name}
                 </h3>
                 <p className="mt-2 text-sm text-muted-foreground font-medium uppercase tracking-tight">
@@ -896,7 +1054,8 @@ export default function SurveyPage() {
                 className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-3xl p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[240px]"
              >
                 <div className="absolute top-4 left-4 bg-slate-100 text-slate-500 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Option B</div>
-                <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors">
+                <CompanyLogo name={activePair[1].name} size="lg" />
+                <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-4">
                   {activePair[1].name}
                 </h3>
                 <p className="mt-2 text-sm text-muted-foreground font-medium uppercase tracking-tight">
@@ -1080,6 +1239,8 @@ export default function SurveyPage() {
                 <div className="flex flex-col items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary font-bold text-lg">
                   {index + 1}
                 </div>
+                
+                <CompanyLogo name={entity.name} size="md" />
                 
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg">{entity.name}</h3>
