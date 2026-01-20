@@ -387,7 +387,6 @@ export default function SurveyPage() {
             >
               {COUNTRIES
                 .filter(c => !state.personalInfo.country || c.name.toLowerCase().includes(state.personalInfo.country.toLowerCase()))
-                .slice(0, 8)
                 .map((country) => (
                   <div
                     key={country.code}
