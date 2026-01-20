@@ -564,7 +564,9 @@ export default function SurveyPage() {
     const { email, gender, customGender, educationStatus, country, university } = state.personalInfo;
     const hasValidEmail = email.includes("@") && email.includes(".");
     const hasValidGender = gender === "custom" ? customGender.trim().length > 0 : gender.length > 0;
-    return hasValidEmail && hasValidGender && educationStatus && country.trim() && university.trim();
+    // If "Neither" is selected, don't require school
+    const hasValidSchool = educationStatus === "Neither" || university.trim().length > 0;
+    return hasValidEmail && hasValidGender && educationStatus && country.trim() && hasValidSchool;
   };
 
   // STEP 0: PERSONAL INFO
@@ -639,21 +641,23 @@ export default function SurveyPage() {
           </div>
         </div>
 
-        {/* Education Level */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Education level</label>
-          <select
-            value={state.personalInfo.educationLevel}
-            onChange={(e) => actions.updatePersonalInfo("educationLevel", e.target.value)}
-            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white"
-            data-testid="select-education-level"
-          >
-            <option value="">Select education level</option>
-            {EDUCATION_LEVELS.map((level) => (
-              <option key={level} value={level}>{level}</option>
-            ))}
-          </select>
-        </div>
+        {/* Education Level - hidden when Neither is selected */}
+        {state.personalInfo.educationStatus !== "Neither" && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">Education level</label>
+            <select
+              value={state.personalInfo.educationLevel}
+              onChange={(e) => actions.updatePersonalInfo("educationLevel", e.target.value)}
+              className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white"
+              data-testid="select-education-level"
+            >
+              <option value="">Select education level</option>
+              {EDUCATION_LEVELS.map((level) => (
+                <option key={level} value={level}>{level}</option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Graduation Date - hidden when Neither is selected */}
         {state.personalInfo.educationStatus !== "Neither" && (
@@ -686,18 +690,20 @@ export default function SurveyPage() {
           </div>
         )}
 
-        {/* School */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">School</label>
-          <input
-            type="text"
-            value={state.personalInfo.university}
-            onChange={(e) => actions.updatePersonalInfo("university", e.target.value)}
-            placeholder="e.g. University of Melbourne"
-            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
-            data-testid="input-school"
-          />
-        </div>
+        {/* School - hidden when Neither is selected */}
+        {state.personalInfo.educationStatus !== "Neither" && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">School</label>
+            <input
+              type="text"
+              value={state.personalInfo.university}
+              onChange={(e) => actions.updatePersonalInfo("university", e.target.value)}
+              placeholder="e.g. University of Melbourne"
+              className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
+              data-testid="input-school"
+            />
+          </div>
+        )}
 
         {/* Country */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
