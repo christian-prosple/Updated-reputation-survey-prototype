@@ -367,26 +367,26 @@ export default function SurveyPage() {
         )}
 
         {/* Country */}
-        <div className="space-y-2 relative">
+        <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
           <label className="text-sm font-medium text-slate-700">Country</label>
           <input
             type="text"
             value={state.personalInfo.country}
             onChange={(e) => actions.updatePersonalInfo("country", e.target.value)}
             onFocus={() => setIsCountrySearchFocused(true)}
+            onClick={() => setIsCountrySearchFocused(true)}
             placeholder="e.g. Australia"
             className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
             data-testid="input-country"
           />
           
           {/* Country dropdown suggestions */}
-          {isCountrySearchFocused && state.personalInfo.country && (
+          {isCountrySearchFocused && (
             <div 
               className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-64 overflow-y-auto z-50"
-              onClick={(e) => e.stopPropagation()}
             >
               {COUNTRIES
-                .filter(c => c.name.toLowerCase().includes(state.personalInfo.country.toLowerCase()))
+                .filter(c => !state.personalInfo.country || c.name.toLowerCase().includes(state.personalInfo.country.toLowerCase()))
                 .slice(0, 8)
                 .map((country) => (
                   <div
@@ -405,7 +405,7 @@ export default function SurveyPage() {
                     <span className="text-sm font-medium text-slate-700">{country.name}</span>
                   </div>
                 ))}
-              {COUNTRIES.filter(c => c.name.toLowerCase().includes(state.personalInfo.country.toLowerCase())).length === 0 && (
+              {state.personalInfo.country && COUNTRIES.filter(c => c.name.toLowerCase().includes(state.personalInfo.country.toLowerCase())).length === 0 && (
                 <div className="px-4 py-3 text-sm text-muted-foreground">
                   No matching countries found
                 </div>
