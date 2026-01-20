@@ -1334,7 +1334,7 @@ export default function SurveyPage() {
                   )}
                 </div>
                 <div className="space-y-2 relative">
-                  <label className="text-xs font-bold uppercase text-muted-foreground">Industry / Role</label>
+                  <label className="text-xs font-bold uppercase text-muted-foreground">Role</label>
                   <button
                     type="button"
                     onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
