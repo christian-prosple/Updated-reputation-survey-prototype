@@ -348,6 +348,9 @@ export default function SurveyPage() {
   const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
   const [isCountrySearchFocused, setIsCountrySearchFocused] = useState(false);
   const [isEducationLevelFocused, setIsEducationLevelFocused] = useState(false);
+  const [isGenderFocused, setIsGenderFocused] = useState(false);
+  const [isGradMonthFocused, setIsGradMonthFocused] = useState(false);
+  const [isGradYearFocused, setIsGradYearFocused] = useState(false);
 
   // Get suggested roles based on selected company name
   const getSuggestedRolesForCompany = (companyName: string): RoleType[] => {
@@ -606,23 +609,43 @@ export default function SurveyPage() {
         </div>
 
         {/* Gender */}
-        <div className="space-y-2">
+        <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
           <label className="text-sm font-medium text-slate-700">Gender</label>
           <div className="relative">
-            <select
-              value={state.personalInfo.gender}
-              onChange={(e) => actions.updatePersonalInfo("gender", e.target.value)}
-              className="w-full p-3 pr-10 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white appearance-none text-slate-900"
+            <button
+              type="button"
+              onClick={() => setIsGenderFocused(!isGenderFocused)}
+              className={cn(
+                "w-full p-3 pr-10 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
+                isGenderFocused ? "border-primary" : "border-slate-200"
+              )}
               data-testid="select-gender"
             >
-              <option value="" disabled hidden>Select gender</option>
-              {GENDERS.map((g) => (
-                <option key={g} value={g}>{g}</option>
-              ))}
-              <option value="Other">Other</option>
-            </select>
-            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+              <span>{state.personalInfo.gender || "Select gender"}</span>
+              <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform", isGenderFocused && "rotate-180")} />
+            </button>
           </div>
+          
+          {/* Gender dropdown */}
+          {isGenderFocused && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50">
+              {[...GENDERS, "Other"].map((g) => (
+                <div
+                  key={g}
+                  onClick={() => {
+                    actions.updatePersonalInfo("gender", g);
+                    setIsGenderFocused(false);
+                  }}
+                  className={cn(
+                    "px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0 text-sm font-medium",
+                    state.personalInfo.gender === g ? "bg-primary/10 text-slate-900" : "text-slate-700"
+                  )}
+                >
+                  {g}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Education Level */}
@@ -671,33 +694,76 @@ export default function SurveyPage() {
         <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">Graduation date (expected or actual)</label>
             <div className="grid grid-cols-2 gap-3">
-              <div className="relative">
-                <select
-                  value={state.personalInfo.graduationMonth}
-                  onChange={(e) => actions.updatePersonalInfo("graduationMonth", e.target.value)}
-                  className="w-full p-3 pr-10 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white appearance-none text-slate-900"
+              {/* Month dropdown */}
+              <div className="relative" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  onClick={() => { setIsGradMonthFocused(!isGradMonthFocused); setIsGradYearFocused(false); }}
+                  className={cn(
+                    "w-full p-3 pr-10 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
+                    isGradMonthFocused ? "border-primary" : "border-slate-200"
+                  )}
                   data-testid="select-graduation-month"
                 >
-                  <option value="">Month</option>
-                  {months.map((m) => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                  <span>{state.personalInfo.graduationMonth || "Month"}</span>
+                  <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform", isGradMonthFocused && "rotate-180")} />
+                </button>
+                
+                {isGradMonthFocused && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50">
+                    {months.map((m) => (
+                      <div
+                        key={m}
+                        onClick={() => {
+                          actions.updatePersonalInfo("graduationMonth", m);
+                          setIsGradMonthFocused(false);
+                        }}
+                        className={cn(
+                          "px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0 text-sm font-medium",
+                          state.personalInfo.graduationMonth === m ? "bg-primary/10 text-slate-900" : "text-slate-700"
+                        )}
+                      >
+                        {m}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="relative">
-                <select
-                  value={state.personalInfo.graduationYear}
-                  onChange={(e) => actions.updatePersonalInfo("graduationYear", e.target.value)}
-                  className="w-full p-3 pr-10 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white appearance-none text-slate-900"
+              
+              {/* Year dropdown */}
+              <div className="relative" onClick={(e) => e.stopPropagation()}>
+                <button
+                  type="button"
+                  onClick={() => { setIsGradYearFocused(!isGradYearFocused); setIsGradMonthFocused(false); }}
+                  className={cn(
+                    "w-full p-3 pr-10 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
+                    isGradYearFocused ? "border-primary" : "border-slate-200"
+                  )}
                   data-testid="select-graduation-year"
                 >
-                  <option value="">Year</option>
-                  {years.map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                  <span>{state.personalInfo.graduationYear || "Year"}</span>
+                  <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform", isGradYearFocused && "rotate-180")} />
+                </button>
+                
+                {isGradYearFocused && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50">
+                    {years.map((y) => (
+                      <div
+                        key={y}
+                        onClick={() => {
+                          actions.updatePersonalInfo("graduationYear", y);
+                          setIsGradYearFocused(false);
+                        }}
+                        className={cn(
+                          "px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0 text-sm font-medium",
+                          state.personalInfo.graduationYear === y ? "bg-primary/10 text-slate-900" : "text-slate-700"
+                        )}
+                      >
+                        {y}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
         </div>
@@ -1447,7 +1513,7 @@ export default function SurveyPage() {
   return (
     <div 
       className="min-h-screen bg-slate-50/50 flex flex-col font-sans text-slate-900"
-      onClick={() => { setIsSearchFocused(false); setIsCountrySearchFocused(false); setIsEducationLevelFocused(false); }}
+      onClick={() => { setIsSearchFocused(false); setIsCountrySearchFocused(false); setIsEducationLevelFocused(false); setIsGenderFocused(false); setIsGradMonthFocused(false); setIsGradYearFocused(false); }}
     >
       {/* Header */}
       <header className="bg-white border-b sticky top-0 z-50">
