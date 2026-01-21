@@ -1393,7 +1393,6 @@ export default function SurveyPage() {
                 onClick={() => handlePairChoice(activePair[0].id)}
                 className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-3xl p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[240px]"
              >
-                <div className="absolute top-4 left-4 bg-slate-100 text-slate-500 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Option A</div>
                 <CompanyLogo name={activePair[0].name} size="lg" />
                 <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-4">
                   {activePair[0].name}
@@ -1420,7 +1419,6 @@ export default function SurveyPage() {
                 onClick={() => handlePairChoice(activePair[1].id)}
                 className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-3xl p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[240px]"
              >
-                <div className="absolute top-4 left-4 bg-slate-100 text-slate-500 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Option B</div>
                 <CompanyLogo name={activePair[1].name} size="lg" />
                 <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-4">
                   {activePair[1].name}
