@@ -344,6 +344,7 @@ export default function SurveyPage() {
   const [isAdding, setIsAdding] = useState(false);
   const [isRolePopupOpen, setIsRolePopupOpen] = useState(false);
   const [rolePopupSearchQuery, setRolePopupSearchQuery] = useState("");
+  const [isCustomCompany, setIsCustomCompany] = useState(false);
   const [showFullTaxonomy, setShowFullTaxonomy] = useState(false);
   const [roleSearchQuery, setRoleSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -389,11 +390,13 @@ export default function SurveyPage() {
     setIsRolePopupOpen(false);
     setIsCompanySearchFocused(false);
     setRolePopupSearchQuery("");
+    setIsCustomCompany(false);
   };
 
-  const handleCompanySelected = (companyName: string) => {
+  const handleCompanySelected = (companyName: string, isCustom: boolean = false) => {
     setNewCompany(prev => ({ ...prev, name: companyName }));
     setIsCompanySearchFocused(false);
+    setIsCustomCompany(isCustom);
     setIsRolePopupOpen(true);
   };
 
@@ -1548,7 +1551,7 @@ export default function SurveyPage() {
                 ))}
               {ALL_COMPANY_NAMES.filter(name => name.toLowerCase().includes(newCompany.name.toLowerCase())).length === 0 && (
                 <div 
-                  onClick={() => handleCompanySelected(newCompany.name.trim())}
+                  onClick={() => handleCompanySelected(newCompany.name.trim(), true)}
                   className="px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm text-primary"
                 >
                   Add "{newCompany.name}" as custom company
@@ -1562,7 +1565,7 @@ export default function SurveyPage() {
         {isRolePopupOpen && (
           <div 
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-            onClick={() => { setIsRolePopupOpen(false); setNewCompany({ name: "", role: "" }); setRolePopupSearchQuery(""); }}
+            onClick={() => { setIsRolePopupOpen(false); setNewCompany({ name: "", role: "" }); setRolePopupSearchQuery(""); setIsCustomCompany(false); }}
           >
             <div 
               className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200"
@@ -1589,8 +1592,8 @@ export default function SurveyPage() {
               </div>
               
               <div className="p-4 max-h-80 overflow-y-auto">
-                {/* Suggested Roles Section */}
-                {getSuggestedRolesForCompany(newCompany.name).filter(role => 
+                {/* Suggested Roles Section - only show for known companies */}
+                {!isCustomCompany && getSuggestedRolesForCompany(newCompany.name).filter(role => 
                   role.toLowerCase().includes(rolePopupSearchQuery.toLowerCase())
                 ).length > 0 && (
                   <>
@@ -1616,19 +1619,22 @@ export default function SurveyPage() {
                 )}
                 
                 {/* All Roles Section */}
-                {ROLES.filter(role => 
-                  !getSuggestedRolesForCompany(newCompany.name).includes(role) &&
+                {(isCustomCompany ? ROLES : ROLES.filter(role => 
+                  !getSuggestedRolesForCompany(newCompany.name).includes(role)
+                )).filter(role => 
                   role.toLowerCase().includes(rolePopupSearchQuery.toLowerCase())
                 ).length > 0 && (
                   <>
-                    <div className="px-2 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 mt-4">
-                      All Roles
+                    <div className={cn(
+                      "px-2 py-2 text-xs font-bold uppercase tracking-widest text-slate-400",
+                      !isCustomCompany && "mt-4"
+                    )}>
+                      {isCustomCompany ? "Select a Role" : "All Roles"}
                     </div>
-                    {ROLES
-                      .filter(role => 
-                        !getSuggestedRolesForCompany(newCompany.name).includes(role) &&
-                        role.toLowerCase().includes(rolePopupSearchQuery.toLowerCase())
-                      )
+                    {(isCustomCompany ? ROLES : ROLES.filter(role => 
+                      !getSuggestedRolesForCompany(newCompany.name).includes(role)
+                    ))
+                      .filter(role => role.toLowerCase().includes(rolePopupSearchQuery.toLowerCase()))
                       .map((role) => (
                         <div
                           key={`all-${role}`}
@@ -1646,10 +1652,7 @@ export default function SurveyPage() {
                 )}
                 
                 {/* No results message */}
-                {getSuggestedRolesForCompany(newCompany.name).filter(role => 
-                  role.toLowerCase().includes(rolePopupSearchQuery.toLowerCase())
-                ).length === 0 && ROLES.filter(role => 
-                  !getSuggestedRolesForCompany(newCompany.name).includes(role) &&
+                {ROLES.filter(role => 
                   role.toLowerCase().includes(rolePopupSearchQuery.toLowerCase())
                 ).length === 0 && rolePopupSearchQuery.length > 0 && (
                   <div className="text-center py-6 text-slate-400 text-sm">
@@ -1661,7 +1664,7 @@ export default function SurveyPage() {
               <div className="p-4 border-t flex justify-end gap-3">
                 <Button 
                   variant="ghost" 
-                  onClick={() => { setIsRolePopupOpen(false); setNewCompany({ name: "", role: "" }); setRolePopupSearchQuery(""); }}
+                  onClick={() => { setIsRolePopupOpen(false); setNewCompany({ name: "", role: "" }); setRolePopupSearchQuery(""); setIsCustomCompany(false); }}
                 >
                   Cancel
                 </Button>
