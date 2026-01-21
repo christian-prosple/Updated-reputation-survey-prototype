@@ -1443,20 +1443,30 @@ export default function SurveyPage() {
       )}
 
       <div className="flex flex-col items-center gap-4">
-        <Button variant="ghost" onClick={() => handlePairChoice(null)} className="text-muted-foreground">
-          Too hard, skip this pair
-        </Button>
-        <div className="flex gap-4 w-full max-w-xs">
+        <div className="flex gap-4 items-center">
+          <Button variant="ghost" onClick={() => handlePairChoice(null)} className="text-muted-foreground">
+            Too hard, skip this pair
+          </Button>
           {state.comparisonHistory.length > 0 && (
-            <Button variant="outline" size="lg" className="flex-1" onClick={handleUndo}>
-              Back
+            <Button variant="ghost" onClick={handleUndo} className="text-muted-foreground">
+              <ChevronLeft className="mr-1 w-4 h-4" /> Undo previous choice
             </Button>
           )}
+        </div>
+        <div className="flex gap-4 w-full max-w-md">
+          <Button 
+            variant="outline" 
+            size="lg" 
+            className="flex-1 text-slate-900 border-slate-200" 
+            onClick={() => actions.prevStep()}
+          >
+            <ChevronLeft className="mr-2 w-5 h-5" /> Back to company recognition
+          </Button>
           <Button 
             variant={state.pairwiseCount >= targetPairwiseCount ? "primary" : "secondary"}
             size="lg"
             className={cn(
-              "flex-[2] transition-all duration-300",
+              "flex-1 transition-all duration-300",
               state.pairwiseCount >= targetPairwiseCount ? "shadow-lg shadow-primary/20 scale-105" : "text-muted-foreground"
             )}
             onClick={handleFinishSurvey}
