@@ -1728,7 +1728,7 @@ export default function SurveyPage() {
       <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-8">
         <CheckCircle2 className="w-10 h-10" />
       </div>
-      <h2 className="text-4xl font-bold mb-4">Thank you for your response</h2>
+      <h2 className="text-4xl font-bold mb-4">Thanks for submitting your list!</h2>
       <p className="text-xl text-muted-foreground max-w-md mx-auto">
         Your career preferences have been recorded. We appreciate your time and insights.
       </p>
