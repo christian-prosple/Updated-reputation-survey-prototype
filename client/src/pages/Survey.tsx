@@ -616,13 +616,13 @@ export default function SurveyPage() {
               type="button"
               onClick={() => setIsGenderFocused(!isGenderFocused)}
               className={cn(
-                "w-full p-3 pr-10 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
+                "w-full p-3 pr-3 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
                 isGenderFocused ? "border-primary" : "border-slate-200"
               )}
               data-testid="select-gender"
             >
               <span>{state.personalInfo.gender || "Select gender"}</span>
-              <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform", isGenderFocused && "rotate-180")} />
+              <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform flex-shrink-0", isGenderFocused && "rotate-180")} />
             </button>
           </div>
           
@@ -656,13 +656,13 @@ export default function SurveyPage() {
                 type="button"
                 onClick={() => setIsEducationLevelFocused(!isEducationLevelFocused)}
                 className={cn(
-                  "w-full p-3 pr-10 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
+                  "w-full p-3 pr-3 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
                   isEducationLevelFocused ? "border-primary" : "border-slate-200"
                 )}
                 data-testid="select-education-level"
               >
                 <span>{state.personalInfo.educationLevel || "Select education level"}</span>
-                <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform", isEducationLevelFocused && "rotate-180")} />
+                <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform flex-shrink-0", isEducationLevelFocused && "rotate-180")} />
               </button>
             </div>
             
@@ -700,13 +700,13 @@ export default function SurveyPage() {
                   type="button"
                   onClick={() => { setIsGradMonthFocused(!isGradMonthFocused); setIsGradYearFocused(false); }}
                   className={cn(
-                    "w-full p-3 pr-10 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
+                    "w-full p-3 pr-3 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
                     isGradMonthFocused ? "border-primary" : "border-slate-200"
                   )}
                   data-testid="select-graduation-month"
                 >
                   <span>{state.personalInfo.graduationMonth || "Month"}</span>
-                  <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform", isGradMonthFocused && "rotate-180")} />
+                  <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform flex-shrink-0", isGradMonthFocused && "rotate-180")} />
                 </button>
                 
                 {isGradMonthFocused && (
@@ -736,13 +736,13 @@ export default function SurveyPage() {
                   type="button"
                   onClick={() => { setIsGradYearFocused(!isGradYearFocused); setIsGradMonthFocused(false); }}
                   className={cn(
-                    "w-full p-3 pr-10 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
+                    "w-full p-3 pr-3 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
                     isGradYearFocused ? "border-primary" : "border-slate-200"
                   )}
                   data-testid="select-graduation-year"
                 >
                   <span>{state.personalInfo.graduationYear || "Year"}</span>
-                  <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform", isGradYearFocused && "rotate-180")} />
+                  <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform flex-shrink-0", isGradYearFocused && "rotate-180")} />
                 </button>
                 
                 {isGradYearFocused && (
