@@ -396,6 +396,11 @@ export default function SurveyPage() {
     return Math.min(20, maxPossible);
   }, [state.selectedCompanies.length]);
 
+  // Minimum comparisons required before showing "Finish Early" button
+  const minComparisonsToFinish = useMemo(() => {
+    return Math.min(state.selectedCompanies.length, 20);
+  }, [state.selectedCompanies.length]);
+
   // --- EFFECT: Initialize Companies for Step 4 ---
   useEffect(() => {
     if (state.step === 4 && state.displayedCompanies.length === 0) {
@@ -1464,18 +1469,20 @@ export default function SurveyPage() {
           >
             <ChevronLeft className="mr-1 w-5 h-5 flex-shrink-0" /> Back
           </Button>
-          <Button 
-            variant={state.pairwiseCount >= targetPairwiseCount ? "primary" : "secondary"}
-            size="lg"
-            className={cn(
-              "flex-1 transition-all duration-300",
-              state.pairwiseCount >= targetPairwiseCount ? "shadow-lg shadow-primary/20 scale-105" : "text-muted-foreground"
-            )}
-            onClick={handleFinishSurvey}
-          >
-            {state.pairwiseCount >= targetPairwiseCount ? "Continue" : "Finish Early"}
-            <ChevronRight className="ml-1 w-5 h-5 flex-shrink-0" />
-          </Button>
+          {state.pairwiseCount >= minComparisonsToFinish && (
+            <Button 
+              variant={state.pairwiseCount >= targetPairwiseCount ? "primary" : "secondary"}
+              size="lg"
+              className={cn(
+                "flex-1 transition-all duration-300",
+                state.pairwiseCount >= targetPairwiseCount ? "shadow-lg shadow-primary/20 scale-105" : "text-muted-foreground"
+              )}
+              onClick={handleFinishSurvey}
+            >
+              {state.pairwiseCount >= targetPairwiseCount ? "Continue" : "Finish Early"}
+              <ChevronRight className="ml-1 w-5 h-5 flex-shrink-0" />
+            </Button>
+          )}
         </div>
       </div>
     </div>
