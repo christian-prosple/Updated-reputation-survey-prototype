@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSurvey, ROLES, RoleType, CompanyEntity, DEGREES, GENDERS, EDUCATION_STATUSES, ALL_COMPANY_NAMES, COMPANIES_BY_ROLE } from "@/hooks/use-survey";
+import { useSurvey, ROLES, RoleType, CompanyEntity, GENDERS, EDUCATION_STATUSES, ALL_COMPANY_NAMES, COMPANIES_BY_ROLE } from "@/hooks/use-survey";
+import { DEGREE_TAXONOMY, ALL_DEGREES, DEGREE_CATEGORIES } from "@/data/degrees";
 import { StepIndicator } from "@/components/StepIndicator";
 import { Button } from "@/components/ui/button-custom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
@@ -351,6 +352,8 @@ export default function SurveyPage() {
   const [isGenderFocused, setIsGenderFocused] = useState(false);
   const [isGradMonthFocused, setIsGradMonthFocused] = useState(false);
   const [isGradYearFocused, setIsGradYearFocused] = useState(false);
+  const [degreeSearchQuery, setDegreeSearchQuery] = useState("");
+  const [isDegreeSearchFocused, setIsDegreeSearchFocused] = useState(false);
 
   // Get suggested roles based on selected company name
   const getSuggestedRolesForCompany = (companyName: string): RoleType[] => {
@@ -527,6 +530,43 @@ export default function SurveyPage() {
     // We don't need to do anything else, the dropdown should stay open
     // because isSearchFocused is still true and we stopPropagation on the click
   };
+
+  const handleDegreeSelection = (degree: string) => {
+    actions.selectDegree(degree);
+    setDegreeSearchQuery("");
+    // Dropdown stays open for multi-select
+  };
+
+  // Get suggested degrees based on already selected degrees (same category)
+  const suggestedDegrees = useMemo(() => {
+    if (state.selectedDegrees.length === 0) {
+      // Return first 5 from first category as default suggestions
+      return ALL_DEGREES.slice(0, 8);
+    }
+    
+    // Find categories of selected degrees and suggest more from those categories
+    const selectedCategories = new Set<string>();
+    for (const degree of state.selectedDegrees) {
+      for (const [category, degrees] of Object.entries(DEGREE_TAXONOMY)) {
+        if (degrees.includes(degree)) {
+          selectedCategories.add(category);
+        }
+      }
+    }
+    
+    // Get degrees from same categories that aren't already selected
+    const suggested: string[] = [];
+    for (const category of Array.from(selectedCategories)) {
+      const categoryDegrees = DEGREE_TAXONOMY[category] || [];
+      for (const degree of categoryDegrees) {
+        if (!state.selectedDegrees.includes(degree) && !suggested.includes(degree)) {
+          suggested.push(degree);
+        }
+      }
+    }
+    
+    return suggested.slice(0, 8);
+  }, [state.selectedDegrees]);
 
   // Generate month and year options
   const months = [
@@ -846,12 +886,12 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 1: DEGREE SELECTION
+  // STEP 1: DEGREE SELECTION (Searchable dropdown like role selection)
   const renderStep1 = () => {
     // Dynamic question text based on graduation date
     const questionText = isGraduationInFuture()
-      ? "What degree are you currently studying? (Select all that apply)"
-      : "What degree did you study? (Select all that apply)";
+      ? "What degree are you currently studying?"
+      : "What degree did you study?";
 
     return (
     <div className="space-y-6">
@@ -861,34 +901,168 @@ export default function SurveyPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-        {DEGREES.map((degree) => {
-          const isSelected = state.selectedDegrees.includes(degree);
-          return (
-            <motion.div
-              key={degree}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              onClick={() => actions.selectDegree(degree)}
-              className={cn(
-                "cursor-pointer rounded-2xl p-4 border-2 transition-all duration-200 flex items-center gap-4 group",
-                isSelected 
-                  ? "border-primary bg-primary/5 shadow-md shadow-primary/10" 
-                  : "border-border bg-card hover:border-primary/50 hover:bg-slate-50"
-              )}
-            >
-              <div className={cn(
-                "w-6 h-6 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0",
-                isSelected ? "border-primary bg-primary text-slate-900" : "border-muted-foreground group-hover:border-primary"
-              )}>
-                {isSelected && <CheckCircle2 className="w-4 h-4" />}
-              </div>
-              <span className={cn("font-medium", isSelected ? "text-slate-900" : "text-foreground")}>
-                {degree}
-              </span>
-            </motion.div>
-          );
-        })}
+      <div className="space-y-8 max-w-2xl mx-auto w-full relative">
+        {/* Search Bar with Selected Pills */}
+        <div className="relative z-50" onClick={(e) => e.stopPropagation()}>
+          <div className={cn(
+            "min-h-[56px] w-full p-2 bg-white border-2 rounded-2xl flex flex-wrap gap-2 items-center transition-all duration-200",
+            (isDegreeSearchFocused || degreeSearchQuery) ? "border-primary shadow-lg" : "border-slate-200 shadow-sm"
+          )}>
+            <div className="flex items-center pl-2">
+              <Search className="w-5 h-5 text-slate-400" />
+            </div>
+            
+            <AnimatePresence>
+              {state.selectedDegrees.map((degree) => (
+                <motion.div
+                  key={degree}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="bg-primary/10 text-primary-foreground border border-primary/20 px-3 py-1.5 rounded-xl flex items-center gap-2 text-sm font-bold group"
+                >
+                  <span className="text-slate-900">{degree}</span>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      actions.selectDegree(degree);
+                    }}
+                    className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5 text-slate-600" />
+                  </button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            <input
+              type="text"
+              placeholder={state.selectedDegrees.length === 0 ? "Search for degrees..." : ""}
+              value={degreeSearchQuery}
+              onFocus={(e) => {
+                e.stopPropagation();
+                setIsDegreeSearchFocused(true);
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsDegreeSearchFocused(true);
+              }}
+              onChange={(e) => setDegreeSearchQuery(e.target.value)}
+              className="flex-1 min-w-[120px] bg-transparent border-none outline-none py-2 px-2 text-slate-900 placeholder:text-slate-400"
+              data-testid="input-degree-search"
+            />
+          </div>
+
+          {/* Dropdown Results */}
+          <AnimatePresence>
+            {(isDegreeSearchFocused || degreeSearchQuery) && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-slate-100 rounded-2xl shadow-xl max-h-[400px] overflow-hidden flex flex-col z-50"
+              >
+                <div className="overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-slate-200">
+                  {degreeSearchQuery.length === 0 ? (
+                    <>
+                      {/* Suggested Section */}
+                      <div className="px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">
+                        Suggested for you
+                      </div>
+                      {suggestedDegrees.slice(0, 8).map((degree) => {
+                        const isSelected = state.selectedDegrees.includes(degree);
+                        return (
+                          <div
+                            key={degree}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDegreeSelection(degree);
+                            }}
+                            className={cn(
+                              "cursor-pointer rounded-xl p-3 flex items-center justify-between transition-colors",
+                              isSelected ? "bg-primary/10" : "hover:bg-slate-50"
+                            )}
+                          >
+                            <span className={cn("text-sm font-medium", isSelected ? "text-slate-900 font-bold" : "text-slate-600")}>
+                              {degree}
+                            </span>
+                            {isSelected && <CheckCircle2 className="w-4 h-4 text-primary" />}
+                          </div>
+                        );
+                      })}
+                      
+                      <div className="border-t my-2" />
+                      
+                      <div className="px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">
+                        All Degrees
+                      </div>
+                      {ALL_DEGREES.map((degree) => {
+                        if (suggestedDegrees.slice(0, 8).includes(degree)) return null;
+                        const isSelected = state.selectedDegrees.includes(degree);
+                        return (
+                          <div
+                            key={degree}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDegreeSelection(degree);
+                            }}
+                            className={cn(
+                              "cursor-pointer rounded-xl p-3 flex items-center justify-between transition-colors",
+                              isSelected ? "bg-primary/10" : "hover:bg-slate-50"
+                            )}
+                          >
+                            <span className={cn("text-sm font-medium", isSelected ? "text-slate-900 font-bold" : "text-slate-600")}>
+                              {degree}
+                            </span>
+                            {isSelected && <CheckCircle2 className="w-4 h-4 text-primary" />}
+                          </div>
+                        );
+                      })}
+                    </>
+                  ) : (
+                    <>
+                      <div className="px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">
+                        Search Results
+                      </div>
+                      {ALL_DEGREES
+                        .filter(degree => degree.toLowerCase().includes(degreeSearchQuery.toLowerCase()))
+                        .map((degree) => {
+                          const isSelected = state.selectedDegrees.includes(degree);
+                          return (
+                            <div
+                              key={degree}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDegreeSelection(degree);
+                              }}
+                              className={cn(
+                                "cursor-pointer rounded-xl p-3 flex items-center justify-between transition-colors",
+                                isSelected ? "bg-primary/10" : "hover:bg-slate-50"
+                              )}
+                            >
+                              <span className={cn("text-sm font-medium", isSelected ? "text-slate-900 font-bold" : "text-slate-600")}>
+                                {degree}
+                              </span>
+                              {isSelected && <CheckCircle2 className="w-4 h-4 text-primary" />}
+                            </div>
+                          );
+                        })}
+                      {ALL_DEGREES.filter(degree => degree.toLowerCase().includes(degreeSearchQuery.toLowerCase())).length === 0 && (
+                        <div className="px-4 py-3 text-sm text-muted-foreground">
+                          No matching degrees found
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
       <div className="flex justify-center mt-12 gap-4">
@@ -1516,7 +1690,7 @@ export default function SurveyPage() {
   return (
     <div 
       className="min-h-screen bg-slate-50/50 flex flex-col font-sans text-slate-900"
-      onClick={() => { setIsSearchFocused(false); setIsCountrySearchFocused(false); setIsEducationLevelFocused(false); setIsGenderFocused(false); setIsGradMonthFocused(false); setIsGradYearFocused(false); }}
+      onClick={() => { setIsSearchFocused(false); setIsCountrySearchFocused(false); setIsEducationLevelFocused(false); setIsGenderFocused(false); setIsGradMonthFocused(false); setIsGradYearFocused(false); setIsDegreeSearchFocused(false); }}
     >
       {/* Header */}
       <header className="bg-white border-b sticky top-0 z-50">

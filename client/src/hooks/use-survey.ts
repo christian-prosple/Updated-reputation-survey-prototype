@@ -1,22 +1,8 @@
 import { useState, useMemo } from 'react';
 
 // --- DATA CONSTANTS ---
-export const DEGREES = [
-  "Business & Management",
-  "Creative Arts",
-  "Engineering & Mathematics",
-  "Food, Hospitality & Personal Services",
-  "Humanities, Arts, & Social Sciences",
-  "IT & Computer Science",
-  "Law, Legal Studies & Justice",
-  "Medicine & Health Sciences",
-  "Property & Built Environment",
-  "Sciences",
-  "Teaching & Education",
-  "Other"
-] as const;
-
-export type DegreeType = typeof DEGREES[number];
+// DegreeType is now a string to support the full taxonomy
+export type DegreeType = string;
 
 export const ROLES = [
   "Accounting & Advisory",
