@@ -343,6 +343,7 @@ export default function SurveyPage() {
   const [newCompany, setNewCompany] = useState<ManualCompany>({ name: "", role: "" });
   const [isAdding, setIsAdding] = useState(false);
   const [isRolePopupOpen, setIsRolePopupOpen] = useState(false);
+  const [rolePopupSearchQuery, setRolePopupSearchQuery] = useState("");
   const [showFullTaxonomy, setShowFullTaxonomy] = useState(false);
   const [roleSearchQuery, setRoleSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -387,6 +388,7 @@ export default function SurveyPage() {
     setIsAdding(false);
     setIsRolePopupOpen(false);
     setIsCompanySearchFocused(false);
+    setRolePopupSearchQuery("");
   };
 
   const handleCompanySelected = (companyName: string) => {
@@ -1560,7 +1562,7 @@ export default function SurveyPage() {
         {isRolePopupOpen && (
           <div 
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-            onClick={() => { setIsRolePopupOpen(false); setNewCompany({ name: "", role: "" }); setIsRoleDropdownOpen(false); }}
+            onClick={() => { setIsRolePopupOpen(false); setNewCompany({ name: "", role: "" }); setRolePopupSearchQuery(""); }}
           >
             <div 
               className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200"
@@ -1571,50 +1573,95 @@ export default function SurveyPage() {
                 <p className="text-sm text-slate-500 mt-1">
                   What role interests you at <span className="font-semibold text-slate-700">{newCompany.name}</span>?
                 </p>
+                
+                {/* Search bar */}
+                <div className="relative mt-4">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input 
+                    type="text"
+                    value={rolePopupSearchQuery}
+                    onChange={(e) => setRolePopupSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm outline-none transition-all bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary"
+                    placeholder="Search roles..."
+                    data-testid="input-role-search"
+                  />
+                </div>
               </div>
               
               <div className="p-4 max-h-80 overflow-y-auto">
                 {/* Suggested Roles Section */}
-                <div className="px-2 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">
-                  Suggested Roles
-                </div>
-                {getSuggestedRolesForCompany(newCompany.name).map((role) => (
-                  <div
-                    key={`suggested-${role}`}
-                    onClick={() => setNewCompany(prev => ({ ...prev, role }))}
-                    className={cn(
-                      "px-3 py-3 hover:bg-slate-50 cursor-pointer text-sm rounded-lg mb-1 transition-all",
-                      newCompany.role === role ? "bg-primary/10 ring-2 ring-primary font-medium" : ""
-                    )}
-                    data-testid={`role-option-suggested-${role.toLowerCase().replace(/\s+/g, '-')}`}
-                  >
-                    {role}
-                  </div>
-                ))}
+                {getSuggestedRolesForCompany(newCompany.name).filter(role => 
+                  role.toLowerCase().includes(rolePopupSearchQuery.toLowerCase())
+                ).length > 0 && (
+                  <>
+                    <div className="px-2 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">
+                      Suggested Roles
+                    </div>
+                    {getSuggestedRolesForCompany(newCompany.name)
+                      .filter(role => role.toLowerCase().includes(rolePopupSearchQuery.toLowerCase()))
+                      .map((role) => (
+                        <div
+                          key={`suggested-${role}`}
+                          onClick={() => setNewCompany(prev => ({ ...prev, role }))}
+                          className={cn(
+                            "px-3 py-3 hover:bg-slate-50 cursor-pointer text-sm rounded-lg mb-1 transition-all",
+                            newCompany.role === role ? "bg-primary/10 ring-2 ring-primary font-medium" : ""
+                          )}
+                          data-testid={`role-option-suggested-${role.toLowerCase().replace(/\s+/g, '-')}`}
+                        >
+                          {role}
+                        </div>
+                      ))}
+                  </>
+                )}
                 
                 {/* All Roles Section */}
-                <div className="px-2 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 mt-4">
-                  All Roles
-                </div>
-                {ROLES.filter(role => !getSuggestedRolesForCompany(newCompany.name).includes(role)).map((role) => (
-                  <div
-                    key={`all-${role}`}
-                    onClick={() => setNewCompany(prev => ({ ...prev, role }))}
-                    className={cn(
-                      "px-3 py-3 hover:bg-slate-50 cursor-pointer text-sm rounded-lg mb-1 transition-all",
-                      newCompany.role === role ? "bg-primary/10 ring-2 ring-primary font-medium" : ""
-                    )}
-                    data-testid={`role-option-all-${role.toLowerCase().replace(/\s+/g, '-')}`}
-                  >
-                    {role}
+                {ROLES.filter(role => 
+                  !getSuggestedRolesForCompany(newCompany.name).includes(role) &&
+                  role.toLowerCase().includes(rolePopupSearchQuery.toLowerCase())
+                ).length > 0 && (
+                  <>
+                    <div className="px-2 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 mt-4">
+                      All Roles
+                    </div>
+                    {ROLES
+                      .filter(role => 
+                        !getSuggestedRolesForCompany(newCompany.name).includes(role) &&
+                        role.toLowerCase().includes(rolePopupSearchQuery.toLowerCase())
+                      )
+                      .map((role) => (
+                        <div
+                          key={`all-${role}`}
+                          onClick={() => setNewCompany(prev => ({ ...prev, role }))}
+                          className={cn(
+                            "px-3 py-3 hover:bg-slate-50 cursor-pointer text-sm rounded-lg mb-1 transition-all",
+                            newCompany.role === role ? "bg-primary/10 ring-2 ring-primary font-medium" : ""
+                          )}
+                          data-testid={`role-option-all-${role.toLowerCase().replace(/\s+/g, '-')}`}
+                        >
+                          {role}
+                        </div>
+                      ))}
+                  </>
+                )}
+                
+                {/* No results message */}
+                {getSuggestedRolesForCompany(newCompany.name).filter(role => 
+                  role.toLowerCase().includes(rolePopupSearchQuery.toLowerCase())
+                ).length === 0 && ROLES.filter(role => 
+                  !getSuggestedRolesForCompany(newCompany.name).includes(role) &&
+                  role.toLowerCase().includes(rolePopupSearchQuery.toLowerCase())
+                ).length === 0 && rolePopupSearchQuery.length > 0 && (
+                  <div className="text-center py-6 text-slate-400 text-sm">
+                    No roles found matching "{rolePopupSearchQuery}"
                   </div>
-                ))}
+                )}
               </div>
               
               <div className="p-4 border-t flex justify-end gap-3">
                 <Button 
                   variant="ghost" 
-                  onClick={() => { setIsRolePopupOpen(false); setNewCompany({ name: "", role: "" }); }}
+                  onClick={() => { setIsRolePopupOpen(false); setNewCompany({ name: "", role: "" }); setRolePopupSearchQuery(""); }}
                 >
                   Cancel
                 </Button>
