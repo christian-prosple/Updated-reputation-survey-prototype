@@ -1098,7 +1098,7 @@ export default function SurveyPage() {
 
             <input
               type="text"
-              placeholder={state.selectedRoles.length === 0 ? "Search for roles..." : ""}
+              placeholder={state.selectedRoles.length === 0 ? "Search for career paths..." : ""}
               value={roleSearchQuery}
               onFocus={(e) => {
                 e.stopPropagation();
@@ -1134,7 +1134,7 @@ export default function SurveyPage() {
                     <>
                       {/* Suggested Section */}
                       <div className="px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">
-                        Suggested for you
+                        Suggested
                       </div>
                       {suggestedRoles.slice(0, 5).map((role) => {
                         const isSelected = state.selectedRoles.includes(role);
@@ -1161,7 +1161,7 @@ export default function SurveyPage() {
                       <div className="border-t my-2" />
                       
                       <div className="px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">
-                        All Roles
+                        All Career Paths
                       </div>
                       {[...ROLES].sort().map((role) => {
                         if (suggestedRoles.slice(0, 5).includes(role)) return null;
