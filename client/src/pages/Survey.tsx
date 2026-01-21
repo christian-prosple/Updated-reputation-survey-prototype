@@ -1492,8 +1492,11 @@ export default function SurveyPage() {
   const renderStep6 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
-          Based on your responses we have generated a draft shortlist for you. Drag to sort them in order of preference before submitting your final rankings
+        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">
+          Nice, here's your shortlist!
+        </h2>
+        <p className="text-lg md:text-xl font-medium text-slate-600 max-w-lg mx-auto">
+          Make any final adjustments by dragging and dropping or adding missing companies
         </p>
       </div>
 
