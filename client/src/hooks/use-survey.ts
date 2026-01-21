@@ -1,8 +1,35 @@
 import { useState, useMemo } from 'react';
+import { DEGREE_TAXONOMY } from '@/data/degrees';
 
 // --- DATA CONSTANTS ---
 // DegreeType is now a string to support the full taxonomy
 export type DegreeType = string;
+
+// Helper to find which category a degree belongs to
+const getDegreeCategory = (degree: string): string | null => {
+  for (const [category, degrees] of Object.entries(DEGREE_TAXONOMY)) {
+    if (degrees.includes(degree)) {
+      return category;
+    }
+  }
+  return null;
+};
+
+// Mapping from degree categories to relevant roles
+const CATEGORY_TO_ROLES: Record<string, string[]> = {
+  "Business & Management": ["Business, Commerce & Management", "Finance & Banking", "Marketing", "Management Consulting", "HR & Recruitment", "Project Management", "Supply Chain & Logistics", "Accounting & Advisory", "Investment Banking", "Economics", "Sales & Business Development"],
+  "IT & Computer Science": ["Computer Science & Software Engineering", "Artificial Intelligence & Machine Learning", "Cybersecurity", "Data Science & Analytics", "Information Technology", "Game Design & Development", "Network & Telecommunications Engineering", "Product Management", "Design & User Experience"],
+  "Creative Arts": ["Animation & VFX", "Creative, Performing & Visual Arts", "Design & User Experience", "Fashion", "Film & TV Production", "Music & Audio Production", "Writing, Journalism & Publishing", "Communications & Public Relations"],
+  "Engineering & Mathematics": ["Aerospace Engineering & Aviation", "Biomedical Engineering & Sciences", "Chemical & Process Engineering", "Civil & Structural Engineering", "Electrical & Electronic Engineering", "Environmental Engineering", "Geotechnical Engineering", "Manufacturing and Industrial Engineering", "Materials Engineering", "Mechanical & Mechatronic Engineering", "Mining & Resources Engineering", "Mathematics & Statistics", "Data Science & Analytics"],
+  "Medical & Health Sciences": ["Medicine", "Nursing", "Midwifery", "Pharmacy & Pharmaceuticals", "Physiotherapy & Occupational Therapy", "Public Health", "Exercise & Sport Sciences", "Healthcare Administration & Management", "Nutrition & Dietetics", "Psychology & Counselling"],
+  "Humanities, Arts & Social Sciences": ["Archaeology & History", "Communications & Public Relations", "Economics", "Government & Public Administration", "International Development & NGOs", "Language & Linguistics", "Policy & International Relations", "Psychology & Counselling", "Social Work", "Writing, Journalism & Publishing", "Education & Teaching"],
+  "Law, Legal Studies & Justice": ["Law", "Criminology & Forensic Science", "Intelligence & National Security", "Government & Public Administration", "Policy & International Relations"],
+  "Property & Built Environment": ["Architecture", "Construction Management", "Interior Design", "Property Development & Management", "Surveying", "Urban Planning", "Civil & Structural Engineering"],
+  "Sciences": ["Biology & Biochemistry", "Chemistry", "Geology & Earth Sciences", "Physics", "Zoology", "Veterinary Science", "Environment & Sustainability", "Geospatial & GIS", "Food Science & Technology", "Data Science & Analytics"],
+  "Teaching & Education": ["Education & Teaching"],
+  "Vocational Education & Training": ["Construction Management", "Electrical & Electronic Engineering", "Manufacturing and Industrial Engineering", "Events, Tourism & Hospitality"],
+  "Food, Hospitality & Personal Services": ["Events, Tourism & Hospitality", "Food Science & Technology", "Nutrition & Dietetics", "Marketing"]
+};
 
 export const ROLES = [
   "Accounting & Advisory",
@@ -492,57 +519,36 @@ export function useSurvey() {
   };
 
   const suggestedRoles = useMemo(() => {
-    const rolesPerDegree: Record<string, RoleType[]> = {};
+    // Collect all relevant roles based on degree categories
+    const allRelevantRoles: Set<string> = new Set();
+    const categoriesFound: Set<string> = new Set();
+    
     state.selectedDegrees.forEach(degree => {
-      // Handle new taxonomy degrees that may not have direct mappings
-      const mappedRoles = DEGREE_TO_ROLES[degree as keyof typeof DEGREE_TO_ROLES];
-      if (mappedRoles) {
-        rolesPerDegree[degree] = [...mappedRoles];
-      } else {
-        // For new taxonomy degrees, return an empty array (they will use default roles)
-        rolesPerDegree[degree] = [];
+      // Find the category this degree belongs to
+      const category = getDegreeCategory(degree);
+      if (category && CATEGORY_TO_ROLES[category]) {
+        categoriesFound.add(category);
+        CATEGORY_TO_ROLES[category].forEach(role => allRelevantRoles.add(role));
       }
     });
-
-    // Explicitly handle "Law" if "Law, Legal Studies & Justice" is selected
-    if (state.selectedDegrees.includes("Law, Legal Studies & Justice")) {
-      if (!rolesPerDegree["Law, Legal Studies & Justice"]) {
-        rolesPerDegree["Law, Legal Studies & Justice"] = [];
-      }
-      if (!rolesPerDegree["Law, Legal Studies & Justice"].includes("Law")) {
-        rolesPerDegree["Law, Legal Studies & Justice"].push("Law");
-      }
-    }
-
-    const finalRoles: RoleType[] = [];
-    const degrees = Object.keys(rolesPerDegree);
     
-    if (degrees.length > 0) {
-      // Round-robin selection to ensure even mix across degrees
-      let hasMore = true;
-      let degreeIdx = 0;
-      const pointers: Record<string, number> = {};
-      degrees.forEach(d => pointers[d] = 0);
-
-      while (finalRoles.length < 10 && hasMore) {
-        hasMore = false;
-        for (const degree of degrees) {
-          const roles = rolesPerDegree[degree];
-          const ptr = pointers[degree];
-          if (ptr < roles.length) {
-            const role = roles[ptr];
-            if (!finalRoles.includes(role)) {
-              finalRoles.push(role);
-            }
-            pointers[degree]++;
-            hasMore = true;
-          }
-          if (finalRoles.length >= 10) break;
-        }
-      }
+    // If we found matching categories, return 5 roles from them
+    if (allRelevantRoles.size > 0) {
+      const rolesArray = Array.from(allRelevantRoles) as RoleType[];
+      // Shuffle and return first 5
+      const shuffled = rolesArray.sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, 5);
     }
-
-    return finalRoles; // Return in priority order (not sorted alphabetically)
+    
+    // Fallback: return 5 random popular roles if no matches
+    const popularRoles: RoleType[] = [
+      "Business, Commerce & Management",
+      "Computer Science & Software Engineering",
+      "Finance & Banking",
+      "Marketing",
+      "Data Science & Analytics"
+    ];
+    return popularRoles;
   }, [state.selectedDegrees]);
 
   return {
