@@ -1400,7 +1400,7 @@ export default function SurveyPage() {
                 <p className="mt-2 text-sm text-muted-foreground italic">
                   working in
                 </p>
-                <p className="text-sm font-bold text-slate-700">
+                <p className="mt-2 text-sm font-bold text-slate-700">
                   {activePair[0].role}
                 </p>
                 <span className="mt-4 text-sm font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1429,7 +1429,7 @@ export default function SurveyPage() {
                 <p className="mt-2 text-sm text-muted-foreground italic">
                   working in
                 </p>
-                <p className="text-sm font-bold text-slate-700">
+                <p className="mt-2 text-sm font-bold text-slate-700">
                   {activePair[1].role}
                 </p>
                 <span className="mt-4 text-sm font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity">
