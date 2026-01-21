@@ -599,7 +599,7 @@ export default function SurveyPage() {
         <div className="space-y-2">
           <div className="space-y-0.5">
             <label className="text-sm font-medium text-slate-700">Email</label>
-            <p className="text-xs text-slate-500">So we can send you a thank you gift</p>
+            <p className="text-xs text-slate-500">So we can send you a thank you gift!</p>
           </div>
           <input
             type="email"
