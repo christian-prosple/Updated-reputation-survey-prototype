@@ -937,7 +937,7 @@ export default function SurveyPage() {
 
             <input
               type="text"
-              placeholder={state.selectedDegrees.length === 0 ? "Search for degrees..." : ""}
+              placeholder={state.selectedDegrees.length === 0 ? "Search for study areas..." : ""}
               value={degreeSearchQuery}
               onFocus={(e) => {
                 e.stopPropagation();
