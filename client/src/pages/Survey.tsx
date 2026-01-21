@@ -890,8 +890,8 @@ export default function SurveyPage() {
   const renderStep1 = () => {
     // Dynamic question text based on graduation date
     const questionText = isGraduationInFuture()
-      ? "What degree are you currently studying?"
-      : "What degree did you study?";
+      ? "What is your area of study? (Select all that apply)"
+      : "What was your area of study? (Select all that apply)";
 
     return (
     <div className="space-y-6">
