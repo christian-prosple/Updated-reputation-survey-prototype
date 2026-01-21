@@ -653,7 +653,7 @@ export default function SurveyPage() {
 
         {/* Education Level */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
-            <label className="text-sm font-medium text-slate-700">Education level</label>
+            <label className="text-sm font-medium text-slate-700">Highest education level (completed or in progress)</label>
             <div className="relative">
               <button
                 type="button"
