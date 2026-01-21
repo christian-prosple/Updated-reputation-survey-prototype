@@ -1444,35 +1444,35 @@ export default function SurveyPage() {
 
       <div className="flex flex-col items-center gap-4">
         <div className="flex gap-4 items-center">
-          <Button variant="ghost" onClick={() => handlePairChoice(null)} className="text-muted-foreground">
-            Too hard, skip this pair
-          </Button>
           {state.comparisonHistory.length > 0 && (
-            <Button variant="ghost" onClick={handleUndo} className="text-muted-foreground">
+            <Button variant="outline" onClick={handleUndo} className="text-slate-900 border-slate-200">
               <ChevronLeft className="mr-1 w-4 h-4" /> Undo previous choice
             </Button>
           )}
+          <Button variant="ghost" onClick={() => handlePairChoice(null)} className="text-muted-foreground">
+            Too hard, skip this pair
+          </Button>
         </div>
-        <div className="flex gap-4 w-full max-w-md">
+        <div className="flex gap-4 w-full max-w-lg">
           <Button 
-            variant="outline" 
-            size="lg" 
-            className="flex-1 text-slate-900 border-slate-200" 
+            variant="secondary"
+            size="lg"
+            className="flex-1 text-muted-foreground whitespace-nowrap" 
             onClick={() => actions.prevStep()}
           >
-            <ChevronLeft className="mr-2 w-5 h-5" /> Back to company recognition
+            <ChevronLeft className="mr-1 w-5 h-5 flex-shrink-0" /> Back to company recognition
           </Button>
           <Button 
             variant={state.pairwiseCount >= targetPairwiseCount ? "primary" : "secondary"}
             size="lg"
             className={cn(
-              "flex-1 transition-all duration-300",
+              "flex-1 transition-all duration-300 whitespace-nowrap",
               state.pairwiseCount >= targetPairwiseCount ? "shadow-lg shadow-primary/20 scale-105" : "text-muted-foreground"
             )}
             onClick={handleFinishSurvey}
           >
             {state.pairwiseCount >= targetPairwiseCount ? "Continue" : "Finish Early"}
-            <ChevronRight className="ml-2 w-5 h-5" />
+            <ChevronRight className="ml-1 w-5 h-5 flex-shrink-0" />
           </Button>
         </div>
       </div>
