@@ -1729,9 +1729,7 @@ export default function SurveyPage() {
         <CheckCircle2 className="w-10 h-10" />
       </div>
       <h2 className="text-4xl font-bold mb-4">Thanks for submitting your list!</h2>
-      <p className="text-xl text-muted-foreground max-w-md mx-auto">
-        Your career preferences have been recorded. We appreciate your time and insights.
-      </p>
+      <p className="text-xl text-muted-foreground max-w-md mx-auto">Your preferences have been saved anonymously and will contribute towards Prosple's global employer rankings!</p>
     </div>
   );
 
