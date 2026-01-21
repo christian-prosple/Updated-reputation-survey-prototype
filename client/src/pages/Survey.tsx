@@ -628,7 +628,7 @@ export default function SurveyPage() {
           
           {/* Gender dropdown */}
           {isGenderFocused && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50">
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-64 overflow-y-auto z-50">
               {[...GENDERS, "Other"].map((g) => (
                 <div
                   key={g}
