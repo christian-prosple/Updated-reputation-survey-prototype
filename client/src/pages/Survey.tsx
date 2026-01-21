@@ -969,39 +969,10 @@ export default function SurveyPage() {
                 <div className="overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-slate-200">
                   {degreeSearchQuery.length === 0 ? (
                     <>
-                      {/* Suggested Section */}
-                      <div className="px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">
-                        Suggested for you
-                      </div>
-                      {suggestedDegrees.slice(0, 8).map((degree) => {
-                        const isSelected = state.selectedDegrees.includes(degree);
-                        return (
-                          <div
-                            key={degree}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDegreeSelection(degree);
-                            }}
-                            className={cn(
-                              "cursor-pointer rounded-xl p-3 flex items-center justify-between transition-colors",
-                              isSelected ? "bg-primary/10" : "hover:bg-slate-50"
-                            )}
-                          >
-                            <span className={cn("text-sm font-medium", isSelected ? "text-slate-900 font-bold" : "text-slate-600")}>
-                              {degree}
-                            </span>
-                            {isSelected && <CheckCircle2 className="w-4 h-4 text-primary" />}
-                          </div>
-                        );
-                      })}
-                      
-                      <div className="border-t my-2" />
-                      
                       <div className="px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">
                         All Degrees
                       </div>
                       {ALL_DEGREES.map((degree) => {
-                        if (suggestedDegrees.slice(0, 8).includes(degree)) return null;
                         const isSelected = state.selectedDegrees.includes(degree);
                         return (
                           <div
