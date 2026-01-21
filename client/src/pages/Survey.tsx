@@ -342,6 +342,7 @@ export default function SurveyPage() {
 
   const [newCompany, setNewCompany] = useState<ManualCompany>({ name: "", role: "" });
   const [isAdding, setIsAdding] = useState(false);
+  const [isRolePopupOpen, setIsRolePopupOpen] = useState(false);
   const [showFullTaxonomy, setShowFullTaxonomy] = useState(false);
   const [roleSearchQuery, setRoleSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -373,7 +374,7 @@ export default function SurveyPage() {
   };
 
   const handleAddManualCompany = () => {
-    if (!newCompany.name.trim()) return;
+    if (!newCompany.name.trim() || !newCompany.role) return;
     
     const entity: CompanyEntity = {
       name: newCompany.name.trim(),
@@ -384,6 +385,14 @@ export default function SurveyPage() {
     actions.updateFinalRanking([entity, ...state.finalRanking]);
     setNewCompany({ name: "", role: "" });
     setIsAdding(false);
+    setIsRolePopupOpen(false);
+    setIsCompanySearchFocused(false);
+  };
+
+  const handleCompanySelected = (companyName: string) => {
+    setNewCompany(prev => ({ ...prev, name: companyName }));
+    setIsCompanySearchFocused(false);
+    setIsRolePopupOpen(true);
   };
 
   // --- DERIVED STATE ---
@@ -1501,127 +1510,125 @@ export default function SurveyPage() {
       </div>
 
       <div className="max-w-2xl mx-auto space-y-3 pb-4">
-        <div className="flex justify-end mb-4">
-          {!isAdding ? (
-            <Button variant="outline" size="sm" onClick={() => setIsAdding(true)} className="text-slate-900 border-slate-200 hover:bg-slate-50">
-              + Add another company
-            </Button>
-          ) : (
-            <div 
-              className="bg-white border rounded-xl p-4 shadow-sm w-full space-y-4 animate-in fade-in slide-in-from-top-2"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2 relative">
-                  <label className="text-xs font-bold uppercase text-muted-foreground">Company Name</label>
-                  <input 
-                    type="text"
-                    value={newCompany.name}
-                    onChange={(e) => setNewCompany(prev => ({ ...prev, name: e.target.value }))}
-                    onFocus={() => setIsCompanySearchFocused(true)}
-                    className={cn(
-                      "w-full p-2 border rounded-md text-sm outline-none transition-all",
-                      isCompanySearchFocused ? "ring-2 ring-primary border-primary" : ""
-                    )}
-                    placeholder="Search or type company name..."
-                    autoFocus
-                    data-testid="input-company-name"
-                  />
-                  {/* Company search dropdown */}
-                  {isCompanySearchFocused && newCompany.name.length > 0 && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-xl max-h-48 overflow-y-auto z-50">
-                      {ALL_COMPANY_NAMES
-                        .filter(name => name.toLowerCase().includes(newCompany.name.toLowerCase()))
-                        .slice(0, 8)
-                        .map((name) => (
-                          <div
-                            key={name}
-                            onClick={() => {
-                              setNewCompany(prev => ({ ...prev, name }));
-                              setIsCompanySearchFocused(false);
-                            }}
-                            className="px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm border-b last:border-b-0"
-                            data-testid={`company-option-${name.toLowerCase().replace(/\s+/g, '-')}`}
-                          >
-                            {name}
-                          </div>
-                        ))}
-                      {ALL_COMPANY_NAMES.filter(name => name.toLowerCase().includes(newCompany.name.toLowerCase())).length === 0 && (
-                        <div className="px-3 py-2 text-sm text-muted-foreground">
-                          No matches found - your entry "{newCompany.name}" will be used
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-2 relative">
-                  <label className="text-xs font-bold uppercase text-muted-foreground">Role</label>
-                  <button
-                    type="button"
-                    onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-                    className={cn(
-                      "w-full p-2 border rounded-md text-sm text-left bg-white flex items-center justify-between transition-all",
-                      isRoleDropdownOpen ? "ring-2 ring-primary border-primary" : ""
-                    )}
-                    data-testid="select-company-role"
+        {/* Add Company Search Card - Pinned to top */}
+        <div 
+          className="bg-white border border-dashed border-slate-300 rounded-xl p-4 shadow-sm relative"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <input 
+              type="text"
+              value={newCompany.name}
+              onChange={(e) => setNewCompany(prev => ({ ...prev, name: e.target.value }))}
+              onFocus={() => setIsCompanySearchFocused(true)}
+              className="w-full pl-10 pr-4 py-3 border rounded-lg text-sm outline-none transition-all bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary"
+              placeholder="Add a company..."
+              data-testid="input-add-company-search"
+            />
+          </div>
+          
+          {/* Company search dropdown */}
+          {isCompanySearchFocused && newCompany.name.length > 0 && (
+            <div className="absolute left-4 right-4 top-full mt-1 bg-white border rounded-lg shadow-xl max-h-48 overflow-y-auto z-50">
+              {ALL_COMPANY_NAMES
+                .filter(name => name.toLowerCase().includes(newCompany.name.toLowerCase()))
+                .slice(0, 8)
+                .map((name) => (
+                  <div
+                    key={name}
+                    onClick={() => handleCompanySelected(name)}
+                    className="px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm border-b last:border-b-0"
+                    data-testid={`company-option-${name.toLowerCase().replace(/\s+/g, '-')}`}
                   >
-                    <span className={cn("truncate", !newCompany.role && "text-muted-foreground")}>{newCompany.role || "Select role"}</span>
-                    <ChevronRight className={cn("w-4 h-4 text-muted-foreground transition-transform", isRoleDropdownOpen ? "rotate-90" : "")} />
-                  </button>
-                  
-                  {/* Role dropdown with sections */}
-                  {isRoleDropdownOpen && (
-                    <div className="absolute top-full left-0 right-0 mt-1 bg-white border rounded-lg shadow-xl max-h-64 overflow-y-auto z-50">
-                      {/* Suggested Roles Section */}
-                      <div className="px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 bg-slate-50 border-b sticky top-0">
-                        Suggested Roles
-                      </div>
-                      {getSuggestedRolesForCompany(newCompany.name).map((role) => (
-                        <div
-                          key={`suggested-${role}`}
-                          onClick={() => {
-                            setNewCompany(prev => ({ ...prev, role }));
-                            setIsRoleDropdownOpen(false);
-                          }}
-                          className={cn(
-                            "px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm border-b last:border-b-0",
-                            newCompany.role === role ? "bg-primary/10 font-medium" : ""
-                          )}
-                        >
-                          {role}
-                        </div>
-                      ))}
-                      
-                      {/* All Roles Section */}
-                      <div className="px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 bg-slate-50 border-b border-t sticky top-0">
-                        All Roles
-                      </div>
-                      {ROLES.filter(role => !getSuggestedRolesForCompany(newCompany.name).includes(role)).map((role) => (
-                        <div
-                          key={`all-${role}`}
-                          onClick={() => {
-                            setNewCompany(prev => ({ ...prev, role }));
-                            setIsRoleDropdownOpen(false);
-                          }}
-                          className={cn(
-                            "px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm border-b last:border-b-0",
-                            newCompany.role === role ? "bg-primary/10 font-medium" : ""
-                          )}
-                        >
-                          {role}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                    {name}
+                  </div>
+                ))}
+              {ALL_COMPANY_NAMES.filter(name => name.toLowerCase().includes(newCompany.name.toLowerCase())).length === 0 && (
+                <div 
+                  onClick={() => handleCompanySelected(newCompany.name.trim())}
+                  className="px-3 py-2 hover:bg-slate-50 cursor-pointer text-sm text-primary"
+                >
+                  Add "{newCompany.name}" as custom company
                 </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button variant="ghost" size="sm" onClick={() => { setIsAdding(false); setIsCompanySearchFocused(false); setIsRoleDropdownOpen(false); }}>Cancel</Button>
-                <Button size="sm" onClick={() => { handleAddManualCompany(); setIsCompanySearchFocused(false); setIsRoleDropdownOpen(false); }} disabled={!newCompany.name.trim() || !newCompany.role}>Add to List</Button>
-              </div>
+              )}
             </div>
           )}
         </div>
+
+        {/* Role Selection Popup */}
+        {isRolePopupOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            onClick={() => { setIsRolePopupOpen(false); setNewCompany({ name: "", role: "" }); setIsRoleDropdownOpen(false); }}
+          >
+            <div 
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md animate-in fade-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6 border-b">
+                <h3 className="text-lg font-bold text-slate-900">Select a role</h3>
+                <p className="text-sm text-slate-500 mt-1">
+                  What role interests you at <span className="font-semibold text-slate-700">{newCompany.name}</span>?
+                </p>
+              </div>
+              
+              <div className="p-4 max-h-80 overflow-y-auto">
+                {/* Suggested Roles Section */}
+                <div className="px-2 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">
+                  Suggested Roles
+                </div>
+                {getSuggestedRolesForCompany(newCompany.name).map((role) => (
+                  <div
+                    key={`suggested-${role}`}
+                    onClick={() => setNewCompany(prev => ({ ...prev, role }))}
+                    className={cn(
+                      "px-3 py-3 hover:bg-slate-50 cursor-pointer text-sm rounded-lg mb-1 transition-all",
+                      newCompany.role === role ? "bg-primary/10 ring-2 ring-primary font-medium" : ""
+                    )}
+                    data-testid={`role-option-suggested-${role.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    {role}
+                  </div>
+                ))}
+                
+                {/* All Roles Section */}
+                <div className="px-2 py-2 text-xs font-bold uppercase tracking-widest text-slate-400 mt-4">
+                  All Roles
+                </div>
+                {ROLES.filter(role => !getSuggestedRolesForCompany(newCompany.name).includes(role)).map((role) => (
+                  <div
+                    key={`all-${role}`}
+                    onClick={() => setNewCompany(prev => ({ ...prev, role }))}
+                    className={cn(
+                      "px-3 py-3 hover:bg-slate-50 cursor-pointer text-sm rounded-lg mb-1 transition-all",
+                      newCompany.role === role ? "bg-primary/10 ring-2 ring-primary font-medium" : ""
+                    )}
+                    data-testid={`role-option-all-${role.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    {role}
+                  </div>
+                ))}
+              </div>
+              
+              <div className="p-4 border-t flex justify-end gap-3">
+                <Button 
+                  variant="ghost" 
+                  onClick={() => { setIsRolePopupOpen(false); setNewCompany({ name: "", role: "" }); }}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleAddManualCompany} 
+                  disabled={!newCompany.role}
+                  data-testid="button-add-company-confirm"
+                >
+                  Add to Shortlist
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
 
         <Reorder.Group axis="y" values={state.finalRanking} onReorder={actions.updateFinalRanking} className="space-y-3">
           {state.finalRanking.map((entity, index) => (
