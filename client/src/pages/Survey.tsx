@@ -561,12 +561,25 @@ export default function SurveyPage() {
 
   // Check if personal info is complete enough to continue
   const isPersonalInfoValid = () => {
-    const { email, gender, educationStatus, country, university } = state.personalInfo;
+    const { email, gender, country, university, graduationMonth, graduationYear } = state.personalInfo;
     const hasValidEmail = email.includes("@") && email.includes(".");
     const hasValidGender = gender.length > 0;
-    // If "Neither" is selected, don't require school
-    const hasValidSchool = educationStatus === "Neither" || university.trim().length > 0;
-    return hasValidEmail && hasValidGender && educationStatus && country.trim() && hasValidSchool;
+    const hasValidSchool = university.trim().length > 0;
+    const hasValidGraduation = graduationMonth.length > 0 && graduationYear.length > 0;
+    return hasValidEmail && hasValidGender && country.trim() && hasValidSchool && hasValidGraduation;
+  };
+  
+  // Helper to check if graduation date is in the future
+  const isGraduationInFuture = () => {
+    const { graduationMonth, graduationYear } = state.personalInfo;
+    if (!graduationMonth || !graduationYear) return true; // default to "currently studying"
+    
+    const monthIndex = months.indexOf(graduationMonth);
+    const year = parseInt(graduationYear);
+    const gradDate = new Date(year, monthIndex, 1);
+    const today = new Date();
+    
+    return gradDate > today;
   };
 
   // STEP 0: PERSONAL INFO
@@ -609,31 +622,8 @@ export default function SurveyPage() {
           </select>
         </div>
 
-        {/* Education Status */}
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Education status</label>
-          <div className="grid grid-cols-3 gap-2">
-            {EDUCATION_STATUSES.map((status) => (
-              <button
-                key={status}
-                onClick={() => actions.updatePersonalInfo("educationStatus", status)}
-                className={cn(
-                  "p-3 border-2 rounded-xl text-sm font-medium transition-all",
-                  state.personalInfo.educationStatus === status
-                    ? "border-primary bg-primary/5 text-slate-900"
-                    : "border-slate-200 hover:border-slate-300 text-slate-600"
-                )}
-                data-testid={`button-education-${status.toLowerCase()}`}
-              >
-                {status}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Education Level - hidden when Neither is selected */}
-        {state.personalInfo.educationStatus !== "Neither" && (
-          <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
+        {/* Education Level */}
+        <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
             <label className="text-sm font-medium text-slate-700">Education level</label>
             <div className="relative">
               <button
@@ -673,12 +663,10 @@ export default function SurveyPage() {
                 ))}
               </div>
             )}
-          </div>
-        )}
+        </div>
 
-        {/* Graduation Date - hidden when Neither is selected */}
-        {state.personalInfo.educationStatus !== "Neither" && (
-          <div className="space-y-2">
+        {/* Graduation Date */}
+        <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">Graduation date (expected or actual)</label>
             <div className="grid grid-cols-2 gap-3">
               <select
@@ -704,12 +692,10 @@ export default function SurveyPage() {
                 ))}
               </select>
             </div>
-          </div>
-        )}
+        </div>
 
-        {/* School - hidden when Neither is selected */}
-        {state.personalInfo.educationStatus !== "Neither" && (
-          <div className="space-y-2">
+        {/* School */}
+        <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">School</label>
             <input
               type="text"
@@ -718,9 +704,8 @@ export default function SurveyPage() {
               placeholder="e.g. University of Melbourne"
               className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
               data-testid="input-school"
-            />
-          </div>
-        )}
+          />
+        </div>
 
         {/* Country */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
@@ -784,33 +769,10 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 1: DEGREE SELECTION (or end survey for "Neither")
+  // STEP 1: DEGREE SELECTION
   const renderStep1 = () => {
-    // If user selected "Neither", end the survey
-    if (state.personalInfo.educationStatus === "Neither") {
-      return (
-        <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500">
-          <div className="w-20 h-20 bg-slate-100 text-slate-500 rounded-full flex items-center justify-center mb-8">
-            <CheckCircle2 className="w-10 h-10" />
-          </div>
-          <h2 className="text-3xl font-bold text-slate-800 mb-4">Thank you for your interest!</h2>
-          <p className="text-lg text-muted-foreground max-w-md mb-8">
-            This survey is designed for students and recent graduates. We appreciate you taking the time to start it.
-          </p>
-          <Button 
-            variant="outline" 
-            size="lg" 
-            onClick={() => actions.prevStep()}
-            className="text-slate-900 border-slate-200"
-          >
-            <ChevronLeft className="mr-2 w-5 h-5" /> Go Back
-          </Button>
-        </div>
-      );
-    }
-
-    // Dynamic question text based on education status
-    const questionText = state.personalInfo.educationStatus === "Studying"
+    // Dynamic question text based on graduation date
+    const questionText = isGraduationInFuture()
       ? "What degree are you currently studying? (Select all that apply)"
       : "What degree did you study? (Select all that apply)";
 
