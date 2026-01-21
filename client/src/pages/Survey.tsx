@@ -1408,9 +1408,7 @@ export default function SurveyPage() {
            </motion.div>
 
            {/* VS Badge in middle */}
-           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center font-bold text-slate-300 shadow-sm border border-slate-100 z-10 flex-shrink-0">
-             VS
-           </div>
+           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center font-bold text-slate-300 shadow-sm border border-slate-100 z-10 flex-shrink-0">OR</div>
 
            {/* Option B */}
            <motion.div 
