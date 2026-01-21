@@ -494,7 +494,14 @@ export function useSurvey() {
   const suggestedRoles = useMemo(() => {
     const rolesPerDegree: Record<string, RoleType[]> = {};
     state.selectedDegrees.forEach(degree => {
-      rolesPerDegree[degree] = [...DEGREE_TO_ROLES[degree]];
+      // Handle new taxonomy degrees that may not have direct mappings
+      const mappedRoles = DEGREE_TO_ROLES[degree as keyof typeof DEGREE_TO_ROLES];
+      if (mappedRoles) {
+        rolesPerDegree[degree] = [...mappedRoles];
+      } else {
+        // For new taxonomy degrees, return an empty array (they will use default roles)
+        rolesPerDegree[degree] = [];
+      }
     });
 
     // Explicitly handle "Law" if "Law, Legal Studies & Justice" is selected
