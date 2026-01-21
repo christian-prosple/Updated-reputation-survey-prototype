@@ -969,9 +969,6 @@ export default function SurveyPage() {
                 <div className="overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-slate-200">
                   {degreeSearchQuery.length === 0 ? (
                     <>
-                      <div className="px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">
-                        All Degrees
-                      </div>
                       {ALL_DEGREES.map((degree) => {
                         const isSelected = state.selectedDegrees.includes(degree);
                         return (
