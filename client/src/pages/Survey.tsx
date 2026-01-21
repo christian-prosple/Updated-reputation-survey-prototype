@@ -608,18 +608,21 @@ export default function SurveyPage() {
         {/* Gender */}
         <div className="space-y-2">
           <label className="text-sm font-medium text-slate-700">Gender</label>
-          <select
-            value={state.personalInfo.gender}
-            onChange={(e) => actions.updatePersonalInfo("gender", e.target.value)}
-            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white"
-            data-testid="select-gender"
-          >
-            <option value="" disabled hidden>Select gender</option>
-            {GENDERS.map((g) => (
-              <option key={g} value={g}>{g}</option>
-            ))}
-            <option value="Other">Other</option>
-          </select>
+          <div className="relative">
+            <select
+              value={state.personalInfo.gender}
+              onChange={(e) => actions.updatePersonalInfo("gender", e.target.value)}
+              className="w-full p-3 pr-10 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white appearance-none text-slate-900"
+              data-testid="select-gender"
+            >
+              <option value="" disabled hidden>Select gender</option>
+              {GENDERS.map((g) => (
+                <option key={g} value={g}>{g}</option>
+              ))}
+              <option value="Other">Other</option>
+            </select>
+            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+          </div>
         </div>
 
         {/* Education Level */}
@@ -630,9 +633,8 @@ export default function SurveyPage() {
                 type="button"
                 onClick={() => setIsEducationLevelFocused(!isEducationLevelFocused)}
                 className={cn(
-                  "w-full p-3 pr-10 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between",
-                  isEducationLevelFocused ? "border-primary" : "border-slate-200",
-                  state.personalInfo.educationLevel ? "text-slate-900" : "text-slate-500"
+                  "w-full p-3 pr-10 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
+                  isEducationLevelFocused ? "border-primary" : "border-slate-200"
                 )}
                 data-testid="select-education-level"
               >
@@ -669,28 +671,34 @@ export default function SurveyPage() {
         <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">Graduation date (expected or actual)</label>
             <div className="grid grid-cols-2 gap-3">
-              <select
-                value={state.personalInfo.graduationMonth}
-                onChange={(e) => actions.updatePersonalInfo("graduationMonth", e.target.value)}
-                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white"
-                data-testid="select-graduation-month"
-              >
-                <option value="">Month</option>
-                {months.map((m) => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
-              <select
-                value={state.personalInfo.graduationYear}
-                onChange={(e) => actions.updatePersonalInfo("graduationYear", e.target.value)}
-                className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white"
-                data-testid="select-graduation-year"
-              >
-                <option value="">Year</option>
-                {years.map((y) => (
-                  <option key={y} value={y}>{y}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  value={state.personalInfo.graduationMonth}
+                  onChange={(e) => actions.updatePersonalInfo("graduationMonth", e.target.value)}
+                  className="w-full p-3 pr-10 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white appearance-none text-slate-900"
+                  data-testid="select-graduation-month"
+                >
+                  <option value="">Month</option>
+                  {months.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+              </div>
+              <div className="relative">
+                <select
+                  value={state.personalInfo.graduationYear}
+                  onChange={(e) => actions.updatePersonalInfo("graduationYear", e.target.value)}
+                  className="w-full p-3 pr-10 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors bg-white appearance-none text-slate-900"
+                  data-testid="select-graduation-year"
+                >
+                  <option value="">Year</option>
+                  {years.map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+              </div>
             </div>
         </div>
 
