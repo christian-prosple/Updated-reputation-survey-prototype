@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button-custom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { ChevronRight, ChevronLeft, ChevronDown, GripVertical, CheckCircle2, RefreshCw, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import headerImage from "@assets/Screenshot_2026-01-22_at_3.04.34_pm_1769054676986.png";
 
 interface ManualCompany {
   name: string;
@@ -1770,17 +1771,12 @@ export default function SurveyPage() {
     >
       {/* Header */}
       <header className="bg-white border-b sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#96D2C0] rounded-full flex items-center justify-center text-slate-800 font-bold text-xl font-display">
-              P
-            </div>
-            <span className="font-display font-bold text-xl tracking-tight text-slate-900">Prosple</span>
-          </div>
-          <div className="text-sm font-medium text-slate-500">
-            Career Preferences
-          </div>
-        </div>
+        <img 
+          src={headerImage} 
+          alt="Prosple Header" 
+          className="w-full h-auto"
+          data-testid="img-header"
+        />
       </header>
 
       {/* Main Content */}
