@@ -793,7 +793,7 @@ export default function SurveyPage() {
 
             <input
               type="text"
-              placeholder={state.selectedDegrees.length === 0 ? "Search for study areas..." : ""}
+              placeholder={state.selectedDegrees.length === 0 ? "Search for study fields..." : ""}
               value={degreeSearchQuery}
               onFocus={(e) => {
                 e.stopPropagation();
@@ -889,7 +889,7 @@ export default function SurveyPage() {
                         })}
                       {ALL_DEGREES.filter(degree => degree.toLowerCase().includes(degreeSearchQuery.toLowerCase())).length === 0 && (
                         <div className="px-3 py-2 text-sm text-muted-foreground">
-                          No matching study areas found
+                          No matching study fields found
                         </div>
                       )}
                     </>
