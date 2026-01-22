@@ -1745,7 +1745,7 @@ export default function SurveyPage() {
           className="px-12 bg-[#96D2C0] text-slate-900 hover:bg-[#85c1af] shadow-lg shadow-[#96D2C0]/20 font-bold"
           onClick={() => actions.nextStep()}
         >
-          Submit Ranking
+          Submit shortlist
         </Button>
       </div>
     </div>
