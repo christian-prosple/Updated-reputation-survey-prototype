@@ -1432,57 +1432,57 @@ export default function SurveyPage() {
       </div>
 
       {activePair ? (
-        <div className="flex flex-col md:flex-row gap-8 items-center mb-12 relative">
+        <div className="flex flex-row gap-3 md:gap-8 items-center mb-12 relative">
            {/* Option A */}
            <motion.div 
              initial={{ opacity: 0, x: -20 }}
              animate={{ opacity: 1, x: 0 }}
-             className="flex flex-col h-full w-full md:flex-1"
+             className="flex flex-col h-full flex-1"
            >
              <button
                 onClick={() => handlePairChoice(activePair[0].id)}
-                className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-3xl p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[240px]"
+                className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-4 md:p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[180px] md:min-h-[240px]"
              >
                 <CompanyLogo name={activePair[0].name} size="lg" />
-                <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-4">
+                <h3 className="text-base md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-2 md:mt-4 line-clamp-2">
                   {activePair[0].name}
                 </h3>
-                <p className="mt-2 text-sm text-muted-foreground italic">
+                <p className="mt-1 md:mt-2 text-xs md:text-sm text-muted-foreground italic">
                   working in
                 </p>
-                <p className="mt-2 text-sm font-bold text-slate-700">
+                <p className="mt-1 md:mt-2 text-xs md:text-sm font-bold text-slate-700 text-center line-clamp-2">
                   {activePair[0].role}
                 </p>
-                <span className="mt-4 text-sm font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="mt-2 md:mt-4 text-xs md:text-sm font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
                   Select this company →
                 </span>
              </button>
            </motion.div>
 
            {/* VS Badge in middle */}
-           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center font-bold text-slate-300 shadow-sm border border-slate-100 z-10 flex-shrink-0">OR</div>
+           <div className="w-8 h-8 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center font-bold text-slate-300 shadow-sm border border-slate-100 z-10 flex-shrink-0 text-xs md:text-base">OR</div>
 
            {/* Option B */}
            <motion.div 
              initial={{ opacity: 0, x: 20 }}
              animate={{ opacity: 1, x: 0 }}
-             className="flex flex-col h-full w-full md:flex-1"
+             className="flex flex-col h-full flex-1"
            >
              <button
                 onClick={() => handlePairChoice(activePair[1].id)}
-                className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-3xl p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[240px]"
+                className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-4 md:p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[180px] md:min-h-[240px]"
              >
                 <CompanyLogo name={activePair[1].name} size="lg" />
-                <h3 className="text-2xl md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-4">
+                <h3 className="text-base md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-2 md:mt-4 line-clamp-2">
                   {activePair[1].name}
                 </h3>
-                <p className="mt-2 text-sm text-muted-foreground italic">
+                <p className="mt-1 md:mt-2 text-xs md:text-sm text-muted-foreground italic">
                   working in
                 </p>
-                <p className="mt-2 text-sm font-bold text-slate-700">
+                <p className="mt-1 md:mt-2 text-xs md:text-sm font-bold text-slate-700 text-center line-clamp-2">
                   {activePair[1].role}
                 </p>
-                <span className="mt-4 text-sm font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="mt-2 md:mt-4 text-xs md:text-sm font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
                   Select this company →
                 </span>
              </button>
