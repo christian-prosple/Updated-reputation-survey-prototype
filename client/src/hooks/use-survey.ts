@@ -502,8 +502,8 @@ export function useSurvey() {
         return { ...prev, step: 2, roleOrder: prev.selectedRoles };
       }
 
-      // Cap at step 7 (Thank You)
-      return { ...prev, step: Math.min(next, 7) };
+      // Cap at step 6 (Thank You)
+      return { ...prev, step: Math.min(next, 6) };
     });
   };
   

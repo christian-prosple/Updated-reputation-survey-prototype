@@ -417,16 +417,16 @@ export default function SurveyPage() {
     return Math.min(state.selectedCompanies.length, 20);
   }, [state.selectedCompanies.length]);
 
-  // --- EFFECT: Initialize Companies for Step 4 ---
+  // --- EFFECT: Initialize Companies for Step 3 (Company Selection) ---
   useEffect(() => {
-    if (state.step === 4 && state.displayedCompanies.length === 0) {
+    if (state.step === 3 && state.displayedCompanies.length === 0) {
       actions.generateCompanyPool();
     }
   }, [state.step]);
 
-  // --- EFFECT: Initialize Final Ranking for Step 6 ---
+  // --- EFFECT: Initialize Final Ranking for Step 5 (Final Ranking) ---
   useEffect(() => {
-    if (state.step === 6 && state.finalRanking.length === 0) {
+    if (state.step === 5 && state.finalRanking.length === 0) {
       actions.generateFinalRanking();
     }
   }, [state.step]);
