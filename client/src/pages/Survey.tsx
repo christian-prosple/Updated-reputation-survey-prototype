@@ -1410,9 +1410,7 @@ export default function SurveyPage() {
   const renderStep4 = () => (
     <div className="flex flex-col h-full justify-center max-w-4xl mx-auto w-full">
       <div className="text-center mb-6">
-        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
-          Which of these two would you prefer to work for?
-        </p>
+        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">Which opportunity would you choose?</p>
       </div>
 
       <div className="max-w-md mx-auto w-full mb-10 space-y-2">
