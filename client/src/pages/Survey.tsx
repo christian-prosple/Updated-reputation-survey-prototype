@@ -401,7 +401,7 @@ export default function SurveyPage() {
   };
 
   // --- DERIVED STATE ---
-  const totalSteps = 7; 
+  const totalSteps = 6; 
 
   const targetPairwiseCount = useMemo(() => {
     const n = state.selectedCompanies.length;
@@ -467,7 +467,7 @@ export default function SurveyPage() {
 
   // --- EFFECT: Manage Pairwise Loop ---
   useEffect(() => {
-    if (state.step === 5 && !activePair) {
+    if (state.step === 4 && !activePair) {
       if (state.pairwiseCount >= targetPairwiseCount) {
         actions.nextStep();
         return;
@@ -628,7 +628,8 @@ export default function SurveyPage() {
     const hasValidGender = gender.length > 0;
     const hasValidSchool = university.trim().length > 0;
     const hasValidGraduation = graduationMonth.length > 0 && graduationYear.length > 0;
-    return hasValidEmail && hasValidGender && country.trim() && hasValidSchool && hasValidGraduation;
+    const hasSelectedDegrees = state.selectedDegrees.length > 0;
+    return hasValidEmail && hasValidGender && country.trim() && hasValidSchool && hasValidGraduation && hasSelectedDegrees;
   };
   
   // Helper to check if graduation date is in the future
@@ -750,6 +751,139 @@ export default function SurveyPage() {
                 ))}
               </div>
             )}
+        </div>
+
+        {/* Area of Study - inline searchable multi-select */}
+        <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
+          <label className="text-sm font-medium text-slate-700">
+            {isGraduationInFuture() ? "What is your area of study?" : "What was your area of study?"} (Select all that apply)
+          </label>
+          <div className={cn(
+            "min-h-[48px] w-full p-2 bg-white border-2 rounded-xl flex flex-wrap gap-2 items-center transition-all duration-200 cursor-text",
+            isDegreeSearchFocused ? "border-primary shadow-lg" : "border-slate-200"
+          )}
+          onClick={() => setIsDegreeSearchFocused(true)}
+          >
+            <div className="flex items-center pl-1">
+              <Search className="w-4 h-4 text-slate-400" />
+            </div>
+            
+            <AnimatePresence>
+              {state.selectedDegrees.map((degree) => (
+                <motion.div
+                  key={degree}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="bg-primary/10 text-primary-foreground border border-primary/20 px-2 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold group"
+                >
+                  <span className="text-slate-900">{degree}</span>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      actions.selectDegree(degree);
+                    }}
+                    className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                  >
+                    <X className="w-3 h-3 text-slate-600" />
+                  </button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            <input
+              type="text"
+              placeholder={state.selectedDegrees.length === 0 ? "Search for study areas..." : ""}
+              value={degreeSearchQuery}
+              onFocus={(e) => {
+                e.stopPropagation();
+                setIsDegreeSearchFocused(true);
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsDegreeSearchFocused(true);
+              }}
+              onChange={(e) => setDegreeSearchQuery(e.target.value)}
+              className="flex-1 min-w-[100px] bg-transparent border-none outline-none py-1 px-1 text-sm text-slate-900 placeholder:text-slate-400"
+              data-testid="input-degree-search"
+            />
+          </div>
+
+          {/* Degree dropdown */}
+          <AnimatePresence>
+            {isDegreeSearchFocused && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-64 overflow-y-auto z-50"
+              >
+                <div className="p-2 space-y-1">
+                  {degreeSearchQuery.length === 0 ? (
+                    ALL_DEGREES.map((degree) => {
+                      const isSelected = state.selectedDegrees.includes(degree);
+                      return (
+                        <div
+                          key={degree}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDegreeSelection(degree);
+                          }}
+                          className={cn(
+                            "cursor-pointer rounded-lg p-2.5 flex items-center justify-between transition-colors text-sm",
+                            isSelected ? "bg-primary/10" : "hover:bg-slate-50"
+                          )}
+                        >
+                          <span className={cn("font-medium", isSelected ? "text-slate-900 font-bold" : "text-slate-600")}>
+                            {degree}
+                          </span>
+                          {isSelected && <CheckCircle2 className="w-4 h-4 text-primary" />}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <>
+                      <div className="px-2 py-1 text-xs font-bold uppercase tracking-widest text-slate-400">
+                        Search Results
+                      </div>
+                      {ALL_DEGREES
+                        .filter(degree => degree.toLowerCase().includes(degreeSearchQuery.toLowerCase()))
+                        .map((degree) => {
+                          const isSelected = state.selectedDegrees.includes(degree);
+                          return (
+                            <div
+                              key={degree}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDegreeSelection(degree);
+                              }}
+                              className={cn(
+                                "cursor-pointer rounded-lg p-2.5 flex items-center justify-between transition-colors text-sm",
+                                isSelected ? "bg-primary/10" : "hover:bg-slate-50"
+                              )}
+                            >
+                              <span className={cn("font-medium", isSelected ? "text-slate-900 font-bold" : "text-slate-600")}>
+                                {degree}
+                              </span>
+                              {isSelected && <CheckCircle2 className="w-4 h-4 text-primary" />}
+                            </div>
+                          );
+                        })}
+                      {ALL_DEGREES.filter(degree => degree.toLowerCase().includes(degreeSearchQuery.toLowerCase())).length === 0 && (
+                        <div className="px-3 py-2 text-sm text-muted-foreground">
+                          No matching study areas found
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Graduation Date */}
@@ -905,177 +1039,8 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 1: DEGREE SELECTION (Searchable dropdown like role selection)
-  const renderStep1 = () => {
-    // Dynamic question text based on graduation date
-    const questionText = isGraduationInFuture()
-      ? "What is your area of study? (Select all that apply)"
-      : "What was your area of study? (Select all that apply)";
-
-    return (
-    <div className="space-y-6">
-      <div className="text-center mb-8">
-        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
-          {questionText}
-        </p>
-      </div>
-
-      <div className="space-y-8 max-w-2xl mx-auto w-full relative">
-        {/* Search Bar with Selected Pills */}
-        <div className="relative z-50" onClick={(e) => e.stopPropagation()}>
-          <div className={cn(
-            "min-h-[56px] w-full p-2 bg-white border-2 rounded-2xl flex flex-wrap gap-2 items-center transition-all duration-200",
-            (isDegreeSearchFocused || degreeSearchQuery) ? "border-primary shadow-lg" : "border-slate-200 shadow-sm"
-          )}>
-            <div className="flex items-center pl-2">
-              <Search className="w-5 h-5 text-slate-400" />
-            </div>
-            
-            <AnimatePresence>
-              {state.selectedDegrees.map((degree) => (
-                <motion.div
-                  key={degree}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  className="bg-primary/10 text-primary-foreground border border-primary/20 px-3 py-1.5 rounded-xl flex items-center gap-2 text-sm font-bold group"
-                >
-                  <span className="text-slate-900">{degree}</span>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      actions.selectDegree(degree);
-                    }}
-                    className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
-                  >
-                    <X className="w-3.5 h-3.5 text-slate-600" />
-                  </button>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-
-            <input
-              type="text"
-              placeholder={state.selectedDegrees.length === 0 ? "Search for study areas..." : ""}
-              value={degreeSearchQuery}
-              onFocus={(e) => {
-                e.stopPropagation();
-                setIsDegreeSearchFocused(true);
-              }}
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsDegreeSearchFocused(true);
-              }}
-              onChange={(e) => setDegreeSearchQuery(e.target.value)}
-              className="flex-1 min-w-[120px] bg-transparent border-none outline-none py-2 px-2 text-slate-900 placeholder:text-slate-400"
-              data-testid="input-degree-search"
-            />
-          </div>
-
-          {/* Dropdown Results */}
-          <AnimatePresence>
-            {(isDegreeSearchFocused || degreeSearchQuery) && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                }}
-                className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-slate-100 rounded-2xl shadow-xl max-h-[400px] overflow-hidden flex flex-col z-50"
-              >
-                <div className="overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-slate-200">
-                  {degreeSearchQuery.length === 0 ? (
-                    <>
-                      {ALL_DEGREES.map((degree) => {
-                        const isSelected = state.selectedDegrees.includes(degree);
-                        return (
-                          <div
-                            key={degree}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDegreeSelection(degree);
-                            }}
-                            className={cn(
-                              "cursor-pointer rounded-xl p-3 flex items-center justify-between transition-colors",
-                              isSelected ? "bg-primary/10" : "hover:bg-slate-50"
-                            )}
-                          >
-                            <span className={cn("text-sm font-medium", isSelected ? "text-slate-900 font-bold" : "text-slate-600")}>
-                              {degree}
-                            </span>
-                            {isSelected && <CheckCircle2 className="w-4 h-4 text-primary" />}
-                          </div>
-                        );
-                      })}
-                    </>
-                  ) : (
-                    <>
-                      <div className="px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">
-                        Search Results
-                      </div>
-                      {ALL_DEGREES
-                        .filter(degree => degree.toLowerCase().includes(degreeSearchQuery.toLowerCase()))
-                        .map((degree) => {
-                          const isSelected = state.selectedDegrees.includes(degree);
-                          return (
-                            <div
-                              key={degree}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDegreeSelection(degree);
-                              }}
-                              className={cn(
-                                "cursor-pointer rounded-xl p-3 flex items-center justify-between transition-colors",
-                                isSelected ? "bg-primary/10" : "hover:bg-slate-50"
-                              )}
-                            >
-                              <span className={cn("text-sm font-medium", isSelected ? "text-slate-900 font-bold" : "text-slate-600")}>
-                                {degree}
-                              </span>
-                              {isSelected && <CheckCircle2 className="w-4 h-4 text-primary" />}
-                            </div>
-                          );
-                        })}
-                      {ALL_DEGREES.filter(degree => degree.toLowerCase().includes(degreeSearchQuery.toLowerCase())).length === 0 && (
-                        <div className="px-4 py-3 text-sm text-muted-foreground">
-                          No matching degrees found
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-
-      <div className="flex justify-center mt-12 gap-4">
-        <Button 
-          variant="outline" 
-          size="lg" 
-          onClick={() => actions.prevStep()}
-          className="w-full max-w-[160px] text-slate-900 border-slate-200"
-        >
-          <ChevronLeft className="mr-2 w-5 h-5" /> Back
-        </Button>
-        <Button 
-          onClick={() => actions.nextStep()} 
-          disabled={state.selectedDegrees.length === 0}
-          size="lg"
-          className="w-full max-w-[160px]"
-        >
-          Continue <ChevronRight className="ml-2 w-5 h-5" />
-        </Button>
-      </div>
-    </div>
-    );
-  };
-
-  // STEP 2: ROLE SELECTION
-  const renderStep2 = () => (
+  // STEP 1: ROLE SELECTION
+  const renderStep1 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">What career path(s) are you most interested in?</p>
@@ -1264,8 +1229,8 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 3: ROLE ORDERING
-  const renderStep3 = () => (
+  // STEP 2: ROLE ORDERING
+  const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
@@ -1308,8 +1273,8 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 4: COMPANY SELECTION
-  const renderStep4 = () => {
+  // STEP 3: COMPANY SELECTION
+  const renderStep3 = () => {
     // Get unique company names from displayed entities
     const uniqueCompanyNames = Array.from(new Set(state.displayedCompanies.map(c => c.name)));
     
@@ -1374,8 +1339,8 @@ export default function SurveyPage() {
     );
   };
 
-  // STEP 5: PAIRWISE LOOP
-  const renderStep5 = () => (
+  // STEP 4: PAIRWISE LOOP
+  const renderStep4 = () => (
     <div className="flex flex-col h-full justify-center max-w-4xl mx-auto w-full">
       <div className="text-center mb-6">
         <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
@@ -1502,8 +1467,8 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 6: FINAL RANKING
-  const renderStep6 = () => (
+  // STEP 5: FINAL RANKING
+  const renderStep5 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">
@@ -1722,8 +1687,8 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 7: THANK YOU
-  const renderStep7 = () => (
+  // STEP 6: THANK YOU
+  const renderStep6 = () => (
     <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500">
       <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-8">
         <CheckCircle2 className="w-10 h-10" />
@@ -1756,7 +1721,7 @@ export default function SurveyPage() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center py-8 md:py-12 px-4 md:px-8 max-w-6xl mx-auto w-full">
-        {state.step <= 6 && <StepIndicator currentStep={state.step} totalSteps={totalSteps} />}
+        {state.step <= 5 && <StepIndicator currentStep={state.step} totalSteps={totalSteps} />}
         
         <AnimatePresence mode="wait">
           <motion.div
@@ -1774,7 +1739,6 @@ export default function SurveyPage() {
             {state.step === 4 && renderStep4()}
             {state.step === 5 && renderStep5()}
             {state.step === 6 && renderStep6()}
-            {state.step === 7 && renderStep7()}
           </motion.div>
         </AnimatePresence>
       </main>
