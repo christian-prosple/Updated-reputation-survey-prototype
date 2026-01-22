@@ -756,7 +756,7 @@ export default function SurveyPage() {
         {/* Area of Study - inline searchable multi-select */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
           <label className="text-sm font-medium text-slate-700">
-            {isGraduationInFuture() ? "What is your area of study?" : "What was your area of study?"} (Select all that apply)
+            Study field(s)
           </label>
           <div className={cn(
             "min-h-[48px] w-full p-2 bg-white border-2 rounded-xl flex flex-wrap gap-2 items-center transition-all duration-200 cursor-text",
