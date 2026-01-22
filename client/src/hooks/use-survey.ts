@@ -208,6 +208,7 @@ export interface PersonalInfo {
   graduationYear: string;
   country: string;
   university: string;
+  preferredCity: string;
 }
 
 export interface CompanyEntity {
@@ -244,7 +245,8 @@ export function useSurvey() {
       graduationMonth: "",
       graduationYear: "",
       country: "",
-      university: ""
+      university: "",
+      preferredCity: ""
     },
     selectedDegrees: [],
     selectedRoles: [],

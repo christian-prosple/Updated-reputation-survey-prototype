@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useSurvey, ROLES, RoleType, CompanyEntity, GENDERS, EDUCATION_STATUSES, ALL_COMPANY_NAMES, COMPANIES_BY_ROLE } from "@/hooks/use-survey";
 import { DEGREE_TAXONOMY, ALL_DEGREES, DEGREE_CATEGORIES } from "@/data/degrees";
+import { CITIES, formatCity } from "@/data/cities";
 import { StepIndicator } from "@/components/StepIndicator";
 import { Button } from "@/components/ui/button-custom";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
@@ -357,6 +358,7 @@ export default function SurveyPage() {
   const [isGradYearFocused, setIsGradYearFocused] = useState(false);
   const [degreeSearchQuery, setDegreeSearchQuery] = useState("");
   const [isDegreeSearchFocused, setIsDegreeSearchFocused] = useState(false);
+  const [isCitySearchFocused, setIsCitySearchFocused] = useState(false);
 
   // Get suggested roles based on selected company name
   const getSuggestedRolesForCompany = (companyName: string): RoleType[] => {
@@ -1032,6 +1034,60 @@ export default function SurveyPage() {
               {state.personalInfo.country && COUNTRIES.filter(c => c.name.toLowerCase().includes(state.personalInfo.country.toLowerCase())).length === 0 && (
                 <div className="px-4 py-3 text-sm text-muted-foreground">
                   No matching countries found
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Preferred Work Location (City) */}
+        <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
+          <label className="text-sm font-medium text-slate-700">Preferred work location (city)</label>
+          <input
+            type="text"
+            value={state.personalInfo.preferredCity}
+            onChange={(e) => actions.updatePersonalInfo("preferredCity", e.target.value)}
+            onFocus={() => setIsCitySearchFocused(true)}
+            onClick={() => setIsCitySearchFocused(true)}
+            placeholder="e.g. Sydney, Australia"
+            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
+            data-testid="input-preferred-city"
+          />
+          
+          {/* City dropdown suggestions */}
+          {isCitySearchFocused && (
+            <div 
+              className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-64 overflow-y-auto z-50"
+            >
+              {CITIES
+                .filter(c => {
+                  const formatted = formatCity(c);
+                  return !state.personalInfo.preferredCity || 
+                    formatted.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase()) ||
+                    c.city.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase()) ||
+                    c.country.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase());
+                })
+                .slice(0, 50) // Limit to 50 results for performance
+                .map((city) => (
+                  <div
+                    key={`${city.city}-${city.country}`}
+                    onClick={() => {
+                      actions.updatePersonalInfo("preferredCity", formatCity(city));
+                      setIsCitySearchFocused(false);
+                    }}
+                    className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0"
+                  >
+                    <span className="text-sm font-medium text-slate-700">{formatCity(city)}</span>
+                  </div>
+                ))}
+              {state.personalInfo.preferredCity && CITIES.filter(c => {
+                const formatted = formatCity(c);
+                return formatted.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase()) ||
+                  c.city.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase()) ||
+                  c.country.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase());
+              }).length === 0 && (
+                <div className="px-4 py-3 text-sm text-muted-foreground">
+                  No matching cities found
                 </div>
               )}
             </div>
@@ -1716,7 +1772,7 @@ export default function SurveyPage() {
   return (
     <div 
       className="min-h-screen bg-slate-50/50 flex flex-col font-sans text-slate-900"
-      onClick={() => { setIsSearchFocused(false); setIsCountrySearchFocused(false); setIsEducationLevelFocused(false); setIsGenderFocused(false); setIsGradMonthFocused(false); setIsGradYearFocused(false); setIsDegreeSearchFocused(false); }}
+      onClick={() => { setIsSearchFocused(false); setIsCountrySearchFocused(false); setIsEducationLevelFocused(false); setIsGenderFocused(false); setIsGradMonthFocused(false); setIsGradYearFocused(false); setIsDegreeSearchFocused(false); setIsCitySearchFocused(false); }}
     >
       {/* Header */}
       <header className="bg-white border-b sticky top-0 z-50">
