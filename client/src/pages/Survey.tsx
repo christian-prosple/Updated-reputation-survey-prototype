@@ -1602,9 +1602,9 @@ export default function SurveyPage() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-6 border-b">
-                <h3 className="text-lg font-bold text-slate-900">Select a role</h3>
+                <h3 className="text-lg font-bold text-slate-900">Select a career path</h3>
                 <p className="text-sm text-slate-500 mt-1">
-                  What role interests you at <span className="font-semibold text-slate-700">{newCompany.name}</span>?
+                  What career path do you want to work at <span className="font-semibold text-slate-700">{newCompany.name}</span> in?
                 </p>
                 
                 {/* Search bar */}
@@ -1615,7 +1615,7 @@ export default function SurveyPage() {
                     value={rolePopupSearchQuery}
                     onChange={(e) => setRolePopupSearchQuery(e.target.value)}
                     className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm outline-none transition-all bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary"
-                    placeholder="Search roles..."
+                    placeholder="Search..."
                     data-testid="input-role-search"
                   />
                 </div>
@@ -1628,7 +1628,7 @@ export default function SurveyPage() {
                 ).length > 0 && (
                   <>
                     <div className="px-2 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">
-                      Suggested Roles
+                      Suggested
                     </div>
                     {getSuggestedRolesForCompany(newCompany.name)
                       .filter(role => role.toLowerCase().includes(rolePopupSearchQuery.toLowerCase()))
@@ -1659,7 +1659,7 @@ export default function SurveyPage() {
                       "px-2 py-2 text-xs font-bold uppercase tracking-widest text-slate-400",
                       !isCustomCompany && "mt-4"
                     )}>
-                      {isCustomCompany ? "Select a Role" : "All Roles"}
+                      {isCustomCompany ? "All" : "All"}
                     </div>
                     {(isCustomCompany ? ROLES : ROLES.filter(role => 
                       !getSuggestedRolesForCompany(newCompany.name).includes(role)
