@@ -993,7 +993,7 @@ export default function SurveyPage() {
 
         {/* Country */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
-          <label className="text-sm font-medium text-slate-700">Country</label>
+          <label className="text-sm font-medium text-slate-700">Country of study</label>
           <input
             type="text"
             value={state.personalInfo.country}
