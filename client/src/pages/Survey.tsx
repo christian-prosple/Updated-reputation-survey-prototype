@@ -807,6 +807,20 @@ export default function SurveyPage() {
               className="flex-1 min-w-[100px] bg-transparent border-none outline-none py-1 px-1 text-sm text-slate-900 placeholder:text-slate-400"
               data-testid="input-degree-search"
             />
+            
+            {/* Clear all button - only shows when degrees are selected */}
+            {state.selectedDegrees.length > 0 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  state.selectedDegrees.forEach(degree => actions.selectDegree(degree));
+                }}
+                className="p-1 hover:bg-slate-100 rounded-full transition-colors flex-shrink-0"
+                data-testid="button-clear-degrees"
+              >
+                <X className="w-4 h-4 text-slate-400" />
+              </button>
+            )}
           </div>
 
           {/* Degree dropdown */}
