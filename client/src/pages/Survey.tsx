@@ -404,7 +404,7 @@ export default function SurveyPage() {
   };
 
   // --- DERIVED STATE ---
-  const totalSteps = 6; 
+  const totalSteps = 7; 
 
   const targetPairwiseCount = useMemo(() => {
     const n = state.selectedCompanies.length;
@@ -418,16 +418,16 @@ export default function SurveyPage() {
     return Math.min(state.selectedCompanies.length, 20);
   }, [state.selectedCompanies.length]);
 
-  // --- EFFECT: Initialize Companies for Step 3 (Company Selection) ---
+  // --- EFFECT: Initialize Companies for Step 4 (Company Selection) ---
   useEffect(() => {
-    if (state.step === 3 && state.displayedCompanies.length === 0) {
+    if (state.step === 4 && state.displayedCompanies.length === 0) {
       actions.generateCompanyPool();
     }
   }, [state.step]);
 
-  // --- EFFECT: Initialize Final Ranking for Step 5 (Final Ranking) ---
+  // --- EFFECT: Initialize Final Ranking for Step 6 (Final Ranking) ---
   useEffect(() => {
-    if (state.step === 5 && state.finalRanking.length === 0) {
+    if (state.step === 6 && state.finalRanking.length === 0) {
       actions.generateFinalRanking();
     }
   }, [state.step]);
@@ -470,7 +470,7 @@ export default function SurveyPage() {
 
   // --- EFFECT: Manage Pairwise Loop ---
   useEffect(() => {
-    if (state.step === 4 && !activePair) {
+    if (state.step === 5 && !activePair) {
       if (state.pairwiseCount >= targetPairwiseCount) {
         actions.nextStep();
         return;
@@ -480,7 +480,7 @@ export default function SurveyPage() {
       if (next) {
         setActivePair(next);
       } else {
-        // No more pairs? Auto-advance to step 6
+        // No more pairs? Auto-advance to final ranking
         actions.nextStep();
       }
     }
@@ -624,15 +624,23 @@ export default function SurveyPage() {
     "Non-degree seeking"
   ];
 
-  // Check if personal info is complete enough to continue
-  const isPersonalInfoValid = () => {
-    const { email, gender, country, university, graduationMonth, graduationYear } = state.personalInfo;
+  // Check if step 0 info (email, location, gender) is complete
+  const isStep0Valid = () => {
+    const { email, gender, preferredCity } = state.personalInfo;
     const hasValidEmail = email.includes("@") && email.includes(".");
     const hasValidGender = gender.length > 0;
+    const hasValidCity = preferredCity.trim().length > 0;
+    return hasValidEmail && hasValidGender && hasValidCity;
+  };
+
+  // Check if step 1 info (education details) is complete
+  const isStep1Valid = () => {
+    const { country, university, graduationMonth, graduationYear } = state.personalInfo;
+    const hasValidCountry = country.trim().length > 0;
     const hasValidSchool = university.trim().length > 0;
     const hasValidGraduation = graduationMonth.length > 0 && graduationYear.length > 0;
     const hasSelectedDegrees = state.selectedDegrees.length > 0;
-    return hasValidEmail && hasValidGender && country.trim() && hasValidSchool && hasValidGraduation && hasSelectedDegrees;
+    return hasValidCountry && hasValidSchool && hasValidGraduation && hasSelectedDegrees;
   };
   
   // Helper to check if graduation date is in the future
@@ -648,7 +656,7 @@ export default function SurveyPage() {
     return gradDate > today;
   };
 
-  // STEP 0: PERSONAL INFO
+  // STEP 0: PERSONAL INFO - Email, Preferred Work Location, Gender
   const renderStep0 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
@@ -669,6 +677,60 @@ export default function SurveyPage() {
             className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
             data-testid="input-email"
           />
+        </div>
+
+        {/* Preferred Work Location (City) */}
+        <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
+          <label className="text-sm font-medium text-slate-700">Preferred work location (city)</label>
+          <input
+            type="text"
+            value={state.personalInfo.preferredCity}
+            onChange={(e) => actions.updatePersonalInfo("preferredCity", e.target.value)}
+            onFocus={() => setIsCitySearchFocused(true)}
+            onClick={() => setIsCitySearchFocused(true)}
+            placeholder="e.g. Sydney, Australia"
+            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
+            data-testid="input-preferred-city"
+          />
+          
+          {/* City dropdown suggestions - only show when typing */}
+          {isCitySearchFocused && state.personalInfo.preferredCity.length > 0 && (
+            <div 
+              className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-64 overflow-y-auto z-50"
+            >
+              {CITIES
+                .filter(c => {
+                  const formatted = formatCity(c);
+                  return !state.personalInfo.preferredCity || 
+                    formatted.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase()) ||
+                    c.city.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase()) ||
+                    c.country.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase());
+                })
+                .slice(0, 50)
+                .map((city) => (
+                  <div
+                    key={`${city.city}-${city.country}`}
+                    onClick={() => {
+                      actions.updatePersonalInfo("preferredCity", formatCity(city));
+                      setIsCitySearchFocused(false);
+                    }}
+                    className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0"
+                  >
+                    <span className="text-sm font-medium text-slate-700">{formatCity(city)}</span>
+                  </div>
+                ))}
+              {state.personalInfo.preferredCity && CITIES.filter(c => {
+                const formatted = formatCity(c);
+                return formatted.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase()) ||
+                  c.city.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase()) ||
+                  c.country.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase());
+              }).length === 0 && (
+                <div className="px-4 py-3 text-sm text-muted-foreground">
+                  No matching cities found
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Gender */}
@@ -707,6 +769,78 @@ export default function SurveyPage() {
                   {g}
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="flex justify-center mt-12 gap-4">
+        <Button 
+          onClick={() => actions.nextStep()} 
+          disabled={!isStep0Valid()}
+          size="lg"
+          className="w-full max-w-[160px]"
+          data-testid="button-continue-personal"
+        >
+          Continue <ChevronRight className="ml-2 w-5 h-5" />
+        </Button>
+      </div>
+    </div>
+  );
+
+  // STEP 1: EDUCATION INFO - Country of study, Education level, Study fields, School, Graduation date
+  const renderStep1 = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
+          Tell us about your education
+        </p>
+      </div>
+
+      <div className="max-w-xl mx-auto space-y-6">
+        {/* Country */}
+        <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
+          <label className="text-sm font-medium text-slate-700">Country of study</label>
+          <input
+            type="text"
+            value={state.personalInfo.country}
+            onChange={(e) => actions.updatePersonalInfo("country", e.target.value)}
+            onFocus={() => setIsCountrySearchFocused(true)}
+            onClick={() => setIsCountrySearchFocused(true)}
+            placeholder="e.g. Australia"
+            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
+            data-testid="input-country"
+          />
+          
+          {/* Country dropdown suggestions */}
+          {isCountrySearchFocused && (
+            <div 
+              className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-64 overflow-y-auto z-50"
+            >
+              {COUNTRIES
+                .filter(c => !state.personalInfo.country || c.name.toLowerCase().includes(state.personalInfo.country.toLowerCase()))
+                .map((country) => (
+                  <div
+                    key={country.code}
+                    onClick={() => {
+                      actions.updatePersonalInfo("country", country.name);
+                      setIsCountrySearchFocused(false);
+                    }}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0"
+                  >
+                    <img 
+                      src={getFlagUrl(country.code)} 
+                      alt={`${country.name} flag`}
+                      className="w-8 h-8 rounded-full object-cover border border-slate-200"
+                    />
+                    <span className="text-sm font-medium text-slate-700">{country.name}</span>
+                  </div>
+                ))}
+              {state.personalInfo.country && COUNTRIES.filter(c => c.name.toLowerCase().includes(state.personalInfo.country.toLowerCase())).length === 0 && (
+                <div className="px-4 py-3 text-sm text-muted-foreground">
+                  No matching countries found
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -900,6 +1034,19 @@ export default function SurveyPage() {
           </AnimatePresence>
         </div>
 
+        {/* School */}
+        <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">School</label>
+            <input
+              type="text"
+              value={state.personalInfo.university}
+              onChange={(e) => actions.updatePersonalInfo("university", e.target.value)}
+              placeholder="e.g. University of Melbourne"
+              className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
+              data-testid="input-school"
+          />
+        </div>
+
         {/* Graduation Date */}
         <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">Graduation date (expected or actual)</label>
@@ -977,129 +1124,24 @@ export default function SurveyPage() {
               </div>
             </div>
         </div>
-
-        {/* School */}
-        <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">School</label>
-            <input
-              type="text"
-              value={state.personalInfo.university}
-              onChange={(e) => actions.updatePersonalInfo("university", e.target.value)}
-              placeholder="e.g. University of Melbourne"
-              className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
-              data-testid="input-school"
-          />
-        </div>
-
-        {/* Country */}
-        <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
-          <label className="text-sm font-medium text-slate-700">Country of study</label>
-          <input
-            type="text"
-            value={state.personalInfo.country}
-            onChange={(e) => actions.updatePersonalInfo("country", e.target.value)}
-            onFocus={() => setIsCountrySearchFocused(true)}
-            onClick={() => setIsCountrySearchFocused(true)}
-            placeholder="e.g. Australia"
-            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
-            data-testid="input-country"
-          />
-          
-          {/* Country dropdown suggestions */}
-          {isCountrySearchFocused && (
-            <div 
-              className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-64 overflow-y-auto z-50"
-            >
-              {COUNTRIES
-                .filter(c => !state.personalInfo.country || c.name.toLowerCase().includes(state.personalInfo.country.toLowerCase()))
-                .map((country) => (
-                  <div
-                    key={country.code}
-                    onClick={() => {
-                      actions.updatePersonalInfo("country", country.name);
-                      setIsCountrySearchFocused(false);
-                    }}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0"
-                  >
-                    <img 
-                      src={getFlagUrl(country.code)} 
-                      alt={`${country.name} flag`}
-                      className="w-8 h-8 rounded-full object-cover border border-slate-200"
-                    />
-                    <span className="text-sm font-medium text-slate-700">{country.name}</span>
-                  </div>
-                ))}
-              {state.personalInfo.country && COUNTRIES.filter(c => c.name.toLowerCase().includes(state.personalInfo.country.toLowerCase())).length === 0 && (
-                <div className="px-4 py-3 text-sm text-muted-foreground">
-                  No matching countries found
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Preferred Work Location (City) */}
-        <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
-          <label className="text-sm font-medium text-slate-700">Preferred work location (city)</label>
-          <input
-            type="text"
-            value={state.personalInfo.preferredCity}
-            onChange={(e) => actions.updatePersonalInfo("preferredCity", e.target.value)}
-            onFocus={() => setIsCitySearchFocused(true)}
-            onClick={() => setIsCitySearchFocused(true)}
-            placeholder="e.g. Sydney, Australia"
-            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
-            data-testid="input-preferred-city"
-          />
-          
-          {/* City dropdown suggestions - only show when typing */}
-          {isCitySearchFocused && state.personalInfo.preferredCity.length > 0 && (
-            <div 
-              className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-64 overflow-y-auto z-50"
-            >
-              {CITIES
-                .filter(c => {
-                  const formatted = formatCity(c);
-                  return !state.personalInfo.preferredCity || 
-                    formatted.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase()) ||
-                    c.city.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase()) ||
-                    c.country.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase());
-                })
-                .slice(0, 50) // Limit to 50 results for performance
-                .map((city) => (
-                  <div
-                    key={`${city.city}-${city.country}`}
-                    onClick={() => {
-                      actions.updatePersonalInfo("preferredCity", formatCity(city));
-                      setIsCitySearchFocused(false);
-                    }}
-                    className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0"
-                  >
-                    <span className="text-sm font-medium text-slate-700">{formatCity(city)}</span>
-                  </div>
-                ))}
-              {state.personalInfo.preferredCity && CITIES.filter(c => {
-                const formatted = formatCity(c);
-                return formatted.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase()) ||
-                  c.city.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase()) ||
-                  c.country.toLowerCase().includes(state.personalInfo.preferredCity.toLowerCase());
-              }).length === 0 && (
-                <div className="px-4 py-3 text-sm text-muted-foreground">
-                  No matching cities found
-                </div>
-              )}
-            </div>
-          )}
-        </div>
       </div>
 
       <div className="flex justify-center mt-12 gap-4">
         <Button 
+          variant="outline"
+          onClick={() => actions.prevStep()} 
+          size="lg"
+          className="w-full max-w-[160px] text-slate-900 border-slate-200"
+          data-testid="button-back-education"
+        >
+          <ChevronLeft className="mr-2 w-5 h-5" /> Back
+        </Button>
+        <Button 
           onClick={() => actions.nextStep()} 
-          disabled={!isPersonalInfoValid()}
+          disabled={!isStep1Valid()}
           size="lg"
           className="w-full max-w-[160px]"
-          data-testid="button-continue-personal"
+          data-testid="button-continue-education"
         >
           Continue <ChevronRight className="ml-2 w-5 h-5" />
         </Button>
@@ -1107,8 +1149,8 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 1: ROLE SELECTION
-  const renderStep1 = () => (
+  // STEP 2: ROLE SELECTION
+  const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">What career path(s) are you most interested in?</p>
@@ -1297,8 +1339,8 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 2: ROLE ORDERING
-  const renderStep2 = () => (
+  // STEP 3: ROLE ORDERING
+  const renderStep3 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
@@ -1341,8 +1383,8 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 3: COMPANY SELECTION
-  const renderStep3 = () => {
+  // STEP 4: COMPANY SELECTION
+  const renderStep4 = () => {
     // Get unique company names from displayed entities
     const uniqueCompanyNames = Array.from(new Set(state.displayedCompanies.map(c => c.name)));
     
@@ -1407,8 +1449,8 @@ export default function SurveyPage() {
     );
   };
 
-  // STEP 4: PAIRWISE LOOP
-  const renderStep4 = () => (
+  // STEP 5: PAIRWISE LOOP
+  const renderStep5 = () => (
     <div className="flex flex-col h-full justify-center max-w-4xl mx-auto w-full">
       <div className="text-center mb-6">
         <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">Which opportunity would you choose?</p>
@@ -1533,8 +1575,8 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 5: FINAL RANKING
-  const renderStep5 = () => (
+  // STEP 6: FINAL RANKING
+  const renderStep6 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">
@@ -1752,8 +1794,8 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 6: THANK YOU
-  const renderStep6 = () => (
+  // STEP 7: THANK YOU
+  const renderStep7 = () => (
     <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500">
       <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-8">
         <CheckCircle2 className="w-10 h-10" />
@@ -1781,7 +1823,7 @@ export default function SurveyPage() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center py-8 md:py-12 px-4 md:px-8 max-w-6xl mx-auto w-full">
-        {state.step <= 5 && <StepIndicator currentStep={state.step} totalSteps={totalSteps} />}
+        {state.step <= 6 && <StepIndicator currentStep={state.step} totalSteps={totalSteps} />}
         
         <AnimatePresence mode="wait">
           <motion.div
@@ -1799,6 +1841,7 @@ export default function SurveyPage() {
             {state.step === 4 && renderStep4()}
             {state.step === 5 && renderStep5()}
             {state.step === 6 && renderStep6()}
+            {state.step === 7 && renderStep7()}
           </motion.div>
         </AnimatePresence>
       </main>
