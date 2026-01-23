@@ -1170,7 +1170,7 @@ export default function SurveyPage() {
   const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">What career path(s) are you most interested in?</p>
+        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">What career path(s) are you most interested in? <span className="text-red-500">*</span></p>
       </div>
 
       <div className="space-y-8 max-w-2xl mx-auto w-full relative">
