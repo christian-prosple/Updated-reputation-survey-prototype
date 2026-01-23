@@ -1820,6 +1820,14 @@ export default function SurveyPage() {
       <h2 className="text-4xl font-bold mb-4">Thanks for submitting your list!</h2>
       <p className="text-xl text-muted-foreground max-w-md mx-auto">Your preferences have been saved and will contribute towards Prosple's global employer rankings!</p>
       <p className="text-xl text-muted-foreground max-w-md mx-auto mt-4">You'll receive an email shortly with your list so you can start applying to your dream jobs.</p>
+      <Button 
+        size="lg"
+        className="mt-8 px-12 bg-[#96D2C0] text-slate-900 hover:bg-[#85c1af] shadow-lg shadow-[#96D2C0]/20 font-bold"
+        onClick={() => {}}
+        data-testid="button-continue-prosple"
+      >
+        Continue to Prosple
+      </Button>
     </div>
   );
 
