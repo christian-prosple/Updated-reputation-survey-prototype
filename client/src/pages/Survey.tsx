@@ -1409,7 +1409,7 @@ export default function SurveyPage() {
       <div className="space-y-6 h-full flex flex-col">
         <div className="text-center mb-4">
           <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
-            Which of the following employers do you recognise? Select all that apply.
+            Which of the following employers do you recognise? Select all that apply. <span className="text-red-500">*</span>
           </p>
         </div>
 
