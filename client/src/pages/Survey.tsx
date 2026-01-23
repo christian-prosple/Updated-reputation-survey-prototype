@@ -668,7 +668,7 @@ export default function SurveyPage() {
       <div className="max-w-xl mx-auto space-y-6">
         {/* Email */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Email (so we can send you your results)</label>
+          <label className="text-sm font-medium text-slate-700">Email (so we can send you your results) <span className="text-red-500">*</span></label>
           <input
             type="email"
             value={state.personalInfo.email}
@@ -681,7 +681,7 @@ export default function SurveyPage() {
 
         {/* Preferred Work Location (City) */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
-          <label className="text-sm font-medium text-slate-700">Preferred work location (city)</label>
+          <label className="text-sm font-medium text-slate-700">Preferred work location (city) <span className="text-red-500">*</span></label>
           <input
             type="text"
             value={state.personalInfo.preferredCity}
@@ -735,7 +735,7 @@ export default function SurveyPage() {
 
         {/* Gender */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
-          <label className="text-sm font-medium text-slate-700">Gender</label>
+          <label className="text-sm font-medium text-slate-700">Gender <span className="text-red-500">*</span></label>
           <div className="relative">
             <button
               type="button"
@@ -800,7 +800,7 @@ export default function SurveyPage() {
       <div className="max-w-xl mx-auto space-y-6">
         {/* Country */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
-          <label className="text-sm font-medium text-slate-700">Country of study</label>
+          <label className="text-sm font-medium text-slate-700">Country of study <span className="text-red-500">*</span></label>
           <input
             type="text"
             value={state.personalInfo.country}
@@ -847,7 +847,7 @@ export default function SurveyPage() {
 
         {/* Education Level */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
-            <label className="text-sm font-medium text-slate-700">Highest education level (completed or in progress)</label>
+            <label className="text-sm font-medium text-slate-700">Highest education level (completed or in progress) <span className="text-red-500">*</span></label>
             <div className="relative">
               <button
                 type="button"
@@ -890,7 +890,7 @@ export default function SurveyPage() {
         {/* Area of Study - inline searchable multi-select */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
           <label className="text-sm font-medium text-slate-700">
-            Study field(s)
+            Study field(s) <span className="text-red-500">*</span>
           </label>
           <div className={cn(
             "min-h-[48px] w-full p-2 bg-white border-2 rounded-xl flex flex-wrap gap-2 items-center transition-all duration-200 cursor-text",
@@ -1036,7 +1036,7 @@ export default function SurveyPage() {
 
         {/* School */}
         <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">School</label>
+            <label className="text-sm font-medium text-slate-700">School <span className="text-red-500">*</span></label>
             <input
               type="text"
               value={state.personalInfo.university}
@@ -1049,7 +1049,7 @@ export default function SurveyPage() {
 
         {/* Graduation Date - Calendar Style Picker */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
-            <label className="text-sm font-medium text-slate-700">Graduation date (expected or actual)</label>
+            <label className="text-sm font-medium text-slate-700">Graduation date (expected or actual) <span className="text-red-500">*</span></label>
             <button
               type="button"
               onClick={() => { 
