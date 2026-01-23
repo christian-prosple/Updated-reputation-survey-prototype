@@ -1361,7 +1361,7 @@ export default function SurveyPage() {
     <div className="space-y-6">
       <div className="text-center mb-8">
         <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
-          What career path are you most interested in?
+          What career path are you most interested in? <span className="text-red-500">*</span>
         </p>
         <p className="text-sm text-slate-500 mt-2">
           Drag and drop to sort your career paths in order of preference
