@@ -356,7 +356,7 @@ export default function SurveyPage() {
   const [isEducationLevelFocused, setIsEducationLevelFocused] = useState(false);
   const [isGenderFocused, setIsGenderFocused] = useState(false);
   const [isGradMonthFocused, setIsGradMonthFocused] = useState(false);
-  const [isGradYearFocused, setIsGradYearFocused] = useState(false);
+  const [pickerYear, setPickerYear] = useState<number | null>(null);
   const [degreeSearchQuery, setDegreeSearchQuery] = useState("");
   const [isDegreeSearchFocused, setIsDegreeSearchFocused] = useState(false);
   const [isCitySearchFocused, setIsCitySearchFocused] = useState(false);
@@ -1047,82 +1047,99 @@ export default function SurveyPage() {
           />
         </div>
 
-        {/* Graduation Date */}
-        <div className="space-y-2">
+        {/* Graduation Date - Calendar Style Picker */}
+        <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
             <label className="text-sm font-medium text-slate-700">Graduation date (expected or actual)</label>
-            <div className="grid grid-cols-2 gap-3">
-              {/* Month dropdown */}
-              <div className="relative" onClick={(e) => e.stopPropagation()}>
-                <button
-                  type="button"
-                  onClick={() => { setIsGradMonthFocused(!isGradMonthFocused); setIsGradYearFocused(false); }}
-                  className={cn(
-                    "w-full p-3 pr-3 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
-                    isGradMonthFocused ? "border-primary" : "border-slate-200"
-                  )}
-                  data-testid="select-graduation-month"
-                >
-                  <span>{state.personalInfo.graduationMonth || "Month"}</span>
-                  <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform flex-shrink-0", isGradMonthFocused && "rotate-180")} />
-                </button>
+            <button
+              type="button"
+              onClick={() => { 
+                setIsGradMonthFocused(!isGradMonthFocused); 
+                if (!pickerYear) setPickerYear(parseInt(state.personalInfo.graduationYear) || currentYear);
+              }}
+              className={cn(
+                "w-full p-3 pr-3 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
+                isGradMonthFocused ? "border-primary" : "border-slate-200"
+              )}
+              data-testid="select-graduation-date"
+            >
+              <span>
+                {state.personalInfo.graduationMonth && state.personalInfo.graduationYear 
+                  ? `${state.personalInfo.graduationMonth} ${state.personalInfo.graduationYear}`
+                  : "Select graduation date"}
+              </span>
+              <div className="flex items-center gap-2">
+                {state.personalInfo.graduationMonth && state.personalInfo.graduationYear && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      actions.updatePersonalInfo("graduationMonth", "");
+                      actions.updatePersonalInfo("graduationYear", "");
+                    }}
+                    className="p-0.5 hover:bg-slate-100 rounded-full"
+                  >
+                    <X className="w-4 h-4 text-slate-400" />
+                  </button>
+                )}
+                <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform flex-shrink-0", isGradMonthFocused && "rotate-180")} />
+              </div>
+            </button>
+            
+            {isGradMonthFocused && (
+              <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl z-50 p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPickerYear(prev => (prev || currentYear) - 1);
+                    }}
+                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5 text-slate-600" />
+                  </button>
+                  <span className="text-lg font-bold text-slate-900">{pickerYear || currentYear}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setPickerYear(prev => (prev || currentYear) + 1);
+                    }}
+                    className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5 text-slate-600" />
+                  </button>
+                </div>
                 
-                {isGradMonthFocused && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50">
-                    {months.map((m) => (
-                      <div
-                        key={m}
-                        onClick={() => {
-                          actions.updatePersonalInfo("graduationMonth", m);
+                <div className="grid grid-cols-3 gap-2">
+                  {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map((shortMonth, idx) => {
+                    const fullMonth = months[idx];
+                    const isSelected = state.personalInfo.graduationMonth === fullMonth && 
+                                       state.personalInfo.graduationYear === String(pickerYear || currentYear);
+                    return (
+                      <button
+                        key={shortMonth}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          actions.updatePersonalInfo("graduationMonth", fullMonth);
+                          actions.updatePersonalInfo("graduationYear", String(pickerYear || currentYear));
                           setIsGradMonthFocused(false);
                         }}
                         className={cn(
-                          "px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0 text-sm font-medium",
-                          state.personalInfo.graduationMonth === m ? "bg-primary/10 text-slate-900" : "text-slate-700"
+                          "py-2.5 px-4 rounded-full text-sm font-medium transition-colors",
+                          isSelected 
+                            ? "bg-slate-800 text-white" 
+                            : "text-slate-600 hover:bg-slate-100"
                         )}
                       >
-                        {m}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                        {shortMonth}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              
-              {/* Year dropdown */}
-              <div className="relative" onClick={(e) => e.stopPropagation()}>
-                <button
-                  type="button"
-                  onClick={() => { setIsGradYearFocused(!isGradYearFocused); setIsGradMonthFocused(false); }}
-                  className={cn(
-                    "w-full p-3 pr-3 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
-                    isGradYearFocused ? "border-primary" : "border-slate-200"
-                  )}
-                  data-testid="select-graduation-year"
-                >
-                  <span>{state.personalInfo.graduationYear || "Year"}</span>
-                  <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform flex-shrink-0", isGradYearFocused && "rotate-180")} />
-                </button>
-                
-                {isGradYearFocused && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50">
-                    {years.map((y) => (
-                      <div
-                        key={y}
-                        onClick={() => {
-                          actions.updatePersonalInfo("graduationYear", y);
-                          setIsGradYearFocused(false);
-                        }}
-                        className={cn(
-                          "px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0 text-sm font-medium",
-                          state.personalInfo.graduationYear === y ? "bg-primary/10 text-slate-900" : "text-slate-700"
-                        )}
-                      >
-                        {y}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            )}
         </div>
       </div>
 
@@ -1809,7 +1826,7 @@ export default function SurveyPage() {
   return (
     <div 
       className="min-h-screen bg-slate-50/50 flex flex-col font-sans text-slate-900"
-      onClick={() => { setIsSearchFocused(false); setIsCountrySearchFocused(false); setIsEducationLevelFocused(false); setIsGenderFocused(false); setIsGradMonthFocused(false); setIsGradYearFocused(false); setIsDegreeSearchFocused(false); setIsCitySearchFocused(false); }}
+      onClick={() => { setIsSearchFocused(false); setIsCountrySearchFocused(false); setIsEducationLevelFocused(false); setIsGenderFocused(false); setIsGradMonthFocused(false); setIsDegreeSearchFocused(false); setIsCitySearchFocused(false); }}
     >
       {/* Header */}
       <header className="bg-white border-b sticky top-0 z-50">
