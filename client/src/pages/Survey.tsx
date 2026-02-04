@@ -1500,7 +1500,7 @@ export default function SurveyPage() {
            >
              <button
                 onClick={() => handlePairChoice(activePair[0].id)}
-                className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-4 md:p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[180px] md:min-h-[240px]"
+                className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-4 md:p-8 transition-all duration-300 text-left flex flex-col items-center justify-center h-[220px] md:h-[280px] overflow-hidden"
              >
                 <CompanyLogo name={activePair[0].name} size="lg" />
                 <h3 className="text-base md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-2 md:mt-4 line-clamp-2">
@@ -1529,7 +1529,7 @@ export default function SurveyPage() {
            >
              <button
                 onClick={() => handlePairChoice(activePair[1].id)}
-                className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-4 md:p-8 transition-all duration-300 text-left flex flex-col items-center justify-center min-h-[180px] md:min-h-[240px]"
+                className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-4 md:p-8 transition-all duration-300 text-left flex flex-col items-center justify-center h-[220px] md:h-[280px] overflow-hidden"
              >
                 <CompanyLogo name={activePair[1].name} size="lg" />
                 <h3 className="text-base md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-2 md:mt-4 line-clamp-2">
