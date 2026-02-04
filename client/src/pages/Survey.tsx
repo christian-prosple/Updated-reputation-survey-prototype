@@ -1491,16 +1491,16 @@ export default function SurveyPage() {
       </div>
 
       {activePair ? (
-        <div className="flex flex-row gap-3 md:gap-8 items-center mb-12 relative">
+        <div className="flex flex-row gap-3 md:gap-8 items-stretch mb-12 relative">
            {/* Option A */}
            <motion.div 
              initial={{ opacity: 0, x: -20 }}
              animate={{ opacity: 1, x: 0 }}
-             className="flex flex-col h-full flex-1"
+             className="flex-1"
            >
              <button
                 onClick={() => handlePairChoice(activePair[0].id)}
-                className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-4 md:p-8 transition-all duration-300 text-left flex flex-col items-center justify-center h-[220px] md:h-[280px] overflow-hidden"
+                className="group relative w-full bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-4 md:p-8 transition-all duration-300 text-left flex flex-col items-center justify-center h-[220px] md:h-[280px]"
              >
                 <CompanyLogo name={activePair[0].name} size="lg" />
                 <h3 className="text-base md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-2 md:mt-4 line-clamp-2">
@@ -1525,11 +1525,11 @@ export default function SurveyPage() {
            <motion.div 
              initial={{ opacity: 0, x: 20 }}
              animate={{ opacity: 1, x: 0 }}
-             className="flex flex-col h-full flex-1"
+             className="flex-1"
            >
              <button
                 onClick={() => handlePairChoice(activePair[1].id)}
-                className="group relative flex-1 bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-4 md:p-8 transition-all duration-300 text-left flex flex-col items-center justify-center h-[220px] md:h-[280px] overflow-hidden"
+                className="group relative w-full bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-4 md:p-8 transition-all duration-300 text-left flex flex-col items-center justify-center h-[220px] md:h-[280px]"
              >
                 <CompanyLogo name={activePair[1].name} size="lg" />
                 <h3 className="text-base md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-2 md:mt-4 line-clamp-2">
