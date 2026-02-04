@@ -1500,19 +1500,19 @@ export default function SurveyPage() {
            >
              <button
                 onClick={() => handlePairChoice(activePair[0].id)}
-                className="group relative w-full bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-4 md:p-8 transition-all duration-300 text-left flex flex-col items-center justify-center h-[220px] md:h-[280px]"
+                className="group relative w-full bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-3 md:p-6 transition-all duration-300 text-left flex flex-col items-center justify-center h-[220px] md:h-[280px]"
              >
                 <CompanyLogo name={activePair[0].name} size="lg" />
-                <h3 className="text-base md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-2 md:mt-4 line-clamp-2">
+                <h3 className="text-sm md:text-2xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-2 md:mt-3 line-clamp-2 w-full px-1">
                   {activePair[0].name}
                 </h3>
-                <p className="mt-1 md:mt-2 text-xs md:text-sm text-muted-foreground italic">
+                <p className="mt-1 text-xs md:text-sm text-muted-foreground italic">
                   working in
                 </p>
-                <p className="mt-1 md:mt-2 text-xs md:text-sm font-bold text-slate-700 text-center line-clamp-2">
+                <p className="mt-1 text-xs md:text-sm font-bold text-slate-700 text-center line-clamp-1 w-full px-1">
                   {activePair[0].role}
                 </p>
-                <span className="mt-2 md:mt-4 text-xs md:text-sm font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
+                <span className="mt-2 text-xs font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
                   Select this company →
                 </span>
              </button>
@@ -1529,19 +1529,19 @@ export default function SurveyPage() {
            >
              <button
                 onClick={() => handlePairChoice(activePair[1].id)}
-                className="group relative w-full bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-4 md:p-8 transition-all duration-300 text-left flex flex-col items-center justify-center h-[220px] md:h-[280px]"
+                className="group relative w-full bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-3 md:p-6 transition-all duration-300 text-left flex flex-col items-center justify-center h-[220px] md:h-[280px]"
              >
                 <CompanyLogo name={activePair[1].name} size="lg" />
-                <h3 className="text-base md:text-3xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-2 md:mt-4 line-clamp-2">
+                <h3 className="text-sm md:text-2xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors mt-2 md:mt-3 line-clamp-2 w-full px-1">
                   {activePair[1].name}
                 </h3>
-                <p className="mt-1 md:mt-2 text-xs md:text-sm text-muted-foreground italic">
+                <p className="mt-1 text-xs md:text-sm text-muted-foreground italic">
                   working in
                 </p>
-                <p className="mt-1 md:mt-2 text-xs md:text-sm font-bold text-slate-700 text-center line-clamp-2">
+                <p className="mt-1 text-xs md:text-sm font-bold text-slate-700 text-center line-clamp-1 w-full px-1">
                   {activePair[1].role}
                 </p>
-                <span className="mt-2 md:mt-4 text-xs md:text-sm font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
+                <span className="mt-2 text-xs font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
                   Select this company →
                 </span>
              </button>
