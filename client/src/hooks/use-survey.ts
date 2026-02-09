@@ -429,21 +429,26 @@ export function useSurvey() {
     });
   };
 
-  const K_FACTOR = 32;
+  const getK = (appearances: Record<string, number>, idA: string, idB: string): number => {
+    const total = (appearances[idA] || 0) + (appearances[idB] || 0);
+    return 32 / Math.sqrt(1 + total);
+  };
 
   const computeEloUpdate = (
     ratings: Record<string, number>,
     winnerId: string,
-    loserId: string
+    loserId: string,
+    appearances: Record<string, number>
   ): Record<string, number> => {
+    const K = getK(appearances, winnerId, loserId);
     const ratingW = ratings[winnerId] || 1500;
     const ratingL = ratings[loserId] || 1500;
     const expectedW = 1 / (1 + Math.pow(10, (ratingL - ratingW) / 400));
     const expectedL = 1 - expectedW;
     return {
       ...ratings,
-      [winnerId]: ratingW + K_FACTOR * (1 - expectedW),
-      [loserId]: ratingL + K_FACTOR * (0 - expectedL),
+      [winnerId]: ratingW + K * (1 - expectedW),
+      [loserId]: ratingL + K * (0 - expectedL),
     };
   };
 
@@ -451,10 +456,10 @@ export function useSurvey() {
     setState(prev => {
       const loserId = pair[0] === winnerId ? pair[1] : pair[0];
       const currentScore = prev.pairwiseWins[winnerId] || 0;
-      const newElo = computeEloUpdate(prev.eloRatings, winnerId, loserId);
       const newAppearances = { ...prev.appearancesInSession };
       newAppearances[pair[0]] = (newAppearances[pair[0]] || 0) + 1;
       newAppearances[pair[1]] = (newAppearances[pair[1]] || 0) + 1;
+      const newElo = computeEloUpdate(prev.eloRatings, winnerId, loserId, newAppearances);
       return {
         ...prev,
         pairwiseWins: { ...prev.pairwiseWins, [winnerId]: currentScore + 1 },
@@ -493,15 +498,19 @@ export function useSurvey() {
     allIds: string[]
   ): Record<string, number> => {
     const ratings: Record<string, number> = {};
-    allIds.forEach(id => { ratings[id] = 1500; });
+    const appearances: Record<string, number> = {};
+    allIds.forEach(id => { ratings[id] = 1500; appearances[id] = 0; });
     for (const entry of history) {
+      appearances[entry.pair[0]] = (appearances[entry.pair[0]] || 0) + 1;
+      appearances[entry.pair[1]] = (appearances[entry.pair[1]] || 0) + 1;
       if (entry.winnerId) {
         const loserId = entry.pair[0] === entry.winnerId ? entry.pair[1] : entry.pair[0];
+        const K = getK(appearances, entry.winnerId, loserId);
         const rW = ratings[entry.winnerId] || 1500;
         const rL = ratings[loserId] || 1500;
         const eW = 1 / (1 + Math.pow(10, (rL - rW) / 400));
-        ratings[entry.winnerId] = rW + K_FACTOR * (1 - eW);
-        ratings[loserId] = rL + K_FACTOR * (0 - (1 - eW));
+        ratings[entry.winnerId] = rW + K * (1 - eW);
+        ratings[loserId] = rL + K * (0 - (1 - eW));
       }
     }
     return ratings;
@@ -593,6 +602,10 @@ export function useSurvey() {
 
   const advanceChainIndex = () => {
     setState(prev => ({ ...prev, chainIndex: prev.chainIndex + 1 }));
+  };
+
+  const setChainIndex = (index: number) => {
+    setState(prev => ({ ...prev, chainIndex: index }));
   };
 
   const setWasChainPair = (val: boolean) => {
@@ -704,6 +717,7 @@ export function useSurvey() {
       setStep,
       initializePairwiseSession,
       advanceChainIndex,
+      setChainIndex,
       setWasChainPair,
     },
     suggestedRoles

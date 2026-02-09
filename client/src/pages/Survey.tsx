@@ -441,46 +441,50 @@ export default function SurveyPage() {
 
   const CHAIN_LIMIT = 8;
 
-  // --- HELPER: Check recency constraint ---
-  const isRecentlyShown = (id: string): boolean => {
-    const recentIds = state.comparisonHistory
-      .slice(-3)
-      .flatMap(h => h.pair);
-    return new Set(recentIds).has(id);
-  };
+  // --- FIX 7: Build id→company map once ---
+  const companyMap = useMemo(() => {
+    const map = new Map<string, CompanyEntity>();
+    state.selectedCompanies.forEach(c => map.set(c.id, c));
+    return map;
+  }, [state.selectedCompanies]);
+
+  // --- FIX 2: Recency set with null filtering ---
+  const recentlyShownSet = useMemo(() => {
+    const ids = state.comparisonHistory
+      .slice(-2)
+      .flatMap(h => h.pair)
+      .filter(Boolean);
+    return new Set(ids);
+  }, [state.comparisonHistory]);
 
   const isPairCompleted = (idA: string, idB: string): boolean => {
     const key = [idA, idB].sort().join("|");
     return state.completedPairs.has(key);
   };
 
-  const findCompanyById = (id: string): CompanyEntity | undefined => {
-    return state.selectedCompanies.find(c => c.id === id);
-  };
-
   // --- HELPER: 3-Stage Pair Selection ---
-  const getNextPair = (): { pair: [CompanyEntity, CompanyEntity]; isChain: boolean } | null => {
+  const getNextPair = (): { pair: [CompanyEntity, CompanyEntity]; isChain: boolean; newChainIndex?: number } | null => {
     const candidates = state.selectedCompanies;
     if (candidates.length < 2) return null;
     const n = candidates.length;
 
-    // STAGE A: Chain warm-start
+    // FIX 1: Stage A — loop forward, skip completed/invalid links, return new chainIndex
     const chainCap = Math.min(n - 1, CHAIN_LIMIT);
     if (state.chainIndex < chainCap && state.sessionOrder.length > 0) {
       for (let i = state.chainIndex; i < chainCap; i++) {
         const idA = state.sessionOrder[i];
         const idB = state.sessionOrder[i + 1];
         if (idA && idB && !isPairCompleted(idA, idB)) {
-          const a = findCompanyById(idA);
-          const b = findCompanyById(idB);
+          const a = companyMap.get(idA);
+          const b = companyMap.get(idB);
           if (a && b) {
-            return { pair: [a, b], isChain: true };
+            return { pair: [a, b], isChain: true, newChainIndex: i + 1 };
           }
         }
       }
     }
 
-    // STAGE B: Coverage booster — ensure every company has appeared at least once
+    // Stage B: Coverage booster — ensure every company has appeared at least once
     const unseenIds = candidates
       .filter(c => (state.appearancesInSession[c.id] || 0) === 0)
       .map(c => c.id);
@@ -488,27 +492,26 @@ export default function SurveyPage() {
     if (unseenIds.length > 0) {
       const unseenId = unseenIds[0];
 
-      // Pick a pivot: prefer median-ranked company by Elo
       const sortedByElo = [...candidates].sort((a, b) => {
         return (state.eloRatings[b.id] || 1500) - (state.eloRatings[a.id] || 1500);
       });
       const medianIdx = Math.floor(sortedByElo.length / 2);
 
-      // Try median first, then most-seen, then any valid partner
+      // FIX 3: After median, sort by LEAST appearances for real diversity
       const pivotCandidates = [
         sortedByElo[medianIdx]?.id,
         ...candidates
           .filter(c => c.id !== unseenId)
-          .sort((a, b) => (state.appearancesInSession[b.id] || 0) - (state.appearancesInSession[a.id] || 0))
+          .sort((a, b) => (state.appearancesInSession[a.id] || 0) - (state.appearancesInSession[b.id] || 0))
           .map(c => c.id)
       ].filter((id): id is string => !!id && id !== unseenId);
 
       for (const pivotId of pivotCandidates) {
         if (!isPairCompleted(unseenId, pivotId)) {
-          const a = findCompanyById(unseenId);
-          const b = findCompanyById(pivotId);
+          const a = companyMap.get(unseenId);
+          const b = companyMap.get(pivotId);
           if (a && b) {
-            if (isRecentlyShown(unseenId) && isRecentlyShown(pivotId)) {
+            if (recentlyShownSet.has(unseenId) && recentlyShownSet.has(pivotId)) {
               continue;
             }
             return { pair: [a, b], isChain: false };
@@ -518,20 +521,21 @@ export default function SurveyPage() {
 
       for (const pivotId of pivotCandidates) {
         if (!isPairCompleted(unseenId, pivotId)) {
-          const a = findCompanyById(unseenId);
-          const b = findCompanyById(pivotId);
+          const a = companyMap.get(unseenId);
+          const b = companyMap.get(pivotId);
           if (a && b) return { pair: [a, b], isChain: false };
         }
       }
     }
 
-    // STAGE C: Neighbour tightening — compare adjacent by Elo ranking
+    // Stage C: Neighbour tightening — compare adjacent by Elo ranking
     const sortedByElo = [...candidates].sort((a, b) => {
       return (state.eloRatings[b.id] || 1500) - (state.eloRatings[a.id] || 1500);
     });
 
     type ScoredPair = { a: CompanyEntity; b: CompanyEntity; score: number };
     const neighbourPairs: ScoredPair[] = [];
+    const TARGET_APPEARANCES = 3;
 
     for (let gap = 1; gap <= Math.min(3, sortedByElo.length - 1); gap++) {
       for (let i = 0; i < sortedByElo.length - gap; i++) {
@@ -543,8 +547,9 @@ export default function SurveyPage() {
         const eloB = state.eloRatings[b.id] || 1500;
         const expectedA = 1 / (1 + Math.pow(10, (eloB - eloA) / 400));
         const closenessTo50 = Math.abs(expectedA - 0.5);
+        // FIX 4: Gentle tie-breaker — only penalize excess appearances above target
         const combinedAppearances = (state.appearancesInSession[a.id] || 0) + (state.appearancesInSession[b.id] || 0);
-        const score = closenessTo50 + combinedAppearances * 0.01;
+        const score = closenessTo50 + Math.max(0, combinedAppearances - TARGET_APPEARANCES * 2) * 0.002;
 
         neighbourPairs.push({ a, b, score });
       }
@@ -553,7 +558,7 @@ export default function SurveyPage() {
     neighbourPairs.sort((x, y) => x.score - y.score);
 
     for (const { a, b } of neighbourPairs) {
-      if (!isRecentlyShown(a.id) || !isRecentlyShown(b.id)) {
+      if (!recentlyShownSet.has(a.id) || !recentlyShownSet.has(b.id)) {
         return { pair: [a, b], isChain: false };
       }
     }
@@ -584,8 +589,8 @@ export default function SurveyPage() {
       const result = getNextPair();
       if (result) {
         setActivePair(result.pair);
-        if (result.isChain) {
-          actions.advanceChainIndex();
+        if (result.isChain && result.newChainIndex !== undefined) {
+          actions.setChainIndex(result.newChainIndex);
         }
         actions.setWasChainPair(result.isChain);
       } else {
@@ -996,7 +1001,16 @@ export default function SurveyPage() {
         </div>
 
         {/* Area of Study - inline searchable multi-select */}
-        <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="space-y-2 relative"
+          onClick={(e) => e.stopPropagation()}
+          onBlur={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+              setIsDegreeSearchFocused(false);
+            }
+          }}
+          tabIndex={-1}
+        >
           <label className="text-sm font-medium text-slate-700">
             Study field(s) <span className="text-red-500">*</span>
           </label>
@@ -1074,7 +1088,6 @@ export default function SurveyPage() {
                 exit={{ opacity: 0, y: -10 }}
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  e.stopPropagation();
                 }}
                 className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-64 overflow-y-auto z-50"
               >
