@@ -1,0 +1,32 @@
+Feedback on current 3-stage pair selection code (what to improve):
+	1.	Stage A (Chain) can stall — needs to advance when a link is blocked
+Right now if the current chain pair is already completed (or invalid), Stage A just falls through and chainIndex never increments (because you only advance it when isChain === true). This means you can keep checking the same blocked chain link every time.
+✅ Fix: in Stage A, loop forward from chainIndex until you find the next uncompleted adjacent link (or exhaust the chain window). Also update chainIndex accordingly.
+	2.	Recent IDs should filter out null/undefined
+recentIds is built from [winnerId, loserId]. If you ever support skips or null winners elsewhere, recentIds may include null/undefined and make recency checks unreliable.
+✅ Fix: const recentIds = ...flatMap(...).filter(Boolean) and ideally use a Set for O(1) checks.
+	3.	Stage B pivot ordering: “most appearances” isn’t actually diversity
+The comment says “median first, then by most appearances (for diversity)” but sorting by most appearances tends to overuse the same pivot and reduces coverage.
+✅ Fix options:
+
+	•	After medianPivot, sort remaining pivots by least appearances first, OR
+	•	Randomly sample from the bottom X least-seen pivots after trying the median.
+
+	4.	Stage C scoring: appearance penalty is too strong and can dominate 50/50 informativeness
+Current score: closenessTo50 + combinedAppearances * 0.01
+With a 20-question budget, combinedAppearances can reach ~40, so the penalty can be ~0.4 which is comparable to the entire closenessTo50 range (0–0.5). This can make the algorithm choose pairs mainly to equalize appearances rather than refine ordering.
+✅ Fix: reduce penalty weight (e.g. * 0.002), or make it a gentle tie-breaker only. Example:
+score = closenessTo50 + Math.max(0, combinedAppearances - target) * 0.01 where target ≈ 2–4.
+	5.	Elo K=32 may be too jumpy for small N + low comparisons
+With only ~20 comparisons, K=32 can swing rankings too much from early noise.
+✅ Fix options:
+
+	•	Use K ~ 16–24, OR
+	•	Make K decay with appearances: K = 32 / Math.sqrt(1 + appearances[winner]+appearances[loser])
+
+	6.	Final ranking should sort by Elo (not win count)
+Now that you track Elo, the final ordered list should use eloRatings (fallback 1500). Raw wins ignores opponent strength and unequal match counts and will undo the benefits of the selection algorithm.
+	7.	Perf / cleanliness (optional)
+findCompanyById is called repeatedly; consider building an id → CompanyEntity map once per render/session.
+
+Main priority fixes: (1) chain progression loop, (4) reduce appearance penalty in Stage C, (6) final ranking uses Elo.
