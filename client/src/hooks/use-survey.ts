@@ -228,7 +228,7 @@ export interface SurveyState {
   pairwiseWins: Record<string, number>;
   completedPairs: Set<string>;
   pairwiseCount: number;
-  comparisonHistory: { winnerId: string | null; pair: [string, string] }[];
+  comparisonHistory: { winnerId: string | null; pair: [string, string]; chainIndexBefore: number; chainIndexAfter: number }[];
   finalRanking: CompanyEntity[];
   eloRatings: Record<string, number>;
   sessionOrder: string[];
@@ -476,22 +476,24 @@ export function useSurvey() {
         newWins[winnerId] = (newWins[winnerId] || 0) + 1;
       }
 
+      const chainIndexAfter = isChain ? (newChainIndex !== undefined ? newChainIndex : prev.chainIndex + 1) : prev.chainIndex;
+
       return {
         ...prev,
         completedPairs: new Set(prev.completedPairs).add(key),
         pairwiseCount: prev.pairwiseCount + 1,
         pairwiseWins: newWins,
-        comparisonHistory: [...prev.comparisonHistory, { winnerId, pair }],
+        comparisonHistory: [...prev.comparisonHistory, { winnerId, pair, chainIndexBefore: prev.chainIndex, chainIndexAfter }],
         eloRatings: newElo,
         appearancesInSession: newAppearances,
-        chainIndex: isChain ? (newChainIndex !== undefined ? newChainIndex : prev.chainIndex + 1) : prev.chainIndex,
+        chainIndex: chainIndexAfter,
         wasChainPair: isChain,
       };
     });
   };
 
   const replayEloFromHistory = (
-    history: { winnerId: string | null; pair: [string, string] }[],
+    history: { winnerId: string | null; pair: [string, string]; chainIndexBefore: number; chainIndexAfter: number }[],
     allIds: string[]
   ): Record<string, number> => {
     const ratings: Record<string, number> = {};
@@ -514,7 +516,7 @@ export function useSurvey() {
   };
 
   const replayAppearancesFromHistory = (
-    history: { winnerId: string | null; pair: [string, string] }[],
+    history: { winnerId: string | null; pair: [string, string]; chainIndexBefore: number; chainIndexAfter: number }[],
     allIds: string[]
   ): Record<string, number> => {
     const appearances: Record<string, number> = {};
@@ -546,8 +548,6 @@ export function useSurvey() {
       const newElo = replayEloFromHistory(newHistory, allIds);
       const newAppearances = replayAppearancesFromHistory(newHistory, allIds);
 
-      const newChainIndex = prev.wasChainPair && prev.chainIndex > 0 ? prev.chainIndex - 1 : prev.chainIndex;
-      
       return {
         ...prev,
         pairwiseWins: newWins,
@@ -556,7 +556,7 @@ export function useSurvey() {
         pairwiseCount: Math.max(0, prev.pairwiseCount - 1),
         eloRatings: newElo,
         appearancesInSession: newAppearances,
-        chainIndex: newChainIndex,
+        chainIndex: last.chainIndexBefore,
         wasChainPair: false,
       };
     });
