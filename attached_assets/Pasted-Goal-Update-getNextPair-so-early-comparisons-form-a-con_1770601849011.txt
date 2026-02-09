@@ -1,0 +1,70 @@
+Goal:
+Update getNextPair() so early comparisons form a connected chain and ensure broad coverage. This makes the system dropout-safe and produces a higher-quality ordered list within a hard cap of 20 comparisons. The current random-unseen approach can over-sample some companies and leave others unseen.
+
+⸻
+
+Pair selection strategy (3 stages)
+
+Stage A — Chain warm-start (connectivity first)
+	•	On session start, generate sessionOrder = a shuffled list of selected company IDs.
+	•	Serve adjacent pairs from this order:
+	•	(order[0], order[1]), (order[1], order[2]), …
+	•	Do this for the first min(N-1, CHAIN_LIMIT) comparisons (suggest CHAIN_LIMIT = 8).
+	•	Always respect completedPairs (avoid duplicates).
+
+Purpose: guarantees fast connectivity and even early exposure across companies.
+
+⸻
+
+Stage B — Coverage booster (dropout protection)
+	•	Track appearancesInSession[id].
+	•	After the chain cap, ensure every company appears at least once:
+	•	While there exists a company with appearancesInSession[id] === 0:
+	•	Pair it with a pivot company.
+	•	Pivot selection:
+	•	Prefer the current median-ranked company (by Elo if available), or
+	•	Fall back to the most-seen company so far.
+
+Purpose: ensures that if a user exits early (~10 comparisons), we still have signal on most companies.
+
+⸻
+
+Stage C — Neighbour tightening (high-information comparisons)
+	•	Once all companies have appeared at least once:
+	•	Sort companies by current rating estimate (Elo preferred).
+	•	Prefer comparing adjacent neighbours in that order.
+	•	Among candidate neighbour pairs, prioritize:
+	•	predicted win probability closest to 50/50, and/or
+	•	lowest combined appearance count.
+
+Purpose: resolves local ordering where rankings are most uncertain.
+
+⸻
+
+Constraints & UX rules (keep existing behaviour)
+	•	Never repeat the same pair (completedPairs).
+	•	Avoid showing companies that appeared in the last ~3 comparisons if possible.
+	•	If a candidate violates recency rules, select the next best candidate.
+
+⸻
+
+Required per-session state
+	•	sessionOrder: string[]
+	•	chainIndex: number
+	•	appearancesInSession: Record<companyId, number>
+
+⸻
+
+Final ranking (important)
+	•	Do not sort by raw win count.
+	•	Use a simple Elo score and sort by Elo.
+	•	If Elo is not implemented yet, rank by wins / matchesPlayed at minimum.
+
+⸻
+
+Acceptance checks
+	•	First ~8 comparisons follow a chain structure.
+	•	By ~10 comparisons, most companies have appeared at least once.
+	•	Later comparisons are mostly between adjacent neighbours.
+	•	No repeated pairs.
+	•	Ranking quality remains high even if the user exits early.

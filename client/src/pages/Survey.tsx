@@ -432,59 +432,167 @@ export default function SurveyPage() {
     }
   }, [state.step]);
 
-  // --- HELPER: Get Next Pair ---
-  const getNextPair = () => {
+  // --- EFFECT: Initialize pairwise session when entering step 5 ---
+  useEffect(() => {
+    if (state.step === 5 && state.sessionOrder.length === 0 && state.selectedCompanies.length >= 2) {
+      actions.initializePairwiseSession();
+    }
+  }, [state.step, state.sessionOrder.length, state.selectedCompanies.length]);
+
+  const CHAIN_LIMIT = 8;
+
+  // --- HELPER: Check recency constraint ---
+  const isRecentlyShown = (id: string): boolean => {
+    const recentIds = state.comparisonHistory
+      .slice(-3)
+      .flatMap(h => h.pair);
+    return new Set(recentIds).has(id);
+  };
+
+  const isPairCompleted = (idA: string, idB: string): boolean => {
+    const key = [idA, idB].sort().join("|");
+    return state.completedPairs.has(key);
+  };
+
+  const findCompanyById = (id: string): CompanyEntity | undefined => {
+    return state.selectedCompanies.find(c => c.id === id);
+  };
+
+  // --- HELPER: 3-Stage Pair Selection ---
+  const getNextPair = (): { pair: [CompanyEntity, CompanyEntity]; isChain: boolean } | null => {
     const candidates = state.selectedCompanies;
     if (candidates.length < 2) return null;
+    const n = candidates.length;
 
-    const recentIds = state.comparisonHistory
-      .slice(-3) // Look at last 3 comparisons
-      .flatMap(h => h.pair);
-    const recentIdSet = new Set(recentIds);
-
-    // Simple random pair logic - try to find one not seen
-    let attempts = 0;
-    const maxAttempts = 100;
-    
-    while (attempts < maxAttempts) {
-      const idx1 = Math.floor(Math.random() * candidates.length);
-      let idx2 = Math.floor(Math.random() * candidates.length);
-      while (idx2 === idx1) idx2 = Math.floor(Math.random() * candidates.length);
-
-      const a = candidates[idx1];
-      const b = candidates[idx2];
-      const key = [a.id, b.id].sort().join("|");
-
-      if (!state.completedPairs.has(key)) {
-        // If we have plenty of attempts left, try to avoid recently seen companies
-        if (attempts < maxAttempts / 2 && (recentIdSet.has(a.id) || recentIdSet.has(b.id))) {
-          attempts++;
-          continue;
+    // STAGE A: Chain warm-start
+    const chainCap = Math.min(n - 1, CHAIN_LIMIT);
+    if (state.chainIndex < chainCap && state.sessionOrder.length > 0) {
+      for (let i = state.chainIndex; i < chainCap; i++) {
+        const idA = state.sessionOrder[i];
+        const idB = state.sessionOrder[i + 1];
+        if (idA && idB && !isPairCompleted(idA, idB)) {
+          const a = findCompanyById(idA);
+          const b = findCompanyById(idB);
+          if (a && b) {
+            return { pair: [a, b], isChain: true };
+          }
         }
-        return [a, b] as [CompanyEntity, CompanyEntity];
       }
-      attempts++;
     }
-    return null; // Exhausted or too hard to find new random one
+
+    // STAGE B: Coverage booster — ensure every company has appeared at least once
+    const unseenIds = candidates
+      .filter(c => (state.appearancesInSession[c.id] || 0) === 0)
+      .map(c => c.id);
+
+    if (unseenIds.length > 0) {
+      const unseenId = unseenIds[0];
+
+      // Pick a pivot: prefer median-ranked company by Elo
+      const sortedByElo = [...candidates].sort((a, b) => {
+        return (state.eloRatings[b.id] || 1500) - (state.eloRatings[a.id] || 1500);
+      });
+      const medianIdx = Math.floor(sortedByElo.length / 2);
+
+      // Try median first, then most-seen, then any valid partner
+      const pivotCandidates = [
+        sortedByElo[medianIdx]?.id,
+        ...candidates
+          .filter(c => c.id !== unseenId)
+          .sort((a, b) => (state.appearancesInSession[b.id] || 0) - (state.appearancesInSession[a.id] || 0))
+          .map(c => c.id)
+      ].filter((id): id is string => !!id && id !== unseenId);
+
+      for (const pivotId of pivotCandidates) {
+        if (!isPairCompleted(unseenId, pivotId)) {
+          const a = findCompanyById(unseenId);
+          const b = findCompanyById(pivotId);
+          if (a && b) {
+            if (isRecentlyShown(unseenId) && isRecentlyShown(pivotId)) {
+              continue;
+            }
+            return { pair: [a, b], isChain: false };
+          }
+        }
+      }
+
+      for (const pivotId of pivotCandidates) {
+        if (!isPairCompleted(unseenId, pivotId)) {
+          const a = findCompanyById(unseenId);
+          const b = findCompanyById(pivotId);
+          if (a && b) return { pair: [a, b], isChain: false };
+        }
+      }
+    }
+
+    // STAGE C: Neighbour tightening — compare adjacent by Elo ranking
+    const sortedByElo = [...candidates].sort((a, b) => {
+      return (state.eloRatings[b.id] || 1500) - (state.eloRatings[a.id] || 1500);
+    });
+
+    type ScoredPair = { a: CompanyEntity; b: CompanyEntity; score: number };
+    const neighbourPairs: ScoredPair[] = [];
+
+    for (let gap = 1; gap <= Math.min(3, sortedByElo.length - 1); gap++) {
+      for (let i = 0; i < sortedByElo.length - gap; i++) {
+        const a = sortedByElo[i];
+        const b = sortedByElo[i + gap];
+        if (isPairCompleted(a.id, b.id)) continue;
+
+        const eloA = state.eloRatings[a.id] || 1500;
+        const eloB = state.eloRatings[b.id] || 1500;
+        const expectedA = 1 / (1 + Math.pow(10, (eloB - eloA) / 400));
+        const closenessTo50 = Math.abs(expectedA - 0.5);
+        const combinedAppearances = (state.appearancesInSession[a.id] || 0) + (state.appearancesInSession[b.id] || 0);
+        const score = closenessTo50 + combinedAppearances * 0.01;
+
+        neighbourPairs.push({ a, b, score });
+      }
+    }
+
+    neighbourPairs.sort((x, y) => x.score - y.score);
+
+    for (const { a, b } of neighbourPairs) {
+      if (!isRecentlyShown(a.id) || !isRecentlyShown(b.id)) {
+        return { pair: [a, b], isChain: false };
+      }
+    }
+
+    if (neighbourPairs.length > 0) {
+      return { pair: [neighbourPairs[0].a, neighbourPairs[0].b], isChain: false };
+    }
+
+    for (let i = 0; i < candidates.length; i++) {
+      for (let j = i + 1; j < candidates.length; j++) {
+        if (!isPairCompleted(candidates[i].id, candidates[j].id)) {
+          return { pair: [candidates[i], candidates[j]], isChain: false };
+        }
+      }
+    }
+
+    return null;
   };
 
   // --- EFFECT: Manage Pairwise Loop ---
   useEffect(() => {
-    if (state.step === 5 && !activePair) {
+    if (state.step === 5 && !activePair && state.sessionOrder.length > 0) {
       if (state.pairwiseCount >= targetPairwiseCount) {
         actions.nextStep();
         return;
       }
       
-      const next = getNextPair();
-      if (next) {
-        setActivePair(next);
+      const result = getNextPair();
+      if (result) {
+        setActivePair(result.pair);
+        if (result.isChain) {
+          actions.advanceChainIndex();
+        }
+        actions.setWasChainPair(result.isChain);
       } else {
-        // No more pairs? Auto-advance to final ranking
         actions.nextStep();
       }
     }
-  }, [state.step, activePair, state.completedPairs, state.pairwiseCount, targetPairwiseCount]);
+  }, [state.step, activePair, state.completedPairs, state.pairwiseCount, targetPairwiseCount, state.sessionOrder.length]);
 
 
   // --- HANDLERS ---

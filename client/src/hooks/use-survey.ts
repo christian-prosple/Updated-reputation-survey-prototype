@@ -223,13 +223,18 @@ export interface SurveyState {
   selectedDegrees: DegreeType[];
   selectedRoles: RoleType[];
   roleOrder: RoleType[];
-  displayedCompanies: CompanyEntity[]; // Unique entities
-  selectedCompanies: CompanyEntity[]; // Unique entities
-  pairwiseWins: Record<string, number>; // Use ID
-  completedPairs: Set<string>; // "ID1|ID2"
-  pairwiseCount: number; // New counter
+  displayedCompanies: CompanyEntity[];
+  selectedCompanies: CompanyEntity[];
+  pairwiseWins: Record<string, number>;
+  completedPairs: Set<string>;
+  pairwiseCount: number;
   comparisonHistory: { winnerId: string | null; pair: [string, string] }[];
-  finalRanking: CompanyEntity[]; 
+  finalRanking: CompanyEntity[];
+  eloRatings: Record<string, number>;
+  sessionOrder: string[];
+  chainIndex: number;
+  appearancesInSession: Record<string, number>;
+  wasChainPair: boolean;
 }
 
 // --- HOOK ---
@@ -258,6 +263,11 @@ export function useSurvey() {
     pairwiseCount: 0,
     comparisonHistory: [],
     finalRanking: [],
+    eloRatings: {},
+    sessionOrder: [],
+    chainIndex: 0,
+    appearancesInSession: {},
+    wasChainPair: false,
   });
 
   // --- ACTIONS ---
@@ -387,7 +397,12 @@ export function useSurvey() {
       pairwiseWins: {},
       completedPairs: new Set(),
       pairwiseCount: 0,
-      finalRanking: []
+      finalRanking: [],
+      eloRatings: {},
+      sessionOrder: [],
+      chainIndex: 0,
+      appearancesInSession: {},
+      wasChainPair: false,
     }));
   };
 
@@ -414,13 +429,38 @@ export function useSurvey() {
     });
   };
 
+  const K_FACTOR = 32;
+
+  const computeEloUpdate = (
+    ratings: Record<string, number>,
+    winnerId: string,
+    loserId: string
+  ): Record<string, number> => {
+    const ratingW = ratings[winnerId] || 1500;
+    const ratingL = ratings[loserId] || 1500;
+    const expectedW = 1 / (1 + Math.pow(10, (ratingL - ratingW) / 400));
+    const expectedL = 1 - expectedW;
+    return {
+      ...ratings,
+      [winnerId]: ratingW + K_FACTOR * (1 - expectedW),
+      [loserId]: ratingL + K_FACTOR * (0 - expectedL),
+    };
+  };
+
   const recordWin = (winnerId: string, pair: [string, string]) => {
     setState(prev => {
+      const loserId = pair[0] === winnerId ? pair[1] : pair[0];
       const currentScore = prev.pairwiseWins[winnerId] || 0;
+      const newElo = computeEloUpdate(prev.eloRatings, winnerId, loserId);
+      const newAppearances = { ...prev.appearancesInSession };
+      newAppearances[pair[0]] = (newAppearances[pair[0]] || 0) + 1;
+      newAppearances[pair[1]] = (newAppearances[pair[1]] || 0) + 1;
       return {
         ...prev,
         pairwiseWins: { ...prev.pairwiseWins, [winnerId]: currentScore + 1 },
-        comparisonHistory: [...prev.comparisonHistory, { winnerId, pair }]
+        comparisonHistory: [...prev.comparisonHistory, { winnerId, pair }],
+        eloRatings: newElo,
+        appearancesInSession: newAppearances,
       };
     });
   };
@@ -428,10 +468,16 @@ export function useSurvey() {
   const markPairSeen = (idA: string, idB: string, skip: boolean = false) => {
     setState(prev => {
       const key = [idA, idB].sort().join("|");
-      const nextState = {
+      const newAppearances = skip ? { ...prev.appearancesInSession } : prev.appearancesInSession;
+      if (skip) {
+        newAppearances[idA] = (newAppearances[idA] || 0) + 1;
+        newAppearances[idB] = (newAppearances[idB] || 0) + 1;
+      }
+      const nextState: SurveyState = {
         ...prev,
         completedPairs: new Set(prev.completedPairs).add(key),
-        pairwiseCount: prev.pairwiseCount + 1
+        pairwiseCount: prev.pairwiseCount + 1,
+        appearancesInSession: skip ? newAppearances : prev.appearancesInSession,
       };
       
       if (skip) {
@@ -440,6 +486,38 @@ export function useSurvey() {
       
       return nextState;
     });
+  };
+
+  const replayEloFromHistory = (
+    history: { winnerId: string | null; pair: [string, string] }[],
+    allIds: string[]
+  ): Record<string, number> => {
+    const ratings: Record<string, number> = {};
+    allIds.forEach(id => { ratings[id] = 1500; });
+    for (const entry of history) {
+      if (entry.winnerId) {
+        const loserId = entry.pair[0] === entry.winnerId ? entry.pair[1] : entry.pair[0];
+        const rW = ratings[entry.winnerId] || 1500;
+        const rL = ratings[loserId] || 1500;
+        const eW = 1 / (1 + Math.pow(10, (rL - rW) / 400));
+        ratings[entry.winnerId] = rW + K_FACTOR * (1 - eW);
+        ratings[loserId] = rL + K_FACTOR * (0 - (1 - eW));
+      }
+    }
+    return ratings;
+  };
+
+  const replayAppearancesFromHistory = (
+    history: { winnerId: string | null; pair: [string, string] }[],
+    allIds: string[]
+  ): Record<string, number> => {
+    const appearances: Record<string, number> = {};
+    allIds.forEach(id => { appearances[id] = 0; });
+    for (const entry of history) {
+      appearances[entry.pair[0]] = (appearances[entry.pair[0]] || 0) + 1;
+      appearances[entry.pair[1]] = (appearances[entry.pair[1]] || 0) + 1;
+    }
+    return appearances;
   };
 
   const undoLastComparison = () => {
@@ -457,28 +535,68 @@ export function useSurvey() {
       const key = [...last.pair].sort().join("|");
       const newCompleted = new Set(prev.completedPairs);
       newCompleted.delete(key);
+
+      const allIds = prev.selectedCompanies.map(c => c.id);
+      const newElo = replayEloFromHistory(newHistory, allIds);
+      const newAppearances = replayAppearancesFromHistory(newHistory, allIds);
+
+      const newChainIndex = prev.wasChainPair && prev.chainIndex > 0 ? prev.chainIndex - 1 : prev.chainIndex;
       
       return {
         ...prev,
         pairwiseWins: newWins,
         completedPairs: newCompleted,
         comparisonHistory: newHistory,
-        pairwiseCount: Math.max(0, prev.pairwiseCount - 1)
+        pairwiseCount: Math.max(0, prev.pairwiseCount - 1),
+        eloRatings: newElo,
+        appearancesInSession: newAppearances,
+        chainIndex: newChainIndex,
+        wasChainPair: false,
       };
     });
   };
 
   const generateFinalRanking = () => {
     const sorted = [...state.selectedCompanies].sort((a, b) => {
-      const scoreA = state.pairwiseWins[a.id] || 0;
-      const scoreB = state.pairwiseWins[b.id] || 0;
-      return scoreB - scoreA;
+      const eloA = state.eloRatings[a.id] || 1500;
+      const eloB = state.eloRatings[b.id] || 1500;
+      return eloB - eloA;
     });
     setState(prev => ({ ...prev, finalRanking: sorted }));
   };
   
   const updateFinalRanking = (newRanking: CompanyEntity[]) => {
     setState(prev => ({ ...prev, finalRanking: newRanking }));
+  };
+
+  const initializePairwiseSession = () => {
+    const ids = state.selectedCompanies.map(c => c.id);
+    const shuffled = [...ids].sort(() => Math.random() - 0.5);
+    const initialElo: Record<string, number> = {};
+    const initialAppearances: Record<string, number> = {};
+    ids.forEach(id => {
+      initialElo[id] = 1500;
+      initialAppearances[id] = 0;
+    });
+    setState(prev => ({
+      ...prev,
+      sessionOrder: shuffled,
+      chainIndex: 0,
+      eloRatings: initialElo,
+      appearancesInSession: initialAppearances,
+      pairwiseWins: {},
+      completedPairs: new Set<string>(),
+      pairwiseCount: 0,
+      comparisonHistory: [],
+    }));
+  };
+
+  const advanceChainIndex = () => {
+    setState(prev => ({ ...prev, chainIndex: prev.chainIndex + 1 }));
+  };
+
+  const setWasChainPair = (val: boolean) => {
+    setState(prev => ({ ...prev, wasChainPair: val }));
   };
 
   const updatePersonalInfo = (field: keyof PersonalInfo, value: string) => {
@@ -512,9 +630,23 @@ export function useSurvey() {
 
   const prevStep = () => {
     setState(prev => {
-      // Logic to reverse the skip from step 2 to 4 (when only 1 role was selected)
       if (prev.step === 4 && prev.selectedRoles.length <= 1) {
         return { ...prev, step: 2 };
+      }
+      if (prev.step === 5) {
+        return {
+          ...prev,
+          step: 4,
+          sessionOrder: [],
+          chainIndex: 0,
+          appearancesInSession: {},
+          eloRatings: {},
+          pairwiseWins: {},
+          completedPairs: new Set<string>(),
+          pairwiseCount: 0,
+          comparisonHistory: [],
+          wasChainPair: false,
+        };
       }
       return { ...prev, step: Math.max(0, prev.step - 1) };
     });
@@ -570,6 +702,9 @@ export function useSurvey() {
       nextStep,
       prevStep,
       setStep,
+      initializePairwiseSession,
+      advanceChainIndex,
+      setWasChainPair,
     },
     suggestedRoles
   };

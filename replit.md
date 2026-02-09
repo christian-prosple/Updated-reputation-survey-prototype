@@ -17,12 +17,27 @@ Preferred communication style: Simple, everyday language.
 - **Typography**: DM Sans for headings, Inter for body text
 
 ## Survey Flow Design
-The 5-step survey progression:
-1. Role Selection - Choose from 3 professional categories
-2. Role Ordering - Drag-and-drop to prioritize selected roles
-3. Company Recognition - Select known companies from a random pool of 20
-4. Pairwise Preference - Compare companies head-to-head
-5. Final Ranking - Display sorted results based on pairwise comparisons
+The 8-step survey progression (steps 0-7):
+0. Personal Info - Email, preferred work location, gender
+1. Education - Country of study, education level, study fields, school, graduation date
+2. Career Path Selection - Choose career paths from 90+ roles with Google-style dropdown
+3. Career Path Ordering - Drag-and-drop to prioritize selected career paths
+4. Company Recognition - Select known companies from a pool of 30
+5. Pairwise Preference - Compare companies head-to-head (3-stage algorithm with Elo rating)
+6. Final Ranking - Display Elo-sorted results with drag-and-drop reordering
+7. Thank You - Confirmation page
+
+## Pairwise Comparison Algorithm
+Uses a 3-stage pair selection strategy (in `Survey.tsx getNextPair`):
+- **Stage A (Chain warm-start)**: First ~8 comparisons follow a shuffled chain of adjacent companies for fast connectivity
+- **Stage B (Coverage booster)**: Ensures every company appears at least once by pairing unseen companies with a median-Elo pivot
+- **Stage C (Neighbour tightening)**: Compares Elo-adjacent companies, prioritizing pairs closest to 50/50 predicted win probability
+
+**Elo Rating System** (in `use-survey.ts`):
+- K-factor: 32, base rating: 1500
+- Ratings updated after each comparison (win/loss)
+- Undo replays full history for exact reversal
+- Final ranking sorted by Elo rating (not raw win count)
 
 ## Backend Architecture
 - **Server**: Express.js with minimal API (health check endpoint only)
