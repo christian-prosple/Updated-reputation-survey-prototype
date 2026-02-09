@@ -452,44 +452,41 @@ export function useSurvey() {
     };
   };
 
-  const recordWin = (winnerId: string, pair: [string, string]) => {
+  const recordComparison = (args: {
+    pair: [string, string];
+    winnerId: string | null;
+    isChain: boolean;
+    newChainIndex?: number;
+  }) => {
+    const { pair, winnerId, isChain, newChainIndex } = args;
     setState(prev => {
-      const loserId = pair[0] === winnerId ? pair[1] : pair[0];
-      const currentScore = prev.pairwiseWins[winnerId] || 0;
-      const newAppearances = { ...prev.appearancesInSession };
-      newAppearances[pair[0]] = (newAppearances[pair[0]] || 0) + 1;
-      newAppearances[pair[1]] = (newAppearances[pair[1]] || 0) + 1;
-      const newElo = computeEloUpdate(prev.eloRatings, winnerId, loserId, newAppearances);
-      return {
-        ...prev,
-        pairwiseWins: { ...prev.pairwiseWins, [winnerId]: currentScore + 1 },
-        comparisonHistory: [...prev.comparisonHistory, { winnerId, pair }],
-        eloRatings: newElo,
-        appearancesInSession: newAppearances,
-      };
-    });
-  };
-
-  const markPairSeen = (idA: string, idB: string, skip: boolean = false) => {
-    setState(prev => {
+      const [idA, idB] = pair;
       const key = [idA, idB].sort().join("|");
-      const newAppearances = skip ? { ...prev.appearancesInSession } : prev.appearancesInSession;
-      if (skip) {
-        newAppearances[idA] = (newAppearances[idA] || 0) + 1;
-        newAppearances[idB] = (newAppearances[idB] || 0) + 1;
+
+      const newAppearances = { ...prev.appearancesInSession };
+      newAppearances[idA] = (newAppearances[idA] || 0) + 1;
+      newAppearances[idB] = (newAppearances[idB] || 0) + 1;
+
+      let newElo = prev.eloRatings;
+      const newWins = { ...prev.pairwiseWins };
+
+      if (winnerId) {
+        const loserId = idA === winnerId ? idB : idA;
+        newElo = computeEloUpdate(prev.eloRatings, winnerId, loserId, newAppearances);
+        newWins[winnerId] = (newWins[winnerId] || 0) + 1;
       }
-      const nextState: SurveyState = {
+
+      return {
         ...prev,
         completedPairs: new Set(prev.completedPairs).add(key),
         pairwiseCount: prev.pairwiseCount + 1,
-        appearancesInSession: skip ? newAppearances : prev.appearancesInSession,
+        pairwiseWins: newWins,
+        comparisonHistory: [...prev.comparisonHistory, { winnerId, pair }],
+        eloRatings: newElo,
+        appearancesInSession: newAppearances,
+        chainIndex: isChain ? (newChainIndex !== undefined ? newChainIndex : prev.chainIndex + 1) : prev.chainIndex,
+        wasChainPair: isChain,
       };
-      
-      if (skip) {
-        nextState.comparisonHistory = [...prev.comparisonHistory, { winnerId: null, pair: [idA, idB] }];
-      }
-      
-      return nextState;
     });
   };
 
@@ -600,17 +597,6 @@ export function useSurvey() {
     }));
   };
 
-  const advanceChainIndex = () => {
-    setState(prev => ({ ...prev, chainIndex: prev.chainIndex + 1 }));
-  };
-
-  const setChainIndex = (index: number) => {
-    setState(prev => ({ ...prev, chainIndex: index }));
-  };
-
-  const setWasChainPair = (val: boolean) => {
-    setState(prev => ({ ...prev, wasChainPair: val }));
-  };
 
   const updatePersonalInfo = (field: keyof PersonalInfo, value: string) => {
     setState(prev => ({
@@ -706,8 +692,7 @@ export function useSurvey() {
       reorderRoles,
       generateCompanyPool,
       toggleCompanySelection,
-      recordWin,
-      markPairSeen,
+      recordComparison,
       undoLastComparison,
       generateFinalRanking,
       updateFinalRanking,
@@ -716,9 +701,6 @@ export function useSurvey() {
       prevStep,
       setStep,
       initializePairwiseSession,
-      advanceChainIndex,
-      setChainIndex,
-      setWasChainPair,
     },
     suggestedRoles
   };

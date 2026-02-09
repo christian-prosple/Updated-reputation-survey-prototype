@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSurvey, ROLES, RoleType, CompanyEntity, GENDERS, EDUCATION_STATUSES, ALL_COMPANY_NAMES, COMPANIES_BY_ROLE } from "@/hooks/use-survey";
 import { DEGREE_TAXONOMY, ALL_DEGREES, DEGREE_CATEGORIES } from "@/data/degrees";
 import { CITIES, formatCity } from "@/data/cities";
@@ -578,6 +578,8 @@ export default function SurveyPage() {
     return null;
   };
 
+  const activePairMeta = useRef<{ isChain: boolean; newChainIndex?: number }>({ isChain: false });
+
   // --- EFFECT: Manage Pairwise Loop ---
   useEffect(() => {
     if (state.step === 5 && !activePair && state.sessionOrder.length > 0) {
@@ -589,10 +591,7 @@ export default function SurveyPage() {
       const result = getNextPair();
       if (result) {
         setActivePair(result.pair);
-        if (result.isChain && result.newChainIndex !== undefined) {
-          actions.setChainIndex(result.newChainIndex);
-        }
-        actions.setWasChainPair(result.isChain);
+        activePairMeta.current = { isChain: result.isChain, newChainIndex: result.newChainIndex };
       } else {
         actions.nextStep();
       }
@@ -617,14 +616,13 @@ export default function SurveyPage() {
     if (!activePair) return;
     const [a, b] = activePair;
     
-    if (winnerId) {
-      actions.recordWin(winnerId, [a.id, b.id]);
-      actions.markPairSeen(a.id, b.id, false);
-    } else {
-      actions.markPairSeen(a.id, b.id, true);
-    }
+    actions.recordComparison({
+      pair: [a.id, b.id],
+      winnerId,
+      isChain: activePairMeta.current.isChain,
+      newChainIndex: activePairMeta.current.newChainIndex,
+    });
     
-    // Reset active pair to trigger effect
     setActivePair(null);
   };
 
