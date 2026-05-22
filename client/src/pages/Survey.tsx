@@ -4,6 +4,7 @@ import { DEGREE_TAXONOMY, ALL_DEGREES, DEGREE_CATEGORIES } from "@/data/degrees"
 import { CITIES, formatCity } from "@/data/cities";
 import { StepIndicator } from "@/components/StepIndicator";
 import { Button } from "@/components/ui/button-custom";
+import { Textarea } from "@/components/ui/textarea";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { ChevronRight, ChevronLeft, ChevronDown, GripVertical, CheckCircle2, RefreshCw, Search, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -404,7 +405,7 @@ export default function SurveyPage() {
   };
 
   // --- DERIVED STATE ---
-  const totalSteps = 7; 
+  const totalSteps = 8; 
 
   const targetPairwiseCount = useMemo(() => {
     const n = state.selectedCompanies.length;
@@ -1923,15 +1924,66 @@ export default function SurveyPage() {
           size="lg"
           className="px-12 bg-[#96D2C0] text-slate-900 hover:bg-[#85c1af] shadow-lg shadow-[#96D2C0]/20 font-bold"
           onClick={() => actions.nextStep()}
+          data-testid="button-next-ranking"
         >
-          Submit shortlist
+          Next
         </Button>
       </div>
     </div>
   );
 
-  // STEP 7: THANK YOU
-  const renderStep7 = () => (
+  // STEP 7: TOP PICK REASON
+  const renderStep7 = () => {
+    const topPick = state.finalRanking[0]?.name ?? "your top pick";
+    const reason = state.personalInfo.topPickReason;
+    const isValid = reason.trim().length > 0;
+
+    return (
+      <div className="w-full max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="text-center mb-10">
+          <h2 className="text-4xl font-bold mb-4">One last thing...</h2>
+          <p className="text-xl text-muted-foreground">
+            Why did you choose <span className="font-semibold text-slate-900">{topPick}</span> as your top pick?
+          </p>
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+          <Textarea
+            value={reason}
+            onChange={(e) => actions.updatePersonalInfo("topPickReason", e.target.value)}
+            placeholder="Share what stood out to you..."
+            rows={6}
+            className="resize-none text-base"
+            data-testid="input-top-pick-reason"
+          />
+        </div>
+
+        <div className="flex justify-center mt-8 pb-12 gap-4">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => actions.prevStep()}
+            className="w-full max-w-[160px] text-slate-900 border-slate-200"
+            data-testid="button-back-reason"
+          >
+            <ChevronLeft className="mr-2 w-5 h-5" /> Back
+          </Button>
+          <Button
+            size="lg"
+            disabled={!isValid}
+            className="px-12 bg-[#96D2C0] text-slate-900 hover:bg-[#85c1af] shadow-lg shadow-[#96D2C0]/20 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => actions.nextStep()}
+            data-testid="button-submit-reason"
+          >
+            Submit
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
+  // STEP 8: THANK YOU
+  const renderStep8 = () => (
     <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500">
       <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-8">
         <CheckCircle2 className="w-10 h-10" />
@@ -1967,7 +2019,7 @@ export default function SurveyPage() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center py-8 md:py-12 px-4 md:px-8 max-w-6xl mx-auto w-full">
-        {state.step <= 6 && <StepIndicator currentStep={state.step} totalSteps={totalSteps} />}
+        {state.step <= 7 && <StepIndicator currentStep={state.step} totalSteps={totalSteps} />}
         
         <AnimatePresence mode="wait">
           <motion.div
@@ -1986,6 +2038,7 @@ export default function SurveyPage() {
             {state.step === 5 && renderStep5()}
             {state.step === 6 && renderStep6()}
             {state.step === 7 && renderStep7()}
+            {state.step === 8 && renderStep8()}
           </motion.div>
         </AnimatePresence>
       </main>
