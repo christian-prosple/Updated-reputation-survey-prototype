@@ -84,6 +84,104 @@ function resolveOptions(q: SurveyQuestion, taxonomies: Taxonomy[]): { label: str
 }
 
 // ---------------------------------------------------------------------------
+// MonthYearPicker — mirrors graduation date picker in Survey.tsx step 1
+// Extracted into its own component so useState calls are at the top level.
+// ---------------------------------------------------------------------------
+const SHORT_MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const FULL_MONTHS  = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function MonthYearPicker({ qId, formStyle, q }: { qId: string; formStyle: boolean; q: SurveyQuestion }) {
+  const currentYear = new Date().getFullYear();
+  const [pickerYear, setPickerYear] = useState(currentYear);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [selMonth, setSelMonth]     = useState("");
+  const [selYear,  setSelYear]      = useState("");
+  const displayValue = selMonth && selYear ? `${selMonth} ${selYear}` : "";
+
+  const FieldLabel = () => (
+    <label className="text-sm font-medium text-slate-700">
+      {q.label || "(untitled question)"}
+      {q.required && <span className="text-red-500"> *</span>}
+    </label>
+  );
+  const BigPromptEl = () => (
+    <div className="text-center mb-8">
+      <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
+        {q.label || "(untitled question)"}
+        {q.required && <span className="text-red-500"> *</span>}
+      </p>
+      {q.helperText && <p className="text-sm text-slate-500 mt-2">{q.helperText}</p>}
+    </div>
+  );
+
+  const picker = (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setPickerOpen((v) => !v)}
+        className={cn(
+          "w-full p-3 pr-3 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
+          pickerOpen ? "border-primary" : "border-slate-200",
+        )}
+        data-testid={`preview-monthyear-${qId}`}
+      >
+        <span className={displayValue ? "" : "text-slate-400"}>{displayValue || "Select graduation date"}</span>
+        <div className="flex items-center gap-2">
+          {displayValue && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setSelMonth(""); setSelYear(""); }}
+              className="p-0.5 hover:bg-slate-100 rounded-full"
+            >
+              <X className="w-4 h-4 text-slate-400" />
+            </button>
+          )}
+          <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform flex-shrink-0", pickerOpen && "rotate-180")} />
+        </div>
+      </button>
+      {pickerOpen && (
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl z-50 p-4">
+          <div className="flex items-center justify-between mb-4">
+            <button type="button" onClick={() => setPickerYear((y) => y - 1)} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+              <ChevronLeft className="w-5 h-5 text-slate-600" />
+            </button>
+            <span className="text-lg font-bold text-slate-900">{pickerYear}</span>
+            <button type="button" onClick={() => setPickerYear((y) => y + 1)} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+              <ChevronRight className="w-5 h-5 text-slate-600" />
+            </button>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {SHORT_MONTHS.map((short, idx) => {
+              const full = FULL_MONTHS[idx];
+              const isSel = selMonth === full && selYear === String(pickerYear);
+              return (
+                <button
+                  key={short}
+                  type="button"
+                  onClick={() => { setSelMonth(full); setSelYear(String(pickerYear)); setPickerOpen(false); }}
+                  className={cn("py-2.5 px-4 rounded-full text-sm font-medium transition-colors", isSel ? "bg-slate-800 text-white" : "text-slate-600 hover:bg-slate-100")}
+                  data-testid={`preview-month-${qId}-${short}`}
+                >
+                  {short}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="space-y-2" data-testid={`preview-question-${qId}`}>
+      {formStyle ? <FieldLabel /> : <BigPromptEl />}
+      {formStyle ? picker : <div className="max-w-xl mx-auto">{picker}</div>}
+      {formStyle && q.helperText && <p className="text-xs text-slate-500">{q.helperText}</p>}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // QuestionPreview
 //   formStyle=true  → small field label (steps 0/1 treatment)
 //   formStyle=false → big centered prompt (steps 2–7 treatment)
@@ -151,6 +249,12 @@ function QuestionPreview({
           {formStyle && q.helperText && <p className="text-xs text-slate-500">{q.helperText}</p>}
         </div>
       );
+
+    // -----------------------------------------------------------------------
+    // month_year — delegates to MonthYearPicker (state lives there)
+    // -----------------------------------------------------------------------
+    case "month_year":
+      return <MonthYearPicker key={q.id} qId={q.id} formStyle={formStyle} q={q} />;
 
     // -----------------------------------------------------------------------
     // single_select — dropdown (mirrors gender/education-level in steps 0/1)

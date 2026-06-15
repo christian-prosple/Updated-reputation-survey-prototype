@@ -16,6 +16,7 @@ import { z } from "zod";
 export const QUESTION_TYPES = [
   "text",
   "email",
+  "month_year",
   "single_select",
   "multi_select",
   "tagbox",
