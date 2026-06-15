@@ -60,6 +60,12 @@ export interface SurveyQuestion {
   taxonomyFilter?: Record<string, unknown> | null;
   validation?: Record<string, unknown> | null;
   conditions?: ConditionRule[];
+  // Free-form behaviour config for richer/custom question types (e.g. a
+  // "pairwise" question's comparison count, allowSkip, algorithm). Stored as
+  // JSON so new custom question types can carry their own settings without a
+  // schema migration. See client/src/lib/questionTemplates.ts for the
+  // human/agent-friendly templates and the documented question shape.
+  config?: Record<string, unknown>;
 }
 
 export interface SurveyPageDef {
