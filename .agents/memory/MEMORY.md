@@ -1,0 +1,2 @@
+- [Drizzle-zod jsonb typing](drizzle-zod-jsonb.md) — drizzle-zod types jsonb columns as `unknown`; cast at the `.values()`/`.set()` call site, not in shared types.
+- [tsconfig low iteration target](tsconfig-iteration.md) — no `target` set means Map/Set `for...of` over `.entries()` errors; wrap in `Array.from(...)` instead of editing tsconfig.

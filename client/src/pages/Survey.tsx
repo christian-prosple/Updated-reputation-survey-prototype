@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "wouter";
 import { useSurvey, ROLES, RoleType, CompanyEntity, GENDERS, EDUCATION_STATUSES, ALL_COMPANY_NAMES, COMPANIES_BY_ROLE } from "@/hooks/use-survey";
+import { useSurveyBackend } from "@/hooks/use-survey-backend";
 import { DEGREE_TAXONOMY, ALL_DEGREES, DEGREE_CATEGORIES } from "@/data/degrees";
 import { CITIES, formatCity } from "@/data/cities";
 import { StepIndicator } from "@/components/StepIndicator";
 import { Button } from "@/components/ui/button-custom";
 import { Textarea } from "@/components/ui/textarea";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
-import { ChevronRight, ChevronLeft, ChevronDown, GripVertical, CheckCircle2, RefreshCw, Search, X } from "lucide-react";
+import { ChevronRight, ChevronLeft, ChevronDown, GripVertical, CheckCircle2, RefreshCw, Search, X, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import headerImage from "@assets/Screenshot_2026-01-22_at_3.04.34_pm_1769054676986.png";
 
@@ -341,6 +343,7 @@ const CompanyLogo = ({ name, size = "md" }: { name: string; size?: "sm" | "md" |
 
 export default function SurveyPage() {
   const { state, actions, suggestedRoles } = useSurvey();
+  useSurveyBackend(state, actions);
   const [activePair, setActivePair] = useState<[CompanyEntity, CompanyEntity] | null>(null);
 
   const [newCompany, setNewCompany] = useState<ManualCompany>({ name: "", role: "" });
@@ -2008,13 +2011,22 @@ export default function SurveyPage() {
       onClick={() => { setIsSearchFocused(false); setIsCountrySearchFocused(false); setIsEducationLevelFocused(false); setIsGenderFocused(false); setIsGradMonthFocused(false); setIsDegreeSearchFocused(false); setIsCitySearchFocused(false); }}
     >
       {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-50">
+      <header className="bg-white border-b sticky top-0 z-50 relative">
         <img 
           src={headerImage} 
           alt="Prosple Header" 
           className="w-full h-auto"
           data-testid="img-header"
         />
+        <Link
+          href="/admin"
+          className="absolute top-2 right-2 p-2 rounded-full bg-white/70 hover:bg-white text-slate-500 hover:text-slate-900 shadow-sm transition-colors"
+          title="Admin"
+          data-testid="link-admin"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Settings className="w-5 h-5" />
+        </Link>
       </header>
 
       {/* Main Content */}

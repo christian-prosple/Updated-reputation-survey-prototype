@@ -577,6 +577,25 @@ export function useSurvey() {
     setState(prev => ({ ...prev, finalRanking: newRanking }));
   };
 
+  // Replace the recognition-step company pool (used when the backend employer
+  // display algorithm decides which employers to show). Resets dependent state.
+  const setDisplayedCompanies = (companies: CompanyEntity[]) => {
+    setState(prev => ({
+      ...prev,
+      displayedCompanies: companies,
+      selectedCompanies: [],
+      pairwiseWins: {},
+      completedPairs: new Set(),
+      pairwiseCount: 0,
+      finalRanking: [],
+      eloRatings: {},
+      sessionOrder: [],
+      chainIndex: 0,
+      appearancesInSession: {},
+      wasChainPair: false,
+    }));
+  };
+
   const initializePairwiseSession = () => {
     const ids = state.selectedCompanies.map(c => c.id);
     const shuffled = [...ids].sort(() => Math.random() - 0.5);
@@ -698,6 +717,7 @@ export function useSurvey() {
       undoLastComparison,
       generateFinalRanking,
       updateFinalRanking,
+      setDisplayedCompanies,
       updatePersonalInfo,
       nextStep,
       prevStep,
