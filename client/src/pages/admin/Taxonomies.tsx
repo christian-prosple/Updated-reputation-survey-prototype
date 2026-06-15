@@ -7,12 +7,13 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, ChevronLeft, Eye, Building2 } from "lucide-react";
-import type { Taxonomy, EmployerItem } from "@shared/schema";
+import { Loader2, Upload, ChevronLeft, ListTree, Building2, Plus, Trash2, Download, Pencil } from "lucide-react";
+import { TAXONOMY_TYPES, type Taxonomy, type TaxonomyType, type EmployerItem } from "@shared/schema";
 
 const IMPORT_FIELDS: { key: string; label: string; required?: boolean }[] = [
   { key: "employerName", label: "Employer name", required: true },
@@ -25,9 +26,18 @@ const IMPORT_FIELDS: { key: string; label: string; required?: boolean }[] = [
   { key: "popularityScore", label: "Popularity score (number)" },
   { key: "rankingScore", label: "Ranking score (number)" },
   { key: "aliases", label: "Aliases (; separated)" },
-] as const;
+  { key: "active", label: "Active (yes/no)" },
+];
 
 const NONE = "__none__";
+
+interface ProcessingRules {
+  dedupe: boolean;
+  mergeAliases: boolean;
+  filterActive: boolean;
+  markAllClients: boolean;
+  defaultPriorityTier: number;
+}
 
 function CsvImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => void }) {
   const { toast } = useToast();
@@ -38,6 +48,9 @@ function CsvImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => voi
   const [importId, setImportId] = useState<number | null>(null);
   const [mapping, setMapping] = useState<Record<string, string>>({});
   const [mode, setMode] = useState<"merge" | "replace">("merge");
+  const [rules, setRules] = useState<ProcessingRules>({
+    dedupe: true, mergeAliases: true, filterActive: false, markAllClients: false, defaultPriorityTier: 0,
+  });
   const [busy, setBusy] = useState(false);
 
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -85,16 +98,21 @@ function CsvImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => voi
         importId: importId ?? undefined,
         mapping,
         mode,
+        rules,
       });
       const data = await res.json();
       await queryClient.invalidateQueries({ queryKey: ["/api/admin/taxonomies"] });
-      toast({ title: "Import complete", description: `${data.imported} rows imported, ${data.total} total.` });
+      toast({ title: "Import complete", description: `${data.imported} imported, ${data.skipped ?? 0} duplicates merged, ${data.total} total.` });
       onDone();
     } catch {
       toast({ title: "Import failed", variant: "destructive" });
     } finally {
       setBusy(false);
     }
+  }
+
+  function rule(key: keyof ProcessingRules, value: boolean | number) {
+    setRules((r) => ({ ...r, [key]: value }));
   }
 
   return (
@@ -144,6 +162,38 @@ function CsvImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => voi
           </Card>
 
           <Card>
+            <CardHeader className="py-3"><CardTitle className="text-sm">3. Processing rules</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">Remove duplicates (by name)</Label>
+                <Switch checked={rules.dedupe} onCheckedChange={(v) => rule("dedupe", v)} data-testid="switch-rule-dedupe" />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">Merge aliases on duplicates</Label>
+                <Switch checked={rules.mergeAliases} onCheckedChange={(v) => rule("mergeAliases", v)} data-testid="switch-rule-merge-aliases" />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">Keep only active employers</Label>
+                <Switch checked={rules.filterActive} onCheckedChange={(v) => rule("filterActive", v)} data-testid="switch-rule-filter-active" />
+              </div>
+              <div className="flex items-center justify-between">
+                <Label className="text-sm">Mark all as clients</Label>
+                <Switch checked={rules.markAllClients} onCheckedChange={(v) => rule("markAllClients", v)} data-testid="switch-rule-mark-clients" />
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <Label className="text-sm">Default priority tier</Label>
+                <Input
+                  type="number"
+                  className="w-24 h-8"
+                  value={rules.defaultPriorityTier}
+                  onChange={(e) => rule("defaultPriorityTier", Number(e.target.value) || 0)}
+                  data-testid="input-rule-priority-tier"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
             <CardHeader className="py-3"><CardTitle className="text-sm">Preview ({sample.length} sample rows)</CardTitle></CardHeader>
             <CardContent className="overflow-auto">
               <Table>
@@ -180,18 +230,139 @@ function CsvImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => voi
   );
 }
 
+const blankItem = (): EmployerItem => ({
+  id: `item-${Math.random().toString(36).slice(2, 8)}`,
+  employerName: "",
+  careerPath: "",
+  isClient: false,
+  priorityTier: 0,
+  popularityScore: 0,
+  rankingScore: 0,
+  active: true,
+});
+
+function ItemManager({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => void }) {
+  const { toast } = useToast();
+  const [items, setItems] = useState<EmployerItem[]>(() => (taxonomy.items as EmployerItem[]).map((i) => ({ ...i })));
+  const [saving, setSaving] = useState(false);
+
+  function update(idx: number, patch: Partial<EmployerItem>) {
+    setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...patch } : it)));
+  }
+
+  async function save() {
+    setSaving(true);
+    try {
+      await apiRequest("PUT", `/api/admin/taxonomies/${taxonomy.id}/items`, { items });
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/taxonomies"] });
+      toast({ title: "Items saved" });
+      onDone();
+    } catch {
+      toast({ title: "Save failed", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <Button variant="ghost" size="sm" onClick={onDone} data-testid="button-back-taxonomies"><ChevronLeft className="w-4 h-4 mr-1" /> Back</Button>
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h3 className="text-lg font-semibold">Manage items — "{taxonomy.name}" ({items.length})</h3>
+        <Button variant="outline" size="sm" onClick={() => setItems((p) => [...p, blankItem()])} data-testid="button-add-item"><Plus className="w-4 h-4 mr-1" /> Add item</Button>
+      </div>
+
+      <Card>
+        <CardContent className="p-0 overflow-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Career path</TableHead>
+                <TableHead>Client</TableHead>
+                <TableHead>Priority</TableHead>
+                <TableHead>Active</TableHead>
+                <TableHead></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {items.map((it, idx) => (
+                <TableRow key={it.id} data-testid={`row-edit-item-${idx}`}>
+                  <TableCell><Input className="h-8" value={it.employerName} onChange={(e) => update(idx, { employerName: e.target.value })} data-testid={`input-item-name-${idx}`} /></TableCell>
+                  <TableCell><Input className="h-8" value={it.careerPath ?? ""} onChange={(e) => update(idx, { careerPath: e.target.value })} data-testid={`input-item-careerpath-${idx}`} /></TableCell>
+                  <TableCell><Switch checked={!!it.isClient} onCheckedChange={(v) => update(idx, { isClient: v })} data-testid={`switch-item-client-${idx}`} /></TableCell>
+                  <TableCell><Input type="number" className="h-8 w-20" value={it.priorityTier ?? 0} onChange={(e) => update(idx, { priorityTier: Number(e.target.value) || 0 })} data-testid={`input-item-priority-${idx}`} /></TableCell>
+                  <TableCell><Switch checked={it.active !== false} onCheckedChange={(v) => update(idx, { active: v })} data-testid={`switch-item-active-${idx}`} /></TableCell>
+                  <TableCell><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setItems((p) => p.filter((_, i) => i !== idx))} data-testid={`button-delete-item-${idx}`}><Trash2 className="w-4 h-4 text-red-500" /></Button></TableCell>
+                </TableRow>
+              ))}
+              {items.length === 0 && <TableRow><TableCell colSpan={6} className="text-center text-slate-500 py-8">No items yet.</TableCell></TableRow>}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      <div className="flex gap-2">
+        <Button onClick={save} disabled={saving} data-testid="button-save-items">{saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />} Save items</Button>
+        <Button variant="outline" onClick={onDone} data-testid="button-cancel-items">Cancel</Button>
+      </div>
+    </div>
+  );
+}
+
 export default function Taxonomies() {
+  const { toast } = useToast();
   const [importing, setImporting] = useState<Taxonomy | null>(null);
-  const [viewing, setViewing] = useState<Taxonomy | null>(null);
+  const [managing, setManaging] = useState<Taxonomy | null>(null);
+  const [editing, setEditing] = useState<Taxonomy | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [formName, setFormName] = useState("");
+  const [formType, setFormType] = useState<TaxonomyType>("employers");
   const { data, isLoading } = useQuery<Taxonomy[]>({ queryKey: ["/api/admin/taxonomies"] });
 
+  function openCreate() {
+    setEditing(null);
+    setFormName("");
+    setFormType("employers");
+    setCreating(true);
+  }
+  function openEdit(t: Taxonomy) {
+    setCreating(false);
+    setEditing(t);
+    setFormName(t.name);
+    setFormType(t.type as TaxonomyType);
+  }
+  async function saveForm() {
+    if (!formName.trim()) { toast({ title: "Name is required", variant: "destructive" }); return; }
+    if (editing) {
+      await apiRequest("PATCH", `/api/admin/taxonomies/${editing.id}`, { name: formName, type: formType });
+      toast({ title: "Taxonomy updated" });
+    } else {
+      await apiRequest("POST", `/api/admin/taxonomies`, { name: formName, type: formType, items: [] });
+      toast({ title: "Taxonomy created" });
+    }
+    await queryClient.invalidateQueries({ queryKey: ["/api/admin/taxonomies"] });
+    setCreating(false);
+    setEditing(null);
+  }
+  async function remove(t: Taxonomy) {
+    if (!confirm(`Delete taxonomy "${t.name}"?`)) return;
+    await apiRequest("DELETE", `/api/admin/taxonomies/${t.id}`);
+    await queryClient.invalidateQueries({ queryKey: ["/api/admin/taxonomies"] });
+    toast({ title: "Taxonomy deleted" });
+  }
+
   if (importing) return <CsvImport taxonomy={importing} onDone={() => setImporting(null)} />;
+  if (managing) return <ItemManager taxonomy={managing} onDone={() => setManaging(null)} />;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold" data-testid="text-taxonomies-title">Taxonomies</h2>
-        <p className="text-slate-500">Manage option sets like employers. Import employers from CSV.</p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="text-2xl font-bold" data-testid="text-taxonomies-title">Taxonomies</h2>
+          <p className="text-slate-500">Manage option sets like employers. Create, edit items, import from CSV, and export.</p>
+        </div>
+        <Button onClick={openCreate} data-testid="button-new-taxonomy"><Plus className="w-4 h-4 mr-1" /> New taxonomy</Button>
       </div>
 
       {isLoading ? (
@@ -209,11 +380,16 @@ export default function Taxonomies() {
                   </div>
                   <p className="text-sm text-slate-500">{t.items.length} item(s)</p>
                 </div>
-                <div className="flex gap-1">
-                  <Button variant="outline" size="sm" onClick={() => setViewing(t)} data-testid={`button-view-taxonomy-${t.id}`}><Eye className="w-4 h-4 mr-1" /> View</Button>
+                <div className="flex gap-1 flex-wrap">
+                  <Button variant="outline" size="sm" onClick={() => setManaging(t)} data-testid={`button-manage-taxonomy-${t.id}`}><ListTree className="w-4 h-4 mr-1" /> Manage items</Button>
                   {t.type === "employers" && (
                     <Button variant="outline" size="sm" onClick={() => setImporting(t)} data-testid={`button-import-taxonomy-${t.id}`}><Upload className="w-4 h-4 mr-1" /> Import CSV</Button>
                   )}
+                  <Button variant="outline" size="sm" asChild data-testid={`button-export-taxonomy-${t.id}`}>
+                    <a href={`/api/admin/taxonomies/${t.id}/export.csv`}><Download className="w-4 h-4 mr-1" /> Export</a>
+                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => openEdit(t)} data-testid={`button-edit-taxonomy-${t.id}`}><Pencil className="w-4 h-4" /></Button>
+                  <Button variant="ghost" size="icon" onClick={() => remove(t)} data-testid={`button-delete-taxonomy-${t.id}`}><Trash2 className="w-4 h-4 text-red-500" /></Button>
                 </div>
               </CardContent>
             </Card>
@@ -222,33 +398,28 @@ export default function Taxonomies() {
         </div>
       )}
 
-      <Dialog open={!!viewing} onOpenChange={(o) => !o && setViewing(null)}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-auto">
-          <DialogHeader><DialogTitle>{viewing?.name} — items</DialogTitle></DialogHeader>
-          {viewing && (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Career path</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Popularity</TableHead>
-                  <TableHead>Ranking</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {(viewing.items as EmployerItem[]).map((it) => (
-                  <TableRow key={it.id} data-testid={`row-item-${it.id}`}>
-                    <TableCell className="font-medium">{it.employerName ?? (it as any).label}</TableCell>
-                    <TableCell className="text-slate-500">{it.careerPath ?? "—"}</TableCell>
-                    <TableCell>{it.isClient ? <Badge>Client</Badge> : "—"}</TableCell>
-                    <TableCell>{it.popularityScore ?? 0}</TableCell>
-                    <TableCell>{it.rankingScore ?? 0}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
+      <Dialog open={creating || !!editing} onOpenChange={(o) => { if (!o) { setCreating(false); setEditing(null); } }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>{editing ? "Edit taxonomy" : "New taxonomy"}</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <Label className="text-xs">Name</Label>
+              <Input value={formName} onChange={(e) => setFormName(e.target.value)} data-testid="input-taxonomy-name" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Type</Label>
+              <Select value={formType} onValueChange={(v) => setFormType(v as TaxonomyType)}>
+                <SelectTrigger data-testid="select-taxonomy-type"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {TAXONOMY_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setCreating(false); setEditing(null); }} data-testid="button-cancel-taxonomy">Cancel</Button>
+            <Button onClick={saveForm} data-testid="button-save-taxonomy">{editing ? "Save" : "Create"}</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

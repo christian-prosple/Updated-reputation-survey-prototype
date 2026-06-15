@@ -20,7 +20,10 @@ function csvEscape(value: unknown): string {
 }
 
 function responsesToCsv(rows: SurveyResponse[]): string {
-  const header = ["id", "sessionId", "status", "respondentEmail", "startedAt", "completedAt", "careerPaths", "shown", "recognized", "answers"];
+  const header = [
+    "id", "sessionId", "status", "respondentEmail", "startedAt", "completedAt",
+    "configId", "configVersion", "careerPaths", "shown", "recognized", "answers",
+  ];
   const lines = [header.join(",")];
   for (const r of rows) {
     const exposure = r.metadata?.employerExposure;
@@ -32,6 +35,8 @@ function responsesToCsv(rows: SurveyResponse[]): string {
       r.respondentEmail ?? "",
       r.startedAt?.toISOString?.() ?? "",
       r.completedAt?.toISOString?.() ?? "",
+      r.surveyConfigId ?? "",
+      r.metadata?.surveyVersion ?? "",
       (exposure?.careerPaths ?? []).join("; "),
       (exposure?.shown ?? []).join("; "),
       (exposure?.recognized ?? []).join("; "),
@@ -39,6 +44,65 @@ function responsesToCsv(rows: SurveyResponse[]): string {
     ].map(csvEscape).join(","));
   }
   return lines.join("\n");
+}
+
+// One row per (response, employer shown) so analysts can pivot on recognition.
+function exposureToCsv(rows: SurveyResponse[]): string {
+  const header = ["responseId", "respondentEmail", "status", "careerPath", "employer", "recognized"];
+  const lines = [header.join(",")];
+  for (const r of rows) {
+    const ex = r.metadata?.employerExposure;
+    if (!ex) continue;
+    const recognized = new Set(ex.recognized ?? []);
+    const careerPaths = (ex.careerPaths ?? []).join("; ");
+    for (const employer of ex.shown ?? []) {
+      lines.push([
+        r.id,
+        r.respondentEmail ?? "",
+        r.status,
+        careerPaths,
+        employer,
+        recognized.has(employer) ? "yes" : "no",
+      ].map(csvEscape).join(","));
+    }
+  }
+  return lines.join("\n");
+}
+
+function employerItemsToCsv(items: EmployerItem[]): string {
+  const header = [
+    "id", "employerName", "displayName", "aliases", "careerPath", "industry",
+    "location", "isClient", "priorityTier", "popularityScore", "rankingScore", "active",
+  ];
+  const lines = [header.join(",")];
+  for (const it of items) {
+    lines.push([
+      it.id,
+      it.employerName,
+      it.displayName ?? "",
+      (it.aliases ?? []).join("; "),
+      it.careerPath ?? "",
+      it.industry ?? "",
+      it.location ?? "",
+      it.isClient ? "yes" : "no",
+      it.priorityTier ?? 0,
+      it.popularityScore ?? 0,
+      it.rankingScore ?? 0,
+      it.active === false ? "no" : "yes",
+    ].map(csvEscape).join(","));
+  }
+  return lines.join("\n");
+}
+
+// Parse the shared response-filter query params used by list + export endpoints.
+function parseResponseFilter(req: Request) {
+  const status: "completed" | "partial" | undefined =
+    req.query.status === "completed" || req.query.status === "partial" ? req.query.status : undefined;
+  const email = typeof req.query.email === "string" && req.query.email ? req.query.email : undefined;
+  const careerPath = typeof req.query.careerPath === "string" && req.query.careerPath ? req.query.careerPath : undefined;
+  const startDate = typeof req.query.startDate === "string" && req.query.startDate ? new Date(req.query.startDate) : undefined;
+  const endDate = typeof req.query.endDate === "string" && req.query.endDate ? new Date(req.query.endDate) : undefined;
+  return { status, email, careerPath, startDate, endDate };
 }
 
 export function registerAdminRoutes(app: Express): void {
@@ -65,8 +129,8 @@ export function registerAdminRoutes(app: Express): void {
   app.get("/api/admin/stats", requireAdmin, async (_req: Request, res: Response) => {
     const [total, completed, partial, configs, taxonomies] = await Promise.all([
       storage.countResponses(),
-      storage.countResponses("completed"),
-      storage.countResponses("partial"),
+      storage.countResponses({ status: "completed" }),
+      storage.countResponses({ status: "partial" }),
       storage.listSurveyConfigs(),
       storage.listTaxonomies(),
     ]);
@@ -123,21 +187,29 @@ export function registerAdminRoutes(app: Express): void {
 
   // --- Responses ---
   app.get("/api/admin/responses", requireAdmin, async (req, res) => {
-    const status = req.query.status === "completed" || req.query.status === "partial" ? req.query.status : undefined;
+    const filter = parseResponseFilter(req);
     const limit = req.query.limit ? Number(req.query.limit) : 100;
     const offset = req.query.offset ? Number(req.query.offset) : 0;
     const [rows, total] = await Promise.all([
-      storage.listResponses({ status, limit, offset }),
-      storage.countResponses(status),
+      storage.listResponses({ ...filter, limit, offset }),
+      storage.countResponses(filter),
     ]);
     res.json({ rows, total });
   });
   app.get("/api/admin/responses/export.csv", requireAdmin, async (req, res) => {
-    const status = req.query.status === "completed" || req.query.status === "partial" ? req.query.status : undefined;
-    const rows = await storage.listResponses({ status, limit: 100000, offset: 0 });
+    const filter = parseResponseFilter(req);
+    const rows = await storage.listResponses({ ...filter, limit: 100000, offset: 0 });
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="responses.csv"`);
     res.send(responsesToCsv(rows));
+  });
+  // Exposure export: one row per (response, employer shown) with recognition flag.
+  app.get("/api/admin/responses/exposure.csv", requireAdmin, async (req, res) => {
+    const filter = parseResponseFilter(req);
+    const rows = await storage.listResponses({ ...filter, limit: 100000, offset: 0 });
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename="employer-exposure.csv"`);
+    res.send(exposureToCsv(rows));
   });
   app.get("/api/admin/responses/:id", requireAdmin, async (req, res) => {
     const row = await storage.getResponse(Number(req.params.id));
@@ -173,6 +245,23 @@ export function registerAdminRoutes(app: Express): void {
   app.delete("/api/admin/taxonomies/:id", requireAdmin, async (req, res) => {
     await storage.deleteTaxonomy(Number(req.params.id));
     res.json({ ok: true });
+  });
+  // Export taxonomy items as CSV (employer-shaped columns).
+  app.get("/api/admin/taxonomies/:id/export.csv", requireAdmin, async (req, res) => {
+    const tax = await storage.getTaxonomy(Number(req.params.id));
+    if (!tax) { res.status(404).json({ message: "Not found" }); return; }
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename="${tax.name.replace(/[^a-z0-9]+/gi, "-")}.csv"`);
+    res.send(employerItemsToCsv(tax.items as EmployerItem[]));
+  });
+  // Replace the full item list for a taxonomy (used by manual item management).
+  app.put("/api/admin/taxonomies/:id/items", requireAdmin, async (req, res) => {
+    const itemsSchema = z.object({ items: z.array(z.record(z.unknown())) });
+    const parsed = itemsSchema.safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ message: "Invalid items", errors: parsed.error.flatten() }); return; }
+    const updated = await storage.updateTaxonomy(Number(req.params.id), { items: parsed.data.items as unknown as EmployerItem[] });
+    if (!updated) { res.status(404).json({ message: "Not found" }); return; }
+    res.json(updated);
   });
 
   // --- CSV import flow: preview then commit ---
@@ -216,8 +305,20 @@ export function registerAdminRoutes(app: Express): void {
       popularityScore: z.string().optional(),
       rankingScore: z.string().optional(),
       aliases: z.string().optional(),
+      active: z.string().optional(),
     }),
     mode: z.enum(["replace", "merge"]).default("merge"),
+    // Processing rules applied to the parsed rows before saving.
+    rules: z
+      .object({
+        dedupe: z.boolean().default(true), // collapse duplicate names/aliases
+        mergeAliases: z.boolean().default(true), // keep aliases when merging dupes
+        filterActive: z.boolean().default(false), // drop rows with active=no
+        markAllClients: z.boolean().default(false), // force isClient=true
+        defaultPriorityTier: z.number().int().nonnegative().default(0),
+      })
+      .partial()
+      .optional(),
   });
   app.post("/api/admin/taxonomies/:id/import/commit", requireAdmin, async (req, res) => {
     const parsed = commitSchema.safeParse(req.body);
@@ -228,38 +329,69 @@ export function registerAdminRoutes(app: Express): void {
 
     const { rows } = parseCsv(parsed.data.content);
     const m = parsed.data.mapping;
+    const rules = parsed.data.rules ?? {};
     const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
+    let skipped = 0;
     const importedItems: EmployerItem[] = [];
     for (const row of rows) {
       const name = (row[m.employerName] ?? "").trim();
       if (!name) continue;
       const careerPath = m.careerPath ? (row[m.careerPath] ?? "").trim() : undefined;
-      importedItems.push({
+      // Active defaults to true; only false when an active column is mapped and parses falsey.
+      const active = m.active ? toBool(row[m.active]) : true;
+      const aliases = m.aliases ? (row[m.aliases] ?? "").split(/[;|]/).map((s) => s.trim()).filter(Boolean) : [];
+      const item: EmployerItem = {
         id: slug(name) || slug(`${name}-${importedItems.length}`),
         employerName: name,
         displayName: m.displayName ? row[m.displayName] : name,
-        aliases: m.aliases ? (row[m.aliases] ?? "").split(/[;|]/).map((s) => s.trim()).filter(Boolean) : [],
+        aliases,
         careerPath,
         industry: m.industry ? row[m.industry] : "",
         location: m.location ? row[m.location] : "",
-        isClient: m.isClient ? toBool(row[m.isClient]) : false,
-        priorityTier: m.priorityTier ? (toNum(row[m.priorityTier]) ?? 0) : 0,
+        isClient: rules.markAllClients ? true : m.isClient ? toBool(row[m.isClient]) : false,
+        priorityTier: m.priorityTier ? (toNum(row[m.priorityTier]) ?? rules.defaultPriorityTier ?? 0) : (rules.defaultPriorityTier ?? 0),
         popularityScore: m.popularityScore ? (toNum(row[m.popularityScore]) ?? 0) : 0,
         rankingScore: m.rankingScore ? (toNum(row[m.rankingScore]) ?? 0) : 0,
         source: "import",
-        active: true,
+        active,
         metadata: careerPath ? { careerPaths: [careerPath] } : {},
-      });
+      };
+      importedItems.push(item);
+    }
+
+    // Drop inactive imported rows up front so the rule affects input, not just
+    // pre-existing items, regardless of merge/replace mode.
+    let processed: EmployerItem[] = rules.filterActive
+      ? importedItems.filter((i) => i.active !== false)
+      : importedItems;
+    if (rules.dedupe !== false) {
+      const byId = new Map<string, EmployerItem>();
+      for (const it of processed) {
+        const prev = byId.get(it.id);
+        if (!prev) { byId.set(it.id, it); continue; }
+        skipped++;
+        const aliases = rules.mergeAliases !== false
+          ? Array.from(new Set([...(prev.aliases ?? []), ...(it.aliases ?? [])]))
+          : it.aliases;
+        byId.set(it.id, { ...prev, ...it, aliases });
+      }
+      processed = Array.from(byId.values());
     }
 
     let finalItems: EmployerItem[];
     if (parsed.data.mode === "replace") {
-      finalItems = importedItems;
+      finalItems = processed;
     } else {
       const byId = new Map<string, EmployerItem>();
       (tax.items as EmployerItem[]).forEach((i) => byId.set(i.id, i));
-      importedItems.forEach((i) => byId.set(i.id, { ...byId.get(i.id), ...i }));
+      processed.forEach((i) => {
+        const prev = byId.get(i.id);
+        const aliases = prev && rules.mergeAliases !== false
+          ? Array.from(new Set([...(prev.aliases ?? []), ...(i.aliases ?? [])]))
+          : i.aliases;
+        byId.set(i.id, { ...prev, ...i, aliases });
+      });
       finalItems = Array.from(byId.values());
     }
 
@@ -267,10 +399,10 @@ export function registerAdminRoutes(app: Express): void {
     if (parsed.data.importId) {
       await storage.updateTaxonomyImport(parsed.data.importId, {
         status: "imported",
-        processingSummary: { imported: importedItems.length, total: finalItems.length, mode: parsed.data.mode },
+        processingSummary: { imported: processed.length, skipped, total: finalItems.length, mode: parsed.data.mode, rules },
       });
     }
-    res.json({ ok: true, imported: importedItems.length, total: finalItems.length, taxonomy: updated });
+    res.json({ ok: true, imported: processed.length, skipped, total: finalItems.length, taxonomy: updated });
   });
 
   app.get("/api/admin/imports", requireAdmin, async (req, res) => {

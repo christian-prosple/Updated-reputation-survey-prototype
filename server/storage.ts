@@ -20,6 +20,20 @@ import {
   type ResponseStatus,
 } from "@shared/schema";
 
+// Filters for querying responses. careerPath matches against the employer
+// exposure recorded in metadata; email is a case-insensitive substring match.
+export interface ResponseFilter {
+  status?: ResponseStatus;
+  email?: string;
+  careerPath?: string;
+  startDate?: Date;
+  endDate?: Date;
+}
+export interface ResponseQuery extends ResponseFilter {
+  limit?: number;
+  offset?: number;
+}
+
 export interface IStorage {
   // Legacy users
   getUser(id: number): Promise<User | undefined>;
@@ -36,8 +50,8 @@ export interface IStorage {
   deleteSurveyConfig(id: number): Promise<void>;
 
   // Responses
-  listResponses(opts?: { status?: ResponseStatus; limit?: number; offset?: number }): Promise<SurveyResponse[]>;
-  countResponses(status?: ResponseStatus): Promise<number>;
+  listResponses(opts?: ResponseQuery): Promise<SurveyResponse[]>;
+  countResponses(filter?: ResponseFilter): Promise<number>;
   getResponse(id: number): Promise<SurveyResponse | undefined>;
   getResponseBySession(sessionId: string): Promise<SurveyResponse | undefined>;
   createResponse(resp: InsertSurveyResponse): Promise<SurveyResponse>;
@@ -121,30 +135,34 @@ export class DbStorage implements IStorage {
   }
 
   // --- Responses ---
-  async listResponses(opts?: { status?: ResponseStatus; limit?: number; offset?: number }): Promise<SurveyResponse[]> {
+  private buildResponseWhere(f?: ResponseFilter) {
+    const clauses = [] as any[];
+    if (f?.status) clauses.push(eq(surveyResponses.status, f.status));
+    if (f?.email) clauses.push(sql`${surveyResponses.respondentEmail} ILIKE ${"%" + f.email + "%"}`);
+    if (f?.startDate) clauses.push(sql`${surveyResponses.startedAt} >= ${f.startDate}`);
+    if (f?.endDate) clauses.push(sql`${surveyResponses.startedAt} <= ${f.endDate}`);
+    if (f?.careerPath) {
+      // careerPaths is a jsonb array inside metadata.employerExposure.
+      clauses.push(
+        sql`${surveyResponses.metadata}->'employerExposure'->'careerPaths' @> ${JSON.stringify([f.careerPath])}::jsonb`,
+      );
+    }
+    return clauses.length ? and(...clauses) : undefined;
+  }
+  async listResponses(opts?: ResponseQuery): Promise<SurveyResponse[]> {
     const limit = opts?.limit ?? 100;
     const offset = opts?.offset ?? 0;
-    if (opts?.status) {
-      return db
-        .select()
-        .from(surveyResponses)
-        .where(eq(surveyResponses.status, opts.status))
-        .orderBy(desc(surveyResponses.updatedAt))
-        .limit(limit)
-        .offset(offset);
-    }
-    return db
-      .select()
-      .from(surveyResponses)
+    const where = this.buildResponseWhere(opts);
+    const q = db.select().from(surveyResponses);
+    return (where ? q.where(where) : q)
       .orderBy(desc(surveyResponses.updatedAt))
       .limit(limit)
       .offset(offset);
   }
-  async countResponses(status?: ResponseStatus): Promise<number> {
+  async countResponses(filter?: ResponseFilter): Promise<number> {
+    const where = this.buildResponseWhere(filter);
     const base = db.select({ count: sql<number>`count(*)::int` }).from(surveyResponses);
-    const [row] = status
-      ? await base.where(eq(surveyResponses.status, status))
-      : await base;
+    const [row] = where ? await base.where(where) : await base;
     return row?.count ?? 0;
   }
   async getResponse(id: number): Promise<SurveyResponse | undefined> {

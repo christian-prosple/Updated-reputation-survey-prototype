@@ -4,26 +4,45 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Download, Eye, Trash2 } from "lucide-react";
+import { Loader2, Download, Eye, Trash2, X } from "lucide-react";
 import type { SurveyResponse } from "@shared/schema";
 
 type Filter = "all" | "completed" | "partial";
 
 export default function AdminResponses() {
   const [filter, setFilter] = useState<Filter>("all");
+  const [email, setEmail] = useState("");
+  const [careerPath, setCareerPath] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [selected, setSelected] = useState<SurveyResponse | null>(null);
   const { toast } = useToast();
 
-  const queryKey = ["/api/admin/responses", filter];
+  function buildQuery(): string {
+    const params = new URLSearchParams();
+    if (filter !== "all") params.set("status", filter);
+    if (email.trim()) params.set("email", email.trim());
+    if (careerPath.trim()) params.set("careerPath", careerPath.trim());
+    if (startDate) params.set("startDate", new Date(startDate).toISOString());
+    if (endDate) {
+      const d = new Date(endDate);
+      d.setHours(23, 59, 59, 999);
+      params.set("endDate", d.toISOString());
+    }
+    return params.toString();
+  }
+  const qs = buildQuery();
+
   const { data, isLoading } = useQuery<{ rows: SurveyResponse[]; total: number }>({
-    queryKey,
+    queryKey: ["/api/admin/responses", filter, email, careerPath, startDate, endDate],
     queryFn: async () => {
-      const url = filter === "all" ? "/api/admin/responses" : `/api/admin/responses?status=${filter}`;
-      const res = await apiRequest("GET", url);
+      const res = await apiRequest("GET", `/api/admin/responses${qs ? `?${qs}` : ""}`);
       return res.json();
     },
   });
@@ -36,7 +55,13 @@ export default function AdminResponses() {
     toast({ title: "Response deleted" });
   }
 
-  const exportUrl = filter === "all" ? "/api/admin/responses/export.csv" : `/api/admin/responses/export.csv?status=${filter}`;
+  function clearFilters() {
+    setEmail(""); setCareerPath(""); setStartDate(""); setEndDate("");
+  }
+  const hasFilters = email || careerPath || startDate || endDate;
+
+  const responsesUrl = `/api/admin/responses/export.csv${qs ? `?${qs}` : ""}`;
+  const exposureUrl = `/api/admin/responses/exposure.csv${qs ? `?${qs}` : ""}`;
 
   return (
     <div className="space-y-6">
@@ -45,9 +70,14 @@ export default function AdminResponses() {
           <h2 className="text-2xl font-bold" data-testid="text-responses-title">Responses</h2>
           <p className="text-slate-500">{data?.total ?? 0} response(s).</p>
         </div>
-        <a href={exportUrl} download>
-          <Button variant="outline" data-testid="button-export-csv"><Download className="w-4 h-4 mr-2" /> Export CSV</Button>
-        </a>
+        <div className="flex gap-2">
+          <a href={responsesUrl} download>
+            <Button variant="outline" data-testid="button-export-csv"><Download className="w-4 h-4 mr-2" /> Export responses</Button>
+          </a>
+          <a href={exposureUrl} download>
+            <Button variant="outline" data-testid="button-export-exposure"><Download className="w-4 h-4 mr-2" /> Export exposure</Button>
+          </a>
+        </div>
       </div>
 
       <Tabs value={filter} onValueChange={(v) => setFilter(v as Filter)}>
@@ -59,11 +89,37 @@ export default function AdminResponses() {
       </Tabs>
 
       <Card>
+        <CardContent className="py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="space-y-1">
+            <Label className="text-xs">Search email</Label>
+            <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" data-testid="input-filter-email" />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">Career path</Label>
+            <Input value={careerPath} onChange={(e) => setCareerPath(e.target.value)} placeholder="e.g. Finance" data-testid="input-filter-careerpath" />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">From date</Label>
+            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} data-testid="input-filter-start" />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">To date</Label>
+            <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} data-testid="input-filter-end" />
+          </div>
+          {hasFilters && (
+            <div className="sm:col-span-2 lg:col-span-4">
+              <Button variant="ghost" size="sm" onClick={clearFilters} data-testid="button-clear-filters"><X className="w-4 h-4 mr-1" /> Clear filters</Button>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
         <CardContent className="p-0">
           {isLoading ? (
             <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
           ) : (data?.rows.length ?? 0) === 0 ? (
-            <p className="text-center text-slate-500 py-16" data-testid="text-no-responses">No responses yet.</p>
+            <p className="text-center text-slate-500 py-16" data-testid="text-no-responses">No responses match these filters.</p>
           ) : (
             <Table>
               <TableHeader>
@@ -71,6 +127,7 @@ export default function AdminResponses() {
                   <TableHead>Email</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Started</TableHead>
+                  <TableHead>Version</TableHead>
                   <TableHead>Career paths</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -83,6 +140,7 @@ export default function AdminResponses() {
                       <Badge variant={r.status === "completed" ? "default" : "secondary"}>{r.status}</Badge>
                     </TableCell>
                     <TableCell className="text-slate-500">{r.startedAt ? new Date(r.startedAt).toLocaleString() : "—"}</TableCell>
+                    <TableCell className="text-slate-500 text-xs">{r.surveyConfigId ? `#${r.surveyConfigId} v${r.metadata?.surveyVersion ?? "?"}` : "—"}</TableCell>
                     <TableCell className="text-slate-500 max-w-[200px] truncate">
                       {(r.metadata?.employerExposure?.careerPaths ?? []).join(", ") || "—"}
                     </TableCell>
@@ -110,6 +168,7 @@ export default function AdminResponses() {
                 <div><span className="text-slate-500">Status:</span> {selected.status}</div>
                 <div><span className="text-slate-500">Session:</span> <span className="font-mono text-xs">{selected.sessionId}</span></div>
                 <div><span className="text-slate-500">Completed:</span> {selected.completedAt ? new Date(selected.completedAt).toLocaleString() : "—"}</div>
+                <div><span className="text-slate-500">Survey:</span> {selected.surveyConfigId ? `config #${selected.surveyConfigId}, version ${selected.metadata?.surveyVersion ?? "?"}` : "—"}</div>
               </div>
               <div>
                 <h4 className="font-semibold mb-2">Answers</h4>
