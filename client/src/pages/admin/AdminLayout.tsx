@@ -1,13 +1,6 @@
-import { ReactNode, useEffect } from "react";
-import { Link, useLocation, useRoute } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Button } from "@/components/ui/button";
-import { LayoutDashboard, FileText, ListChecks, Database, Sliders, LogOut, Loader2, ExternalLink } from "lucide-react";
-
-interface MeResponse {
-  isAdmin: boolean;
-}
+import { ReactNode } from "react";
+import { Link, useLocation } from "wouter";
+import { LayoutDashboard, FileText, ListChecks, Database, Sliders, ExternalLink } from "lucide-react";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -35,41 +28,6 @@ function NavItem({ href, label, icon: Icon, exact }: { href: string; label: stri
 }
 
 export function AdminLayout({ children }: { children: ReactNode }) {
-  const [, navigate] = useLocation();
-  const [isLoginRoute] = useRoute("/admin/login");
-
-  const { data, isLoading } = useQuery<MeResponse>({
-    queryKey: ["/api/admin/me"],
-  });
-
-  useEffect(() => {
-    if (!isLoginRoute && !isLoading && !data?.isAdmin) {
-      navigate("/admin/login");
-    }
-  }, [isLoginRoute, isLoading, data?.isAdmin, navigate]);
-
-  async function handleLogout() {
-    await apiRequest("POST", "/api/admin/logout");
-    queryClient.clear();
-    navigate("/admin/login");
-  }
-
-  if (isLoginRoute) {
-    return <>{children}</>;
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
-      </div>
-    );
-  }
-
-  if (!data?.isAdmin) {
-    return null;
-  }
-
   return (
     <div className="min-h-screen flex bg-slate-50 text-slate-900">
       <aside className="w-60 shrink-0 border-r bg-white flex flex-col">
@@ -82,7 +40,7 @@ export function AdminLayout({ children }: { children: ReactNode }) {
             <NavItem key={item.href} {...item} />
           ))}
         </nav>
-        <div className="p-3 border-t space-y-1">
+        <div className="p-3 border-t">
           <Link
             href="/"
             className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-100"
@@ -91,10 +49,6 @@ export function AdminLayout({ children }: { children: ReactNode }) {
             <ExternalLink className="w-4 h-4" />
             View Survey
           </Link>
-          <Button variant="ghost" className="w-full justify-start gap-3 text-slate-600" onClick={handleLogout} data-testid="button-logout">
-            <LogOut className="w-4 h-4" />
-            Log out
-          </Button>
         </div>
       </aside>
       <main className="flex-1 overflow-auto">

@@ -6,7 +6,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import SurveyPage from "@/pages/Survey";
 import { AdminLayout } from "@/pages/admin/AdminLayout";
-import AdminLogin from "@/pages/admin/Login";
 import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminResponses from "@/pages/admin/Responses";
 import AdminSurveyEditor from "@/pages/admin/SurveyEditor";
@@ -18,7 +17,6 @@ function AdminRouter() {
   return (
     <AdminLayout>
       <Switch>
-        <Route path="/admin/login" component={AdminLogin} />
         <Route path="/admin" component={AdminDashboard} />
         <Route path="/admin/responses" component={AdminResponses} />
         <Route path="/admin/survey" component={AdminSurveyEditor} />

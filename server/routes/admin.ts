@@ -1,7 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { z } from "zod";
 import { storage } from "../storage";
-import { requireAdmin, getAdminPassword } from "../auth";
 import { parseCsv, toBool, toNum } from "../csv";
 import {
   insertSurveyConfigSchema,
@@ -106,27 +105,11 @@ function parseResponseFilter(req: Request) {
 }
 
 export function registerAdminRoutes(app: Express): void {
-  // --- Auth ---
-  app.post("/api/admin/login", (req: Request, res: Response) => {
-    const password = String(req.body?.password ?? "");
-    if (password && password === getAdminPassword()) {
-      req.session.isAdmin = true;
-      res.json({ ok: true });
-      return;
-    }
-    res.status(401).json({ message: "Incorrect password" });
+  app.get("/api/admin/me", (_req: Request, res: Response) => {
+    res.json({ isAdmin: true });
   });
 
-  app.post("/api/admin/logout", (req: Request, res: Response) => {
-    req.session.destroy(() => res.json({ ok: true }));
-  });
-
-  app.get("/api/admin/me", (req: Request, res: Response) => {
-    res.json({ isAdmin: !!req.session?.isAdmin });
-  });
-
-  // Everything below requires admin.
-  app.get("/api/admin/stats", requireAdmin, async (_req: Request, res: Response) => {
+  app.get("/api/admin/stats", async (_req: Request, res: Response) => {
     const [total, completed, partial, configs, taxonomies] = await Promise.all([
       storage.countResponses(),
       storage.countResponses({ status: "completed" }),
@@ -143,32 +126,32 @@ export function registerAdminRoutes(app: Express): void {
   });
 
   // --- Survey configs ---
-  app.get("/api/admin/configs", requireAdmin, async (_req, res) => {
+  app.get("/api/admin/configs", async (_req, res) => {
     res.json(await storage.listSurveyConfigs());
   });
-  app.get("/api/admin/configs/:id", requireAdmin, async (req, res) => {
+  app.get("/api/admin/configs/:id", async (req, res) => {
     const config = await storage.getSurveyConfig(Number(req.params.id));
     if (!config) { res.status(404).json({ message: "Not found" }); return; }
     res.json(config);
   });
-  app.post("/api/admin/configs", requireAdmin, async (req, res) => {
+  app.post("/api/admin/configs", async (req, res) => {
     const parsed = insertSurveyConfigSchema.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ message: "Invalid config", errors: parsed.error.flatten() }); return; }
     res.json(await storage.createSurveyConfig(parsed.data));
   });
-  app.patch("/api/admin/configs/:id", requireAdmin, async (req, res) => {
+  app.patch("/api/admin/configs/:id", async (req, res) => {
     const parsed = insertSurveyConfigSchema.partial().safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ message: "Invalid config", errors: parsed.error.flatten() }); return; }
     const updated = await storage.updateSurveyConfig(Number(req.params.id), parsed.data);
     if (!updated) { res.status(404).json({ message: "Not found" }); return; }
     res.json(updated);
   });
-  app.post("/api/admin/configs/:id/activate", requireAdmin, async (req, res) => {
+  app.post("/api/admin/configs/:id/activate", async (req, res) => {
     const updated = await storage.activateSurveyConfig(Number(req.params.id));
     if (!updated) { res.status(404).json({ message: "Not found" }); return; }
     res.json(updated);
   });
-  app.post("/api/admin/configs/:id/duplicate", requireAdmin, async (req, res) => {
+  app.post("/api/admin/configs/:id/duplicate", async (req, res) => {
     const config = await storage.getSurveyConfig(Number(req.params.id));
     if (!config) { res.status(404).json({ message: "Not found" }); return; }
     const copy = await storage.createSurveyConfig({
@@ -180,13 +163,13 @@ export function registerAdminRoutes(app: Express): void {
     });
     res.json(copy);
   });
-  app.delete("/api/admin/configs/:id", requireAdmin, async (req, res) => {
+  app.delete("/api/admin/configs/:id", async (req, res) => {
     await storage.deleteSurveyConfig(Number(req.params.id));
     res.json({ ok: true });
   });
 
   // --- Responses ---
-  app.get("/api/admin/responses", requireAdmin, async (req, res) => {
+  app.get("/api/admin/responses", async (req, res) => {
     const filter = parseResponseFilter(req);
     const limit = req.query.limit ? Number(req.query.limit) : 100;
     const offset = req.query.offset ? Number(req.query.offset) : 0;
@@ -196,7 +179,7 @@ export function registerAdminRoutes(app: Express): void {
     ]);
     res.json({ rows, total });
   });
-  app.get("/api/admin/responses/export.csv", requireAdmin, async (req, res) => {
+  app.get("/api/admin/responses/export.csv", async (req, res) => {
     const filter = parseResponseFilter(req);
     const rows = await storage.listResponses({ ...filter, limit: 100000, offset: 0 });
     res.setHeader("Content-Type", "text/csv");
@@ -204,50 +187,50 @@ export function registerAdminRoutes(app: Express): void {
     res.send(responsesToCsv(rows));
   });
   // Exposure export: one row per (response, employer shown) with recognition flag.
-  app.get("/api/admin/responses/exposure.csv", requireAdmin, async (req, res) => {
+  app.get("/api/admin/responses/exposure.csv", async (req, res) => {
     const filter = parseResponseFilter(req);
     const rows = await storage.listResponses({ ...filter, limit: 100000, offset: 0 });
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="employer-exposure.csv"`);
     res.send(exposureToCsv(rows));
   });
-  app.get("/api/admin/responses/:id", requireAdmin, async (req, res) => {
+  app.get("/api/admin/responses/:id", async (req, res) => {
     const row = await storage.getResponse(Number(req.params.id));
     if (!row) { res.status(404).json({ message: "Not found" }); return; }
     res.json(row);
   });
-  app.delete("/api/admin/responses/:id", requireAdmin, async (req, res) => {
+  app.delete("/api/admin/responses/:id", async (req, res) => {
     await storage.deleteResponse(Number(req.params.id));
     res.json({ ok: true });
   });
 
   // --- Taxonomies ---
-  app.get("/api/admin/taxonomies", requireAdmin, async (_req, res) => {
+  app.get("/api/admin/taxonomies", async (_req, res) => {
     res.json(await storage.listTaxonomies());
   });
-  app.get("/api/admin/taxonomies/:id", requireAdmin, async (req, res) => {
+  app.get("/api/admin/taxonomies/:id", async (req, res) => {
     const tax = await storage.getTaxonomy(Number(req.params.id));
     if (!tax) { res.status(404).json({ message: "Not found" }); return; }
     res.json(tax);
   });
-  app.post("/api/admin/taxonomies", requireAdmin, async (req, res) => {
+  app.post("/api/admin/taxonomies", async (req, res) => {
     const parsed = insertTaxonomySchema.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ message: "Invalid taxonomy", errors: parsed.error.flatten() }); return; }
     res.json(await storage.createTaxonomy(parsed.data));
   });
-  app.patch("/api/admin/taxonomies/:id", requireAdmin, async (req, res) => {
+  app.patch("/api/admin/taxonomies/:id", async (req, res) => {
     const parsed = insertTaxonomySchema.partial().safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ message: "Invalid taxonomy", errors: parsed.error.flatten() }); return; }
     const updated = await storage.updateTaxonomy(Number(req.params.id), parsed.data);
     if (!updated) { res.status(404).json({ message: "Not found" }); return; }
     res.json(updated);
   });
-  app.delete("/api/admin/taxonomies/:id", requireAdmin, async (req, res) => {
+  app.delete("/api/admin/taxonomies/:id", async (req, res) => {
     await storage.deleteTaxonomy(Number(req.params.id));
     res.json({ ok: true });
   });
   // Export taxonomy items as CSV (employer-shaped columns).
-  app.get("/api/admin/taxonomies/:id/export.csv", requireAdmin, async (req, res) => {
+  app.get("/api/admin/taxonomies/:id/export.csv", async (req, res) => {
     const tax = await storage.getTaxonomy(Number(req.params.id));
     if (!tax) { res.status(404).json({ message: "Not found" }); return; }
     res.setHeader("Content-Type", "text/csv");
@@ -255,7 +238,7 @@ export function registerAdminRoutes(app: Express): void {
     res.send(employerItemsToCsv(tax.items as EmployerItem[]));
   });
   // Replace the full item list for a taxonomy (used by manual item management).
-  app.put("/api/admin/taxonomies/:id/items", requireAdmin, async (req, res) => {
+  app.put("/api/admin/taxonomies/:id/items", async (req, res) => {
     const itemsSchema = z.object({ items: z.array(z.record(z.unknown())) });
     const parsed = itemsSchema.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ message: "Invalid items", errors: parsed.error.flatten() }); return; }
@@ -271,7 +254,7 @@ export function registerAdminRoutes(app: Express): void {
     mapping: z.record(z.string()).optional(),
   });
   // Preview: parse CSV, return headers + first rows so the admin can map columns.
-  app.post("/api/admin/taxonomies/:id/import/preview", requireAdmin, async (req, res) => {
+  app.post("/api/admin/taxonomies/:id/import/preview", async (req, res) => {
     const parsed = previewSchema.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ message: "Invalid payload" }); return; }
     const { headers, rows } = parseCsv(parsed.data.content);
@@ -320,7 +303,7 @@ export function registerAdminRoutes(app: Express): void {
       .partial()
       .optional(),
   });
-  app.post("/api/admin/taxonomies/:id/import/commit", requireAdmin, async (req, res) => {
+  app.post("/api/admin/taxonomies/:id/import/commit", async (req, res) => {
     const parsed = commitSchema.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ message: "Invalid payload", errors: parsed.error.flatten() }); return; }
     const taxId = Number(req.params.id);
@@ -405,17 +388,17 @@ export function registerAdminRoutes(app: Express): void {
     res.json({ ok: true, imported: processed.length, skipped, total: finalItems.length, taxonomy: updated });
   });
 
-  app.get("/api/admin/imports", requireAdmin, async (req, res) => {
+  app.get("/api/admin/imports", async (req, res) => {
     const taxonomyId = req.query.taxonomyId ? Number(req.query.taxonomyId) : undefined;
     res.json(await storage.listTaxonomyImports(taxonomyId));
   });
 
   // --- Settings: employer display logic ---
-  app.get("/api/admin/settings/employer-logic", requireAdmin, async (_req, res) => {
+  app.get("/api/admin/settings/employer-logic", async (_req, res) => {
     const logic = (await storage.getSetting<EmployerDisplayLogic>("employerDisplayLogic")) ?? DEFAULT_EMPLOYER_DISPLAY_LOGIC;
     res.json(logic);
   });
-  app.put("/api/admin/settings/employer-logic", requireAdmin, async (req, res) => {
+  app.put("/api/admin/settings/employer-logic", async (req, res) => {
     // Validate the incoming payload (bounds + types) before merging.
     const parsed = employerDisplayLogicSchema.safeParse(req.body);
     if (!parsed.success) {
