@@ -310,6 +310,131 @@ function ItemManager({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => v
   );
 }
 
+// ---------------------------------------------------------------------------
+// SimpleReplaceImport — for non-employer taxonomies (countries, study fields, etc.)
+// Reads a single-column CSV (or any CSV — uses the first column as the name)
+// and replaces ALL items in the taxonomy with the new list.
+// ---------------------------------------------------------------------------
+function SimpleReplaceImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => void }) {
+  const { toast } = useToast();
+  const [content, setContent] = useState("");
+  const [preview, setPreview] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  function parseNames(raw: string): string[] {
+    const lines = raw.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+    if (lines.length === 0) return [];
+    // Detect if first line is a header — skip if it looks like a header (no comma = plain list, or first value matches a known header word)
+    const firstCol = (line: string) => line.split(",")[0].replace(/^["']|["']$/g, "").trim();
+    const headerKeywords = ["name", "label", "value", "title", "item"];
+    const first = firstCol(lines[0]).toLowerCase();
+    const hasHeader = headerKeywords.some((k) => first === k);
+    const data = hasHeader ? lines.slice(1) : lines;
+    return data.map(firstCol).filter(Boolean);
+  }
+
+  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result ?? "");
+      setContent(text);
+      setPreview(parseNames(text).slice(0, 8));
+    };
+    reader.readAsText(file);
+  }
+
+  function onPaste(text: string) {
+    setContent(text);
+    setPreview(parseNames(text).slice(0, 8));
+  }
+
+  async function doImport() {
+    const names = parseNames(content);
+    if (names.length === 0) { toast({ title: "No items found in CSV", variant: "destructive" }); return; }
+    setBusy(true);
+    try {
+      const items = names.map((name) => ({
+        id: name.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") + "_" + Math.random().toString(36).slice(2, 6),
+        employerName: name,
+        label: name,
+        value: name,
+        active: true,
+      }));
+      await apiRequest("PUT", `/api/admin/taxonomies/${taxonomy.id}/items`, { items });
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/taxonomies"] });
+      toast({ title: "Import complete", description: `${items.length} items imported (replaced previous list).` });
+      onDone();
+    } catch {
+      toast({ title: "Import failed", variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const count = parseNames(content).length;
+
+  return (
+    <div className="space-y-5">
+      <Button variant="ghost" size="sm" onClick={onDone} data-testid="button-back-taxonomies">
+        <ChevronLeft className="w-4 h-4 mr-1" /> Back
+      </Button>
+      <div>
+        <h3 className="text-lg font-semibold">Import CSV → "{taxonomy.name}"</h3>
+        <p className="text-sm text-slate-500 mt-1">
+          Upload or paste a CSV with one name per row (first column is used). This will <strong>replace all existing items</strong>.
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader className="py-3"><CardTitle className="text-sm">1. Upload or paste</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <Input type="file" accept=".csv,text/csv,.txt" onChange={onFile} data-testid="input-csv-file" />
+          <Textarea
+            value={content}
+            onChange={(e) => { onPaste(e.target.value); }}
+            placeholder={"Paste names here, one per line:\nAustralia\nCanada\nUnited Kingdom\n..."}
+            rows={6}
+            className="font-mono text-xs"
+            data-testid="textarea-csv-content"
+          />
+        </CardContent>
+      </Card>
+
+      {preview.length > 0 && (
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              2. Preview
+              <Badge variant="secondary">{count} item{count !== 1 ? "s" : ""} detected</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-1">
+              {preview.map((name, i) => (
+                <li key={i} className="text-sm text-slate-700 flex items-center gap-2">
+                  <span className="w-5 text-slate-400 text-xs">{i + 1}</span>
+                  {name}
+                </li>
+              ))}
+              {count > 8 && <li className="text-xs text-slate-400">…and {count - 8} more</li>}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="flex gap-2">
+        <Button onClick={doImport} disabled={busy || count === 0} data-testid="button-confirm-import">
+          {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          Replace all with {count} item{count !== 1 ? "s" : ""}
+        </Button>
+        <Button variant="outline" onClick={onDone} data-testid="button-cancel-import">Cancel</Button>
+      </div>
+    </div>
+  );
+}
+
 export default function Taxonomies() {
   const { toast } = useToast();
   const [importing, setImporting] = useState<Taxonomy | null>(null);
@@ -352,7 +477,11 @@ export default function Taxonomies() {
     toast({ title: "Taxonomy deleted" });
   }
 
-  if (importing) return <CsvImport taxonomy={importing} onDone={() => setImporting(null)} />;
+  if (importing) {
+    return importing.type === "employers"
+      ? <CsvImport taxonomy={importing} onDone={() => setImporting(null)} />
+      : <SimpleReplaceImport taxonomy={importing} onDone={() => setImporting(null)} />;
+  }
   if (managing) return <ItemManager taxonomy={managing} onDone={() => setManaging(null)} />;
 
   return (
@@ -382,9 +511,7 @@ export default function Taxonomies() {
                 </div>
                 <div className="flex gap-1 flex-wrap">
                   <Button variant="outline" size="sm" onClick={() => setManaging(t)} data-testid={`button-manage-taxonomy-${t.id}`}><ListTree className="w-4 h-4 mr-1" /> Manage items</Button>
-                  {t.type === "employers" && (
-                    <Button variant="outline" size="sm" onClick={() => setImporting(t)} data-testid={`button-import-taxonomy-${t.id}`}><Upload className="w-4 h-4 mr-1" /> Import CSV</Button>
-                  )}
+                  <Button variant="outline" size="sm" onClick={() => setImporting(t)} data-testid={`button-import-taxonomy-${t.id}`}><Upload className="w-4 h-4 mr-1" /> Import CSV</Button>
                   <Button variant="outline" size="sm" asChild data-testid={`button-export-taxonomy-${t.id}`}>
                     <a href={`/api/admin/taxonomies/${t.id}/export.csv`}><Download className="w-4 h-4 mr-1" /> Export</a>
                   </Button>
