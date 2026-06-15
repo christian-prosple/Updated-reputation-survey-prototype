@@ -1,24 +1,26 @@
 ---
 name: Survey rendering architecture
-description: How the public survey is built vs. how admin preview must render it
+description: Why admin previews must re-implement the survey instead of reusing it
 ---
 
 # Survey rendering
 
-The public respondent survey (`client/src/pages/Survey.tsx`) is one large
-monolithic component (~2000 lines, `SurveyPage`) with every step hand-coded
-inline. There are NO reusable per-question respondent components to import.
+The public respondent survey is one large monolithic page component with every
+step hand-coded inline. There are NO reusable per-question respondent
+components to import.
 
-**Why this matters:** any admin-side "preview" of a survey config cannot reuse
-the real survey's render path. It must be a separate config-driven renderer that
-interprets `SurveyPageDef`/`SurveyQuestion` and re-creates the styling.
+**Decision:** the admin-side "preview" is a separate config-driven renderer that
+interprets the survey config and re-creates each question type's markup/styling.
 
-**How to apply:** the config-driven preview lives in
-`client/src/components/SurveyPreview.tsx`. If you add a new question `type` to
-`QUESTION_TYPES`, add a render branch there too (and to `Survey.tsx` if it ships
-to real respondents). Brand accent is `#96D2C0`; headings use
-`text-xl md:text-2xl font-medium text-slate-700`, centered `max-w-2xl`.
+**Why:** there is nothing reusable to mount; a config can also contain
+question/page shapes the live survey never renders.
 
-Survey config (`pages`) is stored in a loose JSONB column, so adding optional
-fields to `SurveyQuestion` (e.g. `config`) needs no migration and won't be
-rejected by the backend's `insertSurveyConfigSchema` validation.
+**How to apply:** when a preview must "match the live survey," copy the live
+survey's exact markup per question type and use the theme color classes
+(primary/border/card/secondary/muted) rather than hardcoded hex, so it tracks
+the theme. If you add a new question type, add a render branch in BOTH the live
+survey and the preview renderer.
+
+Survey config pages are stored in a loose JSONB column, so adding optional
+fields to a question (e.g. `config`) needs no migration and won't be rejected by
+backend validation.

@@ -790,7 +790,7 @@ function ConfigEditor({ config, onBack }: { config: SurveyConfig; onBack: () => 
 
       {/* Full-survey preview (live, unsaved edits) */}
       <Dialog open={fullPreviewOpen} onOpenChange={setFullPreviewOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto" data-testid="dialog-full-preview">
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto" data-testid="dialog-full-preview">
           <DialogHeader>
             <DialogTitle>Full survey preview</DialogTitle>
             <DialogDescription>Walk through every page as a respondent would. Nothing is saved.</DialogDescription>

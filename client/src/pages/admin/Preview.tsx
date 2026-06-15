@@ -39,7 +39,7 @@ export default function Preview() {
         </h2>
         <p className="text-slate-500">Version {config.version} · {config.status} · last saved view</p>
       </div>
-      <div className="max-w-3xl mx-auto w-full">
+      <div className="w-full">
         <SurveyPreview pages={config.pages} taxonomies={taxonomies ?? []} />
       </div>
     </div>
