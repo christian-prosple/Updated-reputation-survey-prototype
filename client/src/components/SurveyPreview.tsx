@@ -1,16 +1,19 @@
 // ===========================================================================
 // SURVEY PREVIEW (respondent-facing, read-only)
 // ===========================================================================
-// Renders a survey config the way a respondent would see it, but purely for
-// preview. It is config-driven: it reads `SurveyPageDef` / `SurveyQuestion`
-// from the editor's live state (or a saved config) and renders each question
-// type with the EXACT visual styling used in the live survey
-// (client/src/pages/Survey.tsx) — same Prosple mint primary, same fonts,
-// same card/grid/pill/button markup — so the preview matches what respondents
-// actually see.
+// Renders a survey config the way a respondent sees it. Uses the SAME markup
+// as client/src/pages/Survey.tsx, including its two layout modes:
 //
-// IMPORTANT: nothing here saves a response. All interaction is local component
-// state and is thrown away. Every entry point shows a "Preview only" banner.
+//   formStyle  (page.questions.length > 1)
+//     → small "text-sm font-medium text-slate-700" label above each control,
+//       all fields stacked inside max-w-xl mx-auto space-y-6
+//       (mirrors steps 0 & 1 — personal info, education)
+//
+//   promptStyle  (single question on the page)
+//     → big centered "text-xl md:text-2xl font-medium text-slate-700" heading
+//       above the control (mirrors steps 2–7)
+//
+// Nothing here ever saves a response. Every entry shows a "Preview only" banner.
 // ===========================================================================
 
 import { useState } from "react";
@@ -23,36 +26,29 @@ import {
   ChevronRight,
   CheckCircle2,
   GripVertical,
+  X,
 } from "lucide-react";
 import { StepIndicator } from "@/components/StepIndicator";
 import { cn } from "@/lib/utils";
 import headerImage from "@assets/Screenshot_2026-01-22_at_3.04.34_pm_1769054676986.png";
 import type { SurveyPageDef, SurveyQuestion, Taxonomy } from "@shared/schema";
 
-// --- Company logo (mirrors CompanyLogo in Survey.tsx, favicon-guess only) ---
-function getCompanyLogoUrl(companyName: string): string {
-  const guessedDomain = companyName.toLowerCase().replace(/[^a-z0-9]/g, "") + ".com";
-  return `https://www.google.com/s2/favicons?domain=${guessedDomain}&sz=128`;
+// --- Inline CompanyLogo (mirrors Survey.tsx; uses favicon-guess fallback) ---
+function getCompanyLogoUrl(name: string): string {
+  const d = name.toLowerCase().replace(/[^a-z0-9]/g, "") + ".com";
+  return `https://www.google.com/s2/favicons?domain=${d}&sz=128`;
 }
-
 function CompanyLogo({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
-  const [hasError, setHasError] = useState(false);
-  const sizeClasses = { sm: "w-6 h-6", md: "w-8 h-8", lg: "w-12 h-12" };
-  const textSizeClasses = { sm: "text-[10px]", md: "text-xs", lg: "text-sm" };
-  const initials = name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
+  const [err, setErr] = useState(false);
+  const sz = { sm: "w-6 h-6", md: "w-8 h-8", lg: "w-12 h-12" }[size];
+  const ts = { sm: "text-[10px]", md: "text-xs", lg: "text-sm" }[size];
+  const init = name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
   return (
-    <div
-      className={`${sizeClasses[size]} rounded-full bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0 border border-slate-200`}
-    >
-      {!hasError ? (
-        <img
-          src={getCompanyLogoUrl(name)}
-          alt={`${name} logo`}
-          className="w-full h-full object-cover"
-          onError={() => setHasError(true)}
-        />
+    <div className={`${sz} rounded-full bg-slate-100 flex items-center justify-center overflow-hidden flex-shrink-0 border border-slate-200`}>
+      {!err ? (
+        <img src={getCompanyLogoUrl(name)} alt={`${name} logo`} className="w-full h-full object-cover" onError={() => setErr(true)} />
       ) : (
-        <span className={`${textSizeClasses[size]} font-bold text-slate-500`}>{initials}</span>
+        <span className={`${ts} font-bold text-slate-500`}>{init}</span>
       )}
     </div>
   );
@@ -60,32 +56,13 @@ function CompanyLogo({ name, size = "md" }: { name: string; size?: "sm" | "md" |
 
 function PreviewBanner() {
   return (
-    <div
-      className="flex items-center justify-center gap-2 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium py-1.5 px-3"
-      data-testid="banner-preview-only"
-    >
+    <div className="flex items-center justify-center gap-2 rounded-md bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium py-1.5 px-3" data-testid="banner-preview-only">
       <Eye className="w-3.5 h-3.5" />
       Preview only — responses are not saved
     </div>
   );
 }
 
-// The centered prompt heading used by the live survey's selection steps.
-function BigPrompt({ q }: { q: SurveyQuestion }) {
-  return (
-    <div className="text-center mb-8">
-      <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
-        {q.label || "(untitled question)"}
-        {q.required && <span className="text-red-500"> *</span>}
-      </p>
-      {q.helperText && <p className="text-sm text-slate-500 mt-2">{q.helperText}</p>}
-    </div>
-  );
-}
-
-// Resolve the options a question would show. Static options come straight from
-// the question; taxonomy-backed ones are pulled from the matching taxonomy (or
-// shown as a friendly placeholder if none is bound yet).
 function resolveOptions(q: SurveyQuestion, taxonomies: Taxonomy[]): { label: string; value: string }[] {
   if (q.optionsSource === "static") {
     return (q.options ?? []).map((o) => ({ label: o.label, value: o.value }));
@@ -93,13 +70,11 @@ function resolveOptions(q: SurveyQuestion, taxonomies: Taxonomy[]): { label: str
   if (q.optionsSource === "taxonomy") {
     const tax = taxonomies.find((t) => t.id === q.taxonomyId);
     const items = (tax?.items as Array<Record<string, unknown>> | undefined) ?? [];
-    if (items.length === 0) {
-      return [
-        { label: "Example option A", value: "a" },
-        { label: "Example option B", value: "b" },
-        { label: "Example option C", value: "c" },
-      ];
-    }
+    if (items.length === 0) return [
+      { label: "Example option A", value: "a" },
+      { label: "Example option B", value: "b" },
+      { label: "Example option C", value: "c" },
+    ];
     return items.slice(0, 12).map((it, i) => ({
       label: String(it.displayName ?? it.employerName ?? it.label ?? it.name ?? `Item ${i + 1}`),
       value: String(it.id ?? i),
@@ -108,198 +83,240 @@ function resolveOptions(q: SurveyQuestion, taxonomies: Taxonomy[]): { label: str
   return [];
 }
 
-function QuestionPreview({ q, taxonomies }: { q: SurveyQuestion; taxonomies: Taxonomy[] }) {
+// ---------------------------------------------------------------------------
+// QuestionPreview
+//   formStyle=true  → small field label (steps 0/1 treatment)
+//   formStyle=false → big centered prompt (steps 2–7 treatment)
+// ---------------------------------------------------------------------------
+function QuestionPreview({
+  q,
+  taxonomies,
+  formStyle,
+}: {
+  q: SurveyQuestion;
+  taxonomies: Taxonomy[];
+  formStyle: boolean;
+}) {
   const [text, setText] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
   const options = resolveOptions(q, taxonomies);
 
   function toggle(value: string, single: boolean) {
-    setSelected((prev) => {
-      if (single) return [value];
-      return prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value];
-    });
+    setSelected((prev) =>
+      single ? [value] : prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
+    );
   }
 
+  // Small label used in form-style (steps 0/1)
+  const FieldLabel = () => (
+    <label className="text-sm font-medium text-slate-700">
+      {q.label || "(untitled question)"}
+      {q.required && <span className="text-red-500"> *</span>}
+    </label>
+  );
+
+  // Big centered prompt used in prompt-style (steps 2–7)
+  const BigPromptEl = () => (
+    <div className="text-center mb-8">
+      <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
+        {q.label || "(untitled question)"}
+        {q.required && <span className="text-red-500"> *</span>}
+      </p>
+      {q.helperText && <p className="text-sm text-slate-500 mt-2">{q.helperText}</p>}
+    </div>
+  );
+
   switch (q.type) {
-    // --- Text / email field (mirrors step 0/1 form rows) ---
+
+    // -----------------------------------------------------------------------
+    // text / email
+    // -----------------------------------------------------------------------
     case "text":
     case "email":
       return (
-        <div className="max-w-xl mx-auto space-y-2" data-testid={`preview-question-${q.id}`}>
-          <label className="text-sm font-medium text-slate-700">
-            {q.label || "(untitled question)"}
-            {q.required && <span className="text-red-500"> *</span>}
-          </label>
+        <div className="space-y-2" data-testid={`preview-question-${q.id}`}>
+          {formStyle ? <FieldLabel /> : <BigPromptEl />}
           <input
             type={q.type === "email" ? "email" : "text"}
             placeholder={q.type === "email" ? "your.email@example.com" : "Type your answer..."}
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className="w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors"
+            className={cn(
+              "w-full p-3 border-2 border-slate-200 rounded-xl focus:border-primary focus:outline-none transition-colors",
+              !formStyle && "max-w-md mx-auto block",
+            )}
             data-testid={`preview-input-${q.id}`}
           />
-          {q.helperText && <p className="text-xs text-slate-500">{q.helperText}</p>}
+          {formStyle && q.helperText && <p className="text-xs text-slate-500">{q.helperText}</p>}
         </div>
       );
 
-    // --- Single select (mirrors the gender dropdown in step 0) ---
+    // -----------------------------------------------------------------------
+    // single_select — dropdown (mirrors gender/education-level in steps 0/1)
+    // -----------------------------------------------------------------------
     case "single_select": {
       const selectedLabel = options.find((o) => o.value === selected[0])?.label;
+      const trigger = (
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className={cn(
+              "w-full p-3 pr-3 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
+              open ? "border-primary" : "border-slate-200",
+            )}
+            data-testid={`preview-select-${q.id}`}
+          >
+            <span className={selectedLabel ? "" : "text-slate-400"}>{selectedLabel || "Select an option"}</span>
+            <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform flex-shrink-0", open && "rotate-180")} />
+          </button>
+          {open && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-64 overflow-y-auto z-50">
+              {options.map((o) => (
+                <div
+                  key={o.value}
+                  onClick={() => { toggle(o.value, true); setOpen(false); }}
+                  className={cn(
+                    "px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0 text-sm font-medium",
+                    selected[0] === o.value ? "bg-primary/10 text-slate-900" : "text-slate-700",
+                  )}
+                  data-testid={`preview-option-${q.id}-${o.value}`}
+                >
+                  {o.label}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
       return (
-        <div className="max-w-xl mx-auto space-y-2" data-testid={`preview-question-${q.id}`}>
-          <label className="text-sm font-medium text-slate-700">
-            {q.label || "(untitled question)"}
-            {q.required && <span className="text-red-500"> *</span>}
-          </label>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setOpen((v) => !v)}
+        <div className="space-y-2" data-testid={`preview-question-${q.id}`}>
+          {formStyle ? <FieldLabel /> : <BigPromptEl />}
+          {formStyle ? trigger : <div className="max-w-xl mx-auto">{trigger}</div>}
+          {formStyle && q.helperText && <p className="text-xs text-slate-500">{q.helperText}</p>}
+        </div>
+      );
+    }
+
+    // -----------------------------------------------------------------------
+    // multi_select / tagbox
+    //   form style  → step 1 study-fields: rounded-xl min-h-[48px] small icons
+    //   prompt style → step 2 career paths: rounded-2xl min-h-[56px] larger
+    // -----------------------------------------------------------------------
+    case "multi_select":
+    case "tagbox": {
+      const selOpts = options.filter((o) => selected.includes(o.value));
+      const unselOpts = options.filter((o) => !selected.includes(o.value));
+      const pillBox = (
+        <div className="relative">
+          <div
+            className={cn(
+              "w-full p-2 bg-white border-2 flex flex-wrap gap-2 items-center transition-all duration-200 cursor-text",
+              formStyle
+                ? "min-h-[48px] rounded-xl"
+                : "min-h-[56px] rounded-2xl shadow-sm",
+              open || selOpts.length
+                ? "border-primary shadow-lg"
+                : "border-slate-200",
+            )}
+            onClick={() => setOpen(true)}
+          >
+            <div className="flex items-center pl-1">
+              <Search className={formStyle ? "w-4 h-4 text-slate-400" : "w-5 h-5 text-slate-400"} />
+            </div>
+            {selOpts.map((o) => (
+              <div
+                key={o.value}
+                className={cn(
+                  "bg-primary/10 text-primary-foreground border border-primary/20 flex items-center gap-1.5 font-bold",
+                  formStyle
+                    ? "px-2 py-1 rounded-lg text-xs"
+                    : "px-3 py-1.5 rounded-xl text-sm",
+                )}
+              >
+                <span className="text-slate-900">{o.label}</span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggle(o.value, false); }}
+                  className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                  data-testid={`preview-pill-remove-${q.id}-${o.value}`}
+                >
+                  <X className="w-3 h-3 text-slate-600" />
+                </button>
+              </div>
+            ))}
+            <input
+              type="text"
+              placeholder={selOpts.length === 0 ? (formStyle ? "Search for study fields..." : "Search...") : ""}
+              onFocus={() => setOpen(true)}
+              readOnly
               className={cn(
-                "w-full p-3 pr-3 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
-                open ? "border-primary" : "border-slate-200",
+                "flex-1 bg-transparent border-none outline-none text-slate-900 placeholder:text-slate-400",
+                formStyle ? "min-w-[100px] py-1 px-1 text-sm" : "min-w-[120px] py-2 px-2",
               )}
-              data-testid={`preview-select-${q.id}`}
-            >
-              <span className={selectedLabel ? "" : "text-slate-400"}>{selectedLabel || "Select an option"}</span>
-              <ChevronDown
-                className={cn("w-5 h-5 text-slate-400 transition-transform flex-shrink-0", open && "rotate-180")}
-              />
-            </button>
-            {open && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-64 overflow-y-auto z-50">
-                {options.map((o) => (
+              data-testid={`preview-search-${q.id}`}
+            />
+          </div>
+          {open && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-slate-100 rounded-2xl shadow-xl max-h-[300px] overflow-y-auto z-50">
+              <div className="p-2 space-y-1">
+                <div className="px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">Options</div>
+                {unselOpts.length === 0 && (
+                  <div className="px-3 py-2 text-sm text-muted-foreground">All options selected</div>
+                )}
+                {unselOpts.map((o) => (
                   <div
                     key={o.value}
-                    onClick={() => {
-                      toggle(o.value, true);
-                      setOpen(false);
-                    }}
-                    className={cn(
-                      "px-4 py-3 hover:bg-slate-50 cursor-pointer border-b last:border-b-0 text-sm font-medium",
-                      selected[0] === o.value ? "bg-primary/10 text-slate-900" : "text-slate-700",
-                    )}
+                    onClick={() => toggle(o.value, false)}
+                    className="cursor-pointer rounded-xl p-3 flex items-center justify-between transition-colors hover:bg-slate-50"
                     data-testid={`preview-option-${q.id}-${o.value}`}
                   >
-                    {o.label}
+                    <span className="text-sm font-medium text-slate-600">{o.label}</span>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-          {q.helperText && <p className="text-xs text-slate-500">{q.helperText}</p>}
-        </div>
-      );
-    }
-
-    // --- Multi-select / tagbox / career path (mirrors step 2 searchable box) ---
-    case "multi_select":
-    case "tagbox": {
-      const selectedOpts = options.filter((o) => selected.includes(o.value));
-      const unselectedOpts = options.filter((o) => !selected.includes(o.value));
-      return (
-        <div className="space-y-6" data-testid={`preview-question-${q.id}`}>
-          <BigPrompt q={q} />
-          <div className="max-w-2xl mx-auto w-full relative">
-            <div
-              className={cn(
-                "min-h-[56px] w-full p-2 bg-white border-2 rounded-2xl flex flex-wrap gap-2 items-center transition-all duration-200",
-                open || selectedOpts.length ? "border-primary shadow-lg" : "border-slate-200 shadow-sm",
-              )}
-            >
-              <div className="flex items-center pl-2">
-                <Search className="w-5 h-5 text-slate-400" />
-              </div>
-              {selectedOpts.map((o) => (
-                <div
-                  key={o.value}
-                  className="bg-primary/10 text-primary-foreground border border-primary/20 px-3 py-1.5 rounded-xl flex items-center gap-2 text-sm font-bold"
-                >
-                  <span className="text-slate-900">{o.label}</span>
-                  <button
-                    onClick={() => toggle(o.value, false)}
-                    className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
-                    data-testid={`preview-pill-remove-${q.id}-${o.value}`}
-                  >
-                    <span className="text-slate-600 text-xs leading-none">✕</span>
-                  </button>
-                </div>
-              ))}
-              <input
-                type="text"
-                placeholder={selectedOpts.length === 0 ? "Search..." : ""}
-                onFocus={() => setOpen(true)}
-                readOnly
-                className="flex-1 min-w-[120px] bg-transparent border-none outline-none py-2 px-2 text-slate-900 placeholder:text-slate-400"
-                data-testid={`preview-search-${q.id}`}
-              />
             </div>
-            {open && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-slate-100 rounded-2xl shadow-xl max-h-[320px] overflow-y-auto z-50">
-                <div className="p-2 space-y-1">
-                  <div className="px-3 py-2 text-xs font-bold uppercase tracking-widest text-slate-400">
-                    Options
-                  </div>
-                  {unselectedOpts.length === 0 && (
-                    <div className="px-3 py-2 text-sm text-muted-foreground">No more options</div>
-                  )}
-                  {unselectedOpts.map((o) => (
-                    <div
-                      key={o.value}
-                      onClick={() => toggle(o.value, false)}
-                      className="cursor-pointer rounded-xl p-3 flex items-center justify-between transition-colors hover:bg-slate-50"
-                      data-testid={`preview-option-${q.id}-${o.value}`}
-                    >
-                      <span className="text-sm font-medium text-slate-600">{o.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          )}
+        </div>
+      );
+      return (
+        <div className={cn("space-y-2", !formStyle && "space-y-6")} data-testid={`preview-question-${q.id}`}>
+          {formStyle ? <FieldLabel /> : <BigPromptEl />}
+          {formStyle ? pillBox : <div className="max-w-2xl mx-auto w-full relative">{pillBox}</div>}
+          {formStyle && q.helperText && <p className="text-xs text-slate-500">{q.helperText}</p>}
         </div>
       );
     }
 
-    // --- Employer recognition grid (mirrors step 4) ---
+    // -----------------------------------------------------------------------
+    // employer_grid — recognition grid (mirrors step 4)
+    // -----------------------------------------------------------------------
     case "employer_grid":
       return (
-        <div className="space-y-6" data-testid={`preview-question-${q.id}`}>
-          <BigPrompt q={q} />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-3xl mx-auto w-full">
+        <div className={cn(!formStyle && "space-y-6")} data-testid={`preview-question-${q.id}`}>
+          {formStyle ? <FieldLabel /> : <BigPromptEl />}
+          <div className={cn(
+            "grid grid-cols-1 sm:grid-cols-2 gap-3",
+            !formStyle && "max-w-3xl mx-auto",
+          )}>
             {options.map((o) => {
-              const isSelected = selected.includes(o.value);
+              const isSel = selected.includes(o.value);
               return (
                 <div
                   key={o.value}
                   onClick={() => toggle(o.value, false)}
                   className={cn(
                     "cursor-pointer rounded-lg p-3 border transition-all duration-200 flex items-center gap-3 select-none",
-                    isSelected
-                      ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                      : "border-border bg-card hover:bg-secondary/50",
+                    isSel ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-card hover:bg-secondary/50",
                   )}
                   data-testid={`preview-grid-${q.id}-${o.value}`}
                 >
-                  <div
-                    className={cn(
-                      "w-5 h-5 rounded border flex items-center justify-center transition-colors flex-shrink-0",
-                      isSelected ? "border-primary bg-primary text-slate-900" : "border-muted-foreground/50",
-                    )}
-                  >
-                    {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
+                  <div className={cn("w-5 h-5 rounded border flex items-center justify-center transition-colors flex-shrink-0", isSel ? "border-primary bg-primary text-slate-900" : "border-muted-foreground/50")}>
+                    {isSel && <CheckCircle2 className="w-3.5 h-3.5" />}
                   </div>
                   <CompanyLogo name={o.label} size="sm" />
                   <div className="flex flex-col min-w-0">
-                    <span
-                      className={cn(
-                        "text-sm font-bold leading-tight truncate",
-                        isSelected ? "text-slate-900" : "text-foreground",
-                      )}
-                    >
-                      {o.label}
-                    </span>
+                    <span className={cn("text-sm font-bold leading-tight truncate", isSel ? "text-slate-900" : "text-foreground")}>{o.label}</span>
                   </div>
                 </div>
               );
@@ -308,7 +325,9 @@ function QuestionPreview({ q, taxonomies }: { q: SurveyQuestion; taxonomies: Tax
         </div>
       );
 
-    // --- Drag rank / final reorder (mirrors step 3) ---
+    // -----------------------------------------------------------------------
+    // drag_rank / final_reorder — numbered reorder rows (mirrors step 3)
+    // -----------------------------------------------------------------------
     case "drag_rank":
     case "final_reorder": {
       const items = options.length ? options : [
@@ -317,18 +336,12 @@ function QuestionPreview({ q, taxonomies }: { q: SurveyQuestion; taxonomies: Tax
         { label: "Item 3", value: "3" },
       ];
       return (
-        <div className="space-y-6" data-testid={`preview-question-${q.id}`}>
-          <BigPrompt q={q} />
-          <div className="max-w-xl mx-auto space-y-3">
+        <div className={cn(!formStyle && "space-y-6")} data-testid={`preview-question-${q.id}`}>
+          {formStyle ? <FieldLabel /> : <BigPromptEl />}
+          <div className={cn("space-y-3", !formStyle && "max-w-xl mx-auto")}>
             {items.map((o, i) => (
-              <div
-                key={o.value}
-                className="bg-card border border-border rounded-xl p-4 shadow-sm flex items-center gap-4 cursor-grab"
-                data-testid={`preview-rank-${q.id}-${o.value}`}
-              >
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary text-muted-foreground font-bold">
-                  {i + 1}
-                </div>
+              <div key={o.value} className="bg-card border border-border rounded-xl p-4 shadow-sm flex items-center gap-4 cursor-grab" data-testid={`preview-rank-${q.id}-${o.value}`}>
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary text-muted-foreground font-bold">{i + 1}</div>
                 <span className="flex-1 font-medium">{o.label}</span>
                 <GripVertical className="text-muted-foreground/50" />
               </div>
@@ -338,15 +351,17 @@ function QuestionPreview({ q, taxonomies }: { q: SurveyQuestion; taxonomies: Tax
       );
     }
 
-    // --- Pairwise comparison (mirrors step 5) ---
+    // -----------------------------------------------------------------------
+    // pairwise — two big cards with OR divider + progress bar (mirrors step 5)
+    // -----------------------------------------------------------------------
     case "pairwise": {
       const a = options[0] ?? { label: "Employer A", value: "a" };
       const b = options[1] ?? { label: "Employer B", value: "b" };
       const parsedTotal = Number(q.config?.comparisons ?? 10);
       const total = Number.isFinite(parsedTotal) && parsedTotal > 0 ? parsedTotal : 10;
       return (
-        <div className="flex flex-col max-w-4xl mx-auto w-full" data-testid={`preview-question-${q.id}`}>
-          <BigPrompt q={q} />
+        <div className={cn("flex flex-col max-w-4xl mx-auto w-full", !formStyle && "mt-0")} data-testid={`preview-question-${q.id}`}>
+          {formStyle ? <FieldLabel /> : <BigPromptEl />}
           <div className="max-w-md mx-auto w-full mb-10 space-y-2">
             <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
               <span>Progress</span>
@@ -356,38 +371,22 @@ function QuestionPreview({ q, taxonomies }: { q: SurveyQuestion; taxonomies: Tax
               <div className="h-full bg-primary" style={{ width: "8%" }} />
             </div>
           </div>
-          <div className="flex flex-row gap-3 md:gap-8 items-stretch mb-4 relative">
+          <div className="flex flex-row gap-3 md:gap-8 items-stretch mb-4">
             <div className="flex-1">
-              <button
-                className="group relative w-full bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-3 md:p-6 transition-all duration-300 flex flex-col items-center justify-center h-[220px] md:h-[280px]"
-                data-testid={`preview-pairwise-${q.id}-0`}
-              >
+              <button className="group relative w-full bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-3 md:p-6 transition-all duration-300 flex flex-col items-center justify-center h-[220px] md:h-[280px]" data-testid={`preview-pairwise-${q.id}-0`}>
                 <CompanyLogo name={a.label} size="lg" />
-                <h3 className="text-sm md:text-2xl font-bold text-center text-slate-800 mt-2 md:mt-3 line-clamp-2 w-full px-1">
-                  {a.label}
-                </h3>
+                <h3 className="text-sm md:text-2xl font-bold text-center text-slate-800 mt-2 md:mt-3 line-clamp-2 w-full px-1">{a.label}</h3>
                 <p className="mt-1 text-xs md:text-sm text-muted-foreground italic">working in</p>
-                <p className="mt-1 text-xs md:text-sm font-bold text-slate-700 text-center line-clamp-1 w-full px-1">
-                  your chosen role
-                </p>
+                <p className="mt-1 text-xs md:text-sm font-bold text-slate-700 text-center line-clamp-1 w-full px-1">your chosen role</p>
               </button>
             </div>
-            <div className="w-8 h-8 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center font-bold text-slate-300 shadow-sm border border-slate-100 z-10 flex-shrink-0 text-xs md:text-base self-center">
-              OR
-            </div>
+            <div className="w-8 h-8 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center font-bold text-slate-300 shadow-sm border border-slate-100 z-10 flex-shrink-0 text-xs md:text-base self-center">OR</div>
             <div className="flex-1">
-              <button
-                className="group relative w-full bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-3 md:p-6 transition-all duration-300 flex flex-col items-center justify-center h-[220px] md:h-[280px]"
-                data-testid={`preview-pairwise-${q.id}-1`}
-              >
+              <button className="group relative w-full bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl md:rounded-3xl p-3 md:p-6 transition-all duration-300 flex flex-col items-center justify-center h-[220px] md:h-[280px]" data-testid={`preview-pairwise-${q.id}-1`}>
                 <CompanyLogo name={b.label} size="lg" />
-                <h3 className="text-sm md:text-2xl font-bold text-center text-slate-800 mt-2 md:mt-3 line-clamp-2 w-full px-1">
-                  {b.label}
-                </h3>
+                <h3 className="text-sm md:text-2xl font-bold text-center text-slate-800 mt-2 md:mt-3 line-clamp-2 w-full px-1">{b.label}</h3>
                 <p className="mt-1 text-xs md:text-sm text-muted-foreground italic">working in</p>
-                <p className="mt-1 text-xs md:text-sm font-bold text-slate-700 text-center line-clamp-1 w-full px-1">
-                  your chosen role
-                </p>
+                <p className="mt-1 text-xs md:text-sm font-bold text-slate-700 text-center line-clamp-1 w-full px-1">your chosen role</p>
               </button>
             </div>
           </div>
@@ -395,7 +394,9 @@ function QuestionPreview({ q, taxonomies }: { q: SurveyQuestion; taxonomies: Tax
       );
     }
 
-    // --- Hidden / static content block ---
+    // -----------------------------------------------------------------------
+    // hidden / static content block
+    // -----------------------------------------------------------------------
     case "hidden":
       return (
         <div className="max-w-xl mx-auto text-center space-y-2" data-testid={`preview-question-${q.id}`}>
@@ -413,23 +414,43 @@ function QuestionPreview({ q, taxonomies }: { q: SurveyQuestion; taxonomies: Tax
   }
 }
 
-// Render a single page: every question stacked the way the live survey shows it.
+// ---------------------------------------------------------------------------
+// PagePreview
+// ---------------------------------------------------------------------------
 export function PagePreview({ page, taxonomies }: { page: SurveyPageDef; taxonomies: Taxonomy[] }) {
-  return (
-    <div className="w-full space-y-6">
-      {(page.questions ?? []).length === 0 && (
-        <p className="text-center text-slate-400 text-sm py-8">This page has no questions yet.</p>
-      )}
-      <div className="space-y-12">
-        {(page.questions ?? []).map((q) => (
-          <QuestionPreview key={q.id} q={q} taxonomies={taxonomies} />
+  const qs = page.questions ?? [];
+  // Multiple questions on one page → form layout (like steps 0 & 1).
+  // Single question → centered prompt layout (like steps 2–7).
+  const formStyle = qs.length > 1;
+
+  if (qs.length === 0) {
+    return <p className="text-center text-slate-400 text-sm py-8">This page has no questions yet.</p>;
+  }
+
+  if (formStyle) {
+    // Wrap all fields in the same container as steps 0 & 1
+    return (
+      <div className="max-w-xl mx-auto space-y-6 w-full">
+        {qs.map((q) => (
+          <QuestionPreview key={q.id} q={q} taxonomies={taxonomies} formStyle={true} />
         ))}
       </div>
+    );
+  }
+
+  // Single question — render full-width, prompt-style
+  return (
+    <div className="w-full">
+      {qs.map((q) => (
+        <QuestionPreview key={q.id} q={q} taxonomies={taxonomies} formStyle={false} />
+      ))}
     </div>
   );
 }
 
-// Single-page preview wrapper with the banner (used in the editor side panel).
+// ---------------------------------------------------------------------------
+// SinglePagePreview — editor side panel
+// ---------------------------------------------------------------------------
 export function SinglePagePreview({ page, taxonomies }: { page: SurveyPageDef; taxonomies: Taxonomy[] }) {
   return (
     <div className="space-y-4 font-sans text-slate-900">
@@ -441,8 +462,9 @@ export function SinglePagePreview({ page, taxonomies }: { page: SurveyPageDef; t
   );
 }
 
-// Full-survey preview with page navigation and the real survey chrome
-// (Prosple header + step indicator). Used in the modal and the route.
+// ---------------------------------------------------------------------------
+// SurveyPreview — full survey modal + /admin/preview route
+// ---------------------------------------------------------------------------
 export function SurveyPreview({
   pages,
   taxonomies,
