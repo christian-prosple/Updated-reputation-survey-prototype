@@ -150,7 +150,7 @@ function buildDefaultPages(employerTaxonomyId: number): SurveyPageDef[] {
         { id: "country", type: "single_select", label: "Country of study", required: false, optionsSource: "none" },
         { id: "educationLevel", type: "single_select", label: "Education level", required: false, optionsSource: "none" },
         { id: "selectedDegrees", type: "multi_select", label: "Study fields", required: false, optionsSource: "none" },
-        { id: "university", type: "text", label: "School", required: false, optionsSource: "none" },
+        { id: "university", type: "text", label: "School / University", required: false, optionsSource: "none" },
         { id: "graduation", type: "text", label: "Graduation date", required: false, optionsSource: "none" },
       ],
     },
