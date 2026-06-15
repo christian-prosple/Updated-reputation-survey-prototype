@@ -1,3 +1,1 @@
-- [Drizzle-zod jsonb typing](drizzle-zod-jsonb.md) — drizzle-zod types jsonb columns as `unknown`; cast at the `.values()`/`.set()` call site, not in shared types.
-- [tsconfig low iteration target](tsconfig-iteration.md) — no `target` set means Map/Set `for...of` over `.entries()` errors; wrap in `Array.from(...)` instead of editing tsconfig.
-- [Survey rendering architecture](survey-rendering.md) — public Survey.tsx is monolithic; admin previews must be config-driven re-renders, not reuse.
+- [Config-driven survey copy](survey-config-driven.md) — Survey.tsx reads headings/labels/options from DB via useSurveyConfig hook; DB is authoritative for copy.

@@ -128,30 +128,38 @@ function buildDefaultPages(employerTaxonomyId: number): SurveyPageDef[] {
     {
       id: "personal",
       kind: "personal",
-      title: "About you",
+      title: "Let's start with a bit about you",
       subtitle: "A few details to start.",
       questions: [
-        { id: "email", type: "email", label: "Email", required: true, optionsSource: "none" },
-        { id: "gender", type: "single_select", label: "Gender", required: false, optionsSource: "static", options: [
+        { id: "email", type: "email", label: "Email (so we can send you your results)", required: true, optionsSource: "none" },
+        { id: "gender", type: "single_select", label: "Gender", required: true, optionsSource: "static", options: [
           { label: "Female", value: "Female" },
           { label: "Male", value: "Male" },
           { label: "Non-binary", value: "Non-binary" },
           { label: "Prefer not to say", value: "Prefer not to say" },
+          { label: "Other", value: "Other" },
         ] },
-        { id: "preferredCity", type: "text", label: "Preferred work location", required: false, optionsSource: "none" },
+        { id: "preferredCity", type: "text", label: "Preferred work location (city)", required: true, optionsSource: "none" },
       ],
     },
     {
       id: "education",
       kind: "education",
-      title: "Your education",
+      title: "Tell us about your education",
       subtitle: "Where and what you study.",
       questions: [
-        { id: "country", type: "single_select", label: "Country of study", required: false, optionsSource: "none" },
-        { id: "educationLevel", type: "single_select", label: "Education level", required: false, optionsSource: "none" },
-        { id: "selectedDegrees", type: "multi_select", label: "Study fields", required: false, optionsSource: "none" },
-        { id: "university", type: "text", label: "School / University", required: false, optionsSource: "none" },
-        { id: "graduation", type: "text", label: "Graduation date", required: false, optionsSource: "none" },
+        { id: "country", type: "single_select", label: "Country of study", required: true, optionsSource: "none" },
+        { id: "educationLevel", type: "single_select", label: "Highest education level (completed or in progress)", required: false, optionsSource: "static", options: [
+          "Accelerated master's", "Advanced certificate", "Associate's", "Bachelor's",
+          "Bachelor's (Honours)", "Certificate", "Community / Technical college", "Diploma",
+          "Doctorate", "Doctorate (PhD)", "High School Certificate", "Juris Doctor", "M.D.",
+          "Masters (Coursework)", "Masters (Research)", "Master's of Business Administration",
+          "Non-award", "Postdoctoral studies", "Professional Certificate",
+          "Short course or microcredential", "Technical diploma", "Non-degree seeking",
+        ].map(v => ({ label: v, value: v })) },
+        { id: "selectedDegrees", type: "multi_select", label: "Study field(s)", required: true, optionsSource: "none" },
+        { id: "university", type: "text", label: "School", required: true, optionsSource: "none" },
+        { id: "graduation", type: "text", label: "Graduation date (expected or actual)", required: true, optionsSource: "none" },
       ],
     },
     {

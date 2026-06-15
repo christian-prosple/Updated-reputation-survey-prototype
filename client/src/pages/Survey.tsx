@@ -11,6 +11,7 @@ import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { ChevronRight, ChevronLeft, ChevronDown, GripVertical, CheckCircle2, RefreshCw, Search, X, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import headerImage from "@assets/Screenshot_2026-01-22_at_3.04.34_pm_1769054676986.png";
+import { useSurveyConfig } from "@/hooks/use-survey-config";
 
 interface ManualCompany {
   name: string;
@@ -344,6 +345,7 @@ const CompanyLogo = ({ name, size = "md" }: { name: string; size?: "sm" | "md" |
 export default function SurveyPage() {
   const { state, actions, suggestedRoles } = useSurvey();
   useSurveyBackend(state, actions);
+  const cfg = useSurveyConfig();
   const [activePair, setActivePair] = useState<[CompanyEntity, CompanyEntity] | null>(null);
 
   const [newCompany, setNewCompany] = useState<ManualCompany>({ name: "", role: "" });
@@ -713,7 +715,11 @@ export default function SurveyPage() {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: currentYear - 2015 + 6 }, (_, i) => String(2015 + i));
 
-  // Education level options
+  // Derived from config; fall back to hardcoded lists if config not loaded yet
+  const gendersToShow = cfg.questionOptions("personal", "gender");
+  const educationLevelsFromCfg = cfg.questionOptions("education", "educationLevel");
+
+  // Education level options (fallback when config not yet loaded)
   const EDUCATION_LEVELS = [
     "Accelerated master's",
     "Advanced certificate",
@@ -776,14 +782,14 @@ export default function SurveyPage() {
     <div className="space-y-6">
       <div className="text-center mb-8">
         <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
-          Let's start with a bit about you
+          {cfg.pageTitle("personal", "Let's start with a bit about you")}
         </p>
       </div>
 
       <div className="max-w-xl mx-auto space-y-6">
         {/* Email */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Email (so we can send you your results) <span className="text-red-500">*</span></label>
+          <label className="text-sm font-medium text-slate-700">{cfg.questionLabel("personal", "email", "Email (so we can send you your results)")} <span className="text-red-500">*</span></label>
           <input
             type="email"
             value={state.personalInfo.email}
@@ -796,7 +802,7 @@ export default function SurveyPage() {
 
         {/* Preferred Work Location (City) */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
-          <label className="text-sm font-medium text-slate-700">Preferred work location (city) <span className="text-red-500">*</span></label>
+          <label className="text-sm font-medium text-slate-700">{cfg.questionLabel("personal", "preferredCity", "Preferred work location (city)")} <span className="text-red-500">*</span></label>
           <input
             type="text"
             value={state.personalInfo.preferredCity}
@@ -850,7 +856,7 @@ export default function SurveyPage() {
 
         {/* Gender */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
-          <label className="text-sm font-medium text-slate-700">Gender <span className="text-red-500">*</span></label>
+          <label className="text-sm font-medium text-slate-700">{cfg.questionLabel("personal", "gender", "Gender")} <span className="text-red-500">*</span></label>
           <div className="relative">
             <button
               type="button"
@@ -869,7 +875,7 @@ export default function SurveyPage() {
           {/* Gender dropdown */}
           {isGenderFocused && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-64 overflow-y-auto z-50">
-              {[...GENDERS, "Other"].map((g) => (
+              {(gendersToShow.length > 0 ? gendersToShow : [...GENDERS, "Other"]).map((g) => (
                 <div
                   key={g}
                   onClick={() => {
@@ -908,14 +914,14 @@ export default function SurveyPage() {
     <div className="space-y-6">
       <div className="text-center mb-8">
         <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
-          Tell us about your education
+          {cfg.pageTitle("education", "Tell us about your education")}
         </p>
       </div>
 
       <div className="max-w-xl mx-auto space-y-6">
         {/* Country */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
-          <label className="text-sm font-medium text-slate-700">Country of study <span className="text-red-500">*</span></label>
+          <label className="text-sm font-medium text-slate-700">{cfg.questionLabel("education", "country", "Country of study")} <span className="text-red-500">*</span></label>
           <input
             type="text"
             value={state.personalInfo.country}
@@ -962,7 +968,7 @@ export default function SurveyPage() {
 
         {/* Education Level */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
-            <label className="text-sm font-medium text-slate-700">Highest education level (completed or in progress) <span className="text-red-500">*</span></label>
+            <label className="text-sm font-medium text-slate-700">{cfg.questionLabel("education", "educationLevel", "Highest education level (completed or in progress)")} <span className="text-red-500">*</span></label>
             <div className="relative">
               <button
                 type="button"
@@ -983,7 +989,7 @@ export default function SurveyPage() {
               <div 
                 className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl max-h-48 overflow-y-auto z-50"
               >
-                {EDUCATION_LEVELS.map((level) => (
+                {(educationLevelsFromCfg.length > 0 ? educationLevelsFromCfg : EDUCATION_LEVELS).map((level) => (
                   <div
                     key={level}
                     onClick={() => {
@@ -1014,7 +1020,7 @@ export default function SurveyPage() {
           tabIndex={-1}
         >
           <label className="text-sm font-medium text-slate-700">
-            Study field(s) <span className="text-red-500">*</span>
+            {cfg.questionLabel("education", "selectedDegrees", "Study field(s)")} <span className="text-red-500">*</span>
           </label>
           <div className={cn(
             "min-h-[48px] w-full p-2 bg-white border-2 rounded-xl flex flex-wrap gap-2 items-center transition-all duration-200 cursor-text",
@@ -1159,7 +1165,7 @@ export default function SurveyPage() {
 
         {/* School */}
         <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">School <span className="text-red-500">*</span></label>
+            <label className="text-sm font-medium text-slate-700">{cfg.questionLabel("education", "university", "School")} <span className="text-red-500">*</span></label>
             <input
               type="text"
               value={state.personalInfo.university}
@@ -1172,7 +1178,7 @@ export default function SurveyPage() {
 
         {/* Graduation Date - Calendar Style Picker */}
         <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
-            <label className="text-sm font-medium text-slate-700">Graduation date (expected or actual) <span className="text-red-500">*</span></label>
+            <label className="text-sm font-medium text-slate-700">{cfg.questionLabel("education", "graduation", "Graduation date (expected or actual)")} <span className="text-red-500">*</span></label>
             <button
               type="button"
               onClick={() => { 
@@ -1293,7 +1299,7 @@ export default function SurveyPage() {
   const renderStep2 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
-        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">What career path(s) are you most interested in? <span className="text-red-500">*</span></p>
+        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">{cfg.questionLabel("careers", "selectedRoles", "What career path(s) are you most interested in?")} <span className="text-red-500">*</span></p>
       </div>
 
       <div className="space-y-8 max-w-2xl mx-auto w-full relative">
@@ -1944,7 +1950,7 @@ export default function SurveyPage() {
     return (
       <div className="w-full max-w-2xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
         <div className="text-center mb-10">
-          <h2 className="text-4xl font-bold mb-4">One last thing...</h2>
+          <h2 className="text-4xl font-bold mb-4">{cfg.pageTitle("top_pick_reason", "One last thing...")}</h2>
           <p className="text-xl text-muted-foreground">
             Why did you choose <span className="font-semibold text-slate-900">{topPick}</span> as your top pick?
           </p>
@@ -1991,8 +1997,8 @@ export default function SurveyPage() {
       <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-8">
         <CheckCircle2 className="w-10 h-10" />
       </div>
-      <h2 className="text-4xl font-bold mb-4">Thanks for submitting your list!</h2>
-      <p className="text-xl text-muted-foreground max-w-md mx-auto">Your preferences have been saved and will contribute towards Prosple's global employer rankings!</p>
+      <h2 className="text-4xl font-bold mb-4">{cfg.pageTitle("thankyou", "Thanks for submitting your list!")}</h2>
+      <p className="text-xl text-muted-foreground max-w-md mx-auto">{cfg.pageSubtitle("thankyou", "Your preferences have been saved and will contribute towards Prosple's global employer rankings!")}</p>
       <p className="text-xl text-muted-foreground max-w-md mx-auto mt-4">You'll receive an email shortly with your list so you can start applying to your dream jobs.</p>
       <Button 
         size="lg"
