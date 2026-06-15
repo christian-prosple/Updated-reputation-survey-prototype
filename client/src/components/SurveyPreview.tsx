@@ -116,11 +116,13 @@ function MonthYearPicker({ qId, formStyle, q }: { qId: string; formStyle: boolea
 
   const picker = (
     <div className="relative">
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setPickerOpen((v) => !v)}
+        onKeyDown={(e) => e.key === "Enter" && setPickerOpen((v) => !v)}
         className={cn(
-          "w-full p-3 pr-3 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900",
+          "w-full p-3 pr-3 border-2 rounded-xl text-left transition-colors bg-white flex items-center justify-between text-slate-900 cursor-pointer select-none",
           pickerOpen ? "border-primary" : "border-slate-200",
         )}
         data-testid={`preview-monthyear-${qId}`}
@@ -138,7 +140,7 @@ function MonthYearPicker({ qId, formStyle, q }: { qId: string; formStyle: boolea
           )}
           <ChevronDown className={cn("w-5 h-5 text-slate-400 transition-transform flex-shrink-0", pickerOpen && "rotate-180")} />
         </div>
-      </button>
+      </div>
       {pickerOpen && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-slate-100 rounded-xl shadow-xl z-50 p-4">
           <div className="flex items-center justify-between mb-4">

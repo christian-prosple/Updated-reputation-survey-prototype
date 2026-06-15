@@ -267,20 +267,68 @@ function QuestionCard({
             </Select>
           </div>
 
-          {q.optionsSource === "static" && (
-            <OptionsEditor options={q.options ?? []} onChange={(options) => onChange({ options })} />
-          )}
-          {q.optionsSource === "taxonomy" && (
-            <div className="space-y-1">
-              <Label className="text-xs">Taxonomy</Label>
-              <Select value={q.taxonomyId ? String(q.taxonomyId) : ""} onValueChange={(v) => onChange({ taxonomyId: Number(v) })}>
-                <SelectTrigger data-testid={`select-question-taxonomy-${pageIdx}-${qIdx}`}><SelectValue placeholder="Pick a taxonomy" /></SelectTrigger>
-                <SelectContent>
-                  {taxonomies.map((t) => <SelectItem key={t.id} value={String(t.id)}>{t.name} ({t.type})</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
+          {q.optionsSource === "static" && (() => {
+            const opts = q.options ?? [];
+            const INLINE_LIMIT = 12;
+            return (
+              <div className="space-y-2">
+                {opts.length > 0 && opts.length <= INLINE_LIMIT && (
+                  <div className="space-y-1">
+                    <Label className="text-xs text-slate-500">Options ({opts.length})</Label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {opts.map((o) => (
+                        <span key={o.value} className="inline-flex items-center px-2 py-0.5 rounded-full bg-slate-100 text-xs text-slate-700 border border-slate-200">
+                          {o.label}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <OptionsEditor options={opts} onChange={(options) => onChange({ options })} />
+              </div>
+            );
+          })()}
+          {q.optionsSource === "taxonomy" && (() => {
+            const linked = taxonomies.find((t) => t.id === q.taxonomyId);
+            return (
+              <div className="space-y-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Taxonomy</Label>
+                  <Select value={q.taxonomyId ? String(q.taxonomyId) : ""} onValueChange={(v) => onChange({ taxonomyId: Number(v) })}>
+                    <SelectTrigger data-testid={`select-question-taxonomy-${pageIdx}-${qIdx}`}><SelectValue placeholder="Pick a taxonomy" /></SelectTrigger>
+                    <SelectContent>
+                      {taxonomies.map((t) => (
+                        <SelectItem key={t.id} value={String(t.id)}>
+                          {t.name} — {(t.items as unknown[]).length} items
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {linked && (
+                  <div className="flex items-center justify-between rounded-md bg-slate-50 border border-slate-200 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-slate-700">{linked.name}</span>
+                      <Badge variant="secondary" className="text-[10px]">{(linked.items as unknown[]).length} items</Badge>
+                      <Badge variant="outline" className="text-[10px] text-slate-500">{linked.type}</Badge>
+                    </div>
+                    <a
+                      href="/admin/taxonomies"
+                      className="flex items-center gap-1 text-xs text-primary hover:underline"
+                      data-testid={`link-manage-taxonomy-${q.id}`}
+                    >
+                      Manage <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                )}
+                {!linked && q.taxonomyId && (
+                  <p className="text-xs text-amber-600 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3" /> Taxonomy id {q.taxonomyId} not found
+                  </p>
+                )}
+              </div>
+            );
+          })()}
 
           <ConditionsEditor conditions={q.conditions ?? []} allPages={allPages} onChange={(conditions) => onChange({ conditions })} />
 

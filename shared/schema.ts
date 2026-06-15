@@ -177,6 +177,8 @@ export const TAXONOMY_TYPES = [
   "employers",
   "career_paths",
   "study_fields",
+  "countries",
+  "universities",
   "locations",
   "work_rights",
   "custom",
