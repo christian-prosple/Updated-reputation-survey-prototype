@@ -1,0 +1,442 @@
+You are working on my existing Replit project: “US College Data Tool”.
+
+Context:
+This project is currently only a frontend prototype for a Prosple-style US reputation survey. The survey UI already exists, but there is no real backend, no admin system, no response storage, and no way to manage the survey logic or employer/company taxonomies.
+
+I want you to turn this into a working survey platform with:
+1. A public-facing survey experience
+2. An admin backend/dashboard
+3. Response storage
+4. Survey editor tools
+5. CSV-based taxonomy/import tools for controlling which employers/options appear in the survey
+
+Do not rebuild the whole frontend from scratch. Preserve the existing survey UI and styling as much as possible, then add the backend/admin functionality around it.
+
+Core requirements:
+
+## 1. Admin access
+
+Add an admin entry point accessible from the survey UI.
+
+Suggested UX:
+- Add a small admin/settings icon in the top-right corner of the page.
+- Clicking it opens `/admin`.
+- For now, protect admin with a simple password login.
+- Store the admin password in an environment variable if possible.
+- If no env var exists, use a safe obvious development fallback like `admin123`, but make it easy to change.
+
+Admin routes:
+- `/admin/login`
+- `/admin`
+- `/admin/survey-editor`
+- `/admin/responses`
+- `/admin/taxonomies`
+- `/admin/settings`
+
+Admin dashboard should have cards/sections for:
+- Edit survey
+- View responses
+- Manage taxonomies
+- Import CSV
+- Configure survey logic
+
+## 2. Backend/database
+
+Add a backend and database layer.
+
+Use the simplest sensible stack for this Replit app based on the existing codebase. If the app already uses Node/Express, use that. If it is Vite/React only, add an Express backend.
+
+Create database models/tables for:
+
+### SurveyConfig
+Stores the active survey structure.
+Fields:
+- id
+- name
+- version
+- status: draft / active / archived
+- pages JSON
+- logic JSON
+- createdAt
+- updatedAt
+
+### SurveyPage
+If easier, pages can live inside SurveyConfig JSON. But the data structure should support:
+- page id
+- title
+- subtitle/help text
+- questions
+- navigation rules
+- conditional display rules
+
+### Question
+Support question types:
+- text input
+- email
+- single select
+- multi select
+- tagbox / searchable multi select
+- drag rank
+- pairwise choice
+- employer recognition grid/checklist
+- final reorder
+- hidden field
+
+Each question should support:
+- id
+- type
+- label
+- helper text
+- required true/false
+- options source
+- static options
+- taxonomy-backed options
+- validation
+- conditional display rules
+
+### SurveyResponse
+Stores each submitted survey response.
+Fields:
+- id
+- surveyConfigId
+- sessionId
+- respondentEmail if provided
+- status: partial / completed
+- answers JSON
+- metadata JSON
+- startedAt
+- completedAt
+- updatedAt
+
+Metadata should include:
+- user agent
+- timestamp
+- current survey version
+- optional source/UTM fields if available
+
+### Taxonomy
+Stores configurable option sets.
+Fields:
+- id
+- name
+- type
+- description
+- items JSON
+- processingLogic JSON
+- createdAt
+- updatedAt
+
+Taxonomy types should include:
+- employers
+- career paths
+- study fields
+- locations
+- work rights
+- custom
+
+### TaxonomyImport
+Stores uploaded CSV imports.
+Fields:
+- id
+- taxonomyId
+- filename
+- rowCount
+- status
+- rawPreview JSON
+- mappingConfig JSON
+- processingSummary JSON
+- createdAt
+
+## 3. Survey editor
+
+Build a basic admin survey editor.
+
+I want to be able to:
+- View all survey pages in order
+- Add a new page
+- Duplicate a page
+- Delete a page
+- Reorder pages
+- Edit page title/subtitle
+- Edit question labels/help text
+- Add questions
+- Duplicate questions
+- Delete questions
+- Reorder questions
+- Mark questions as required/not required
+- Edit basic question options
+- Configure whether a question pulls options from a taxonomy
+
+The editor does not need to be a perfect no-code builder yet, but it should be practical and usable.
+
+For logic:
+- Add a “Logic” panel per page/question.
+- Support simple conditional rules like:
+  - Show this page if question X contains Y
+  - Skip to page Z if question X equals Y
+  - Source options from taxonomy A filtered by previous answer B
+- Store logic as JSON.
+- Provide a readable UI for common rules.
+- Also include an “Advanced JSON” editor for logic if easier.
+
+Important:
+- The existing survey should be migrated into an initial default SurveyConfig.
+- The public survey should render from the active SurveyConfig rather than hardcoded page flow wherever practical.
+
+## 4. Response storage and viewing
+
+The public survey must save responses.
+
+Requirements:
+- Create a sessionId when a user starts.
+- Save progress after each page so partial responses are captured.
+- Mark response as completed on final submit.
+- Store all answers as structured JSON.
+- Preserve question IDs, labels, and answer values.
+- Make sure response data still makes sense even if the survey config later changes.
+
+Admin responses page:
+- Show table of responses
+- Columns:
+  - submitted/completed time
+  - email
+  - status
+  - selected career paths
+  - recognition count if available
+  - completion status
+- Click response to view full detail
+- Add filters:
+  - completed / partial
+  - date range
+  - career path
+  - email search
+- Add export CSV button
+- Export should flatten JSON answers into columns where possible
+
+## 5. Taxonomy management
+
+Create an admin taxonomy section where I can manage option sets that appear in the survey.
+
+Example use case:
+For the company recognition question, I want to upload a CSV of companies and configure the logic that decides which companies get shown to the respondent.
+
+Taxonomy page requirements:
+- List taxonomies
+- Create taxonomy
+- Edit taxonomy name/type/description
+- View items
+- Add/edit/delete items manually
+- Upload CSV
+- Map CSV columns to taxonomy fields
+- Preview imported rows before saving
+- Save imported taxonomy items
+
+Employer taxonomy item fields should support:
+- id
+- employerName
+- displayName
+- aliases
+- careerPath
+- industry
+- location
+- isClient
+- priorityTier
+- popularityScore
+- rankingScore
+- source
+- active true/false
+- metadata JSON
+
+## 6. CSV import flow
+
+When uploading CSV:
+1. User selects taxonomy type, e.g. Employers.
+2. Uploads CSV.
+3. App displays column preview.
+4. User maps CSV columns to standard fields.
+5. User can choose processing rules.
+6. User previews final processed items.
+7. User confirms import.
+
+For employer CSVs, include processing rules:
+- Deduplicate by normalized employer name
+- Merge aliases
+- Filter active/inactive rows
+- Group employers by career path
+- Prioritize clients
+- Prioritize top 100 employers
+- Include random exploration employers
+- Set weights for display algorithm
+
+## 7. Employer display logic builder
+
+This is very important.
+
+In the admin backend, I want to design the logic for how companies get shown to survey users.
+
+Add a “Display Logic” editor for employer recognition.
+
+The system should support rules like:
+- Select employers based on respondent’s chosen career path
+- Show a fixed number of employers, e.g. 20
+- Include some popular employers
+- Include some clients
+- Include some top-ranked/top-100 employers
+- Include some random/exploration employers
+- Ensure every eligible employer has some chance of being shown
+- Avoid showing duplicate employers
+- Allow weight controls
+
+Example default algorithm:
+For each selected career path:
+- Get all active employers for that career path
+- Score each employer using:
+  - popularityScore
+  - rankingScore
+  - isClient boost
+  - priorityTier boost
+  - random exploration factor
+- Select 20 employers total:
+  - 6 popular/high score employers
+  - 5 client or priority employers
+  - 5 top 100/ranking employers
+  - 4 random exploration employers
+- Deduplicate
+- Shuffle display order
+- Store which employers were shown in the response metadata
+
+Build the logic so these numbers can be edited in admin.
+
+Admin UI should let me configure:
+- number of employers shown
+- weight for popularity
+- weight for ranking/top 100
+- client boost
+- priority tier boost
+- random exploration percentage
+- whether to guarantee clients appear
+- whether to show only employers matching selected career path
+- fallback behavior if not enough employers exist
+
+Also include an “Advanced JSON” mode for this logic.
+
+## 8. Public survey integration
+
+The public survey should use the active config and taxonomy logic.
+
+Requirements:
+- First pages collect respondent info as already shown.
+- Later pages use taxonomy-backed options.
+- Employer recognition page should call the backend to fetch the respondent-specific employer list.
+- The backend should return the selected employer options and store exposure data.
+- When the user submits recognition answers, store:
+  - employers shown
+  - employers recognized
+  - employers not recognized
+  - selected career path / context
+  - algorithm version/config used
+
+This is important because we need to know not just what they clicked, but what they were shown.
+
+## 9. API endpoints
+
+Create sensible backend API endpoints, for example:
+
+Public:
+- GET `/api/survey/active`
+- POST `/api/survey/start`
+- POST `/api/survey/:sessionId/save`
+- POST `/api/survey/:sessionId/complete`
+- POST `/api/survey/employers/select`
+
+Admin:
+- POST `/api/admin/login`
+- GET `/api/admin/survey-configs`
+- POST `/api/admin/survey-configs`
+- PUT `/api/admin/survey-configs/:id`
+- POST `/api/admin/survey-configs/:id/activate`
+- GET `/api/admin/responses`
+- GET `/api/admin/responses/:id`
+- GET `/api/admin/responses/export`
+- GET `/api/admin/taxonomies`
+- POST `/api/admin/taxonomies`
+- PUT `/api/admin/taxonomies/:id`
+- POST `/api/admin/taxonomies/:id/import-csv`
+- POST `/api/admin/taxonomies/:id/process-preview`
+- POST `/api/admin/taxonomies/:id/confirm-import`
+
+## 10. Data export
+
+Add CSV export for:
+- Full survey responses
+- Employer recognition exposure data
+- Taxonomy items
+
+The response export should include:
+- response id
+- session id
+- status
+- started at
+- completed at
+- email
+- demographics fields
+- selected career paths
+- all question answers flattened
+- employers shown
+- employers recognized
+- algorithm version/config id
+
+## 11. Design requirements
+
+Use the existing Prosple-style UI as much as possible.
+
+Admin should be clean and practical:
+- left sidebar navigation
+- cards
+- tables
+- modals/drawers for editing
+- clear save buttons
+- clear success/error states
+- loading states
+- empty states
+
+Do not over-design. Prioritize functionality.
+
+## 12. Important technical expectations
+
+- Preserve existing app behavior while adding backend functionality.
+- Make sure the app runs in Replit without manual complex setup.
+- Add seed/default data so the survey works immediately.
+- Add a few sample employer taxonomy rows.
+- Add sample survey config matching the current prototype.
+- Add clear comments in code around:
+  - survey config structure
+  - response saving
+  - employer display algorithm
+  - CSV import logic
+
+## 13. Deliverables
+
+When complete:
+1. Public survey still works.
+2. Admin icon appears top-right.
+3. Admin login works.
+4. I can edit survey pages/questions.
+5. I can upload employer CSVs.
+6. I can configure employer display logic.
+7. Survey responses are saved.
+8. Admin can view/export responses.
+9. Employer exposure data is stored.
+10. The app runs successfully in Replit.
+
+Please implement this incrementally:
+- First inspect the codebase and identify the current frontend structure.
+- Then add database/backend foundation.
+- Then add admin routing/login.
+- Then add survey config rendering.
+- Then add response saving.
+- Then add taxonomy CSV import.
+- Then add employer display logic.
+- Then polish admin UI and test the full flow.
+
+Before making big architectural changes, explain the current code structure and your implementation plan.
