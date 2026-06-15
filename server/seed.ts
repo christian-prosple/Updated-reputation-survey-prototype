@@ -126,13 +126,6 @@ function buildEmployerItems(): EmployerItem[] {
 function buildDefaultPages(employerTaxonomyId: number): SurveyPageDef[] {
   return [
     {
-      id: "intro",
-      kind: "intro",
-      title: "US College Data Tool",
-      subtitle: "Help us understand which employers students recognise.",
-      questions: [],
-    },
-    {
       id: "personal",
       kind: "personal",
       title: "About you",
@@ -212,6 +205,15 @@ function buildDefaultPages(employerTaxonomyId: number): SurveyPageDef[] {
       subtitle: "Adjust the final order if you like.",
       questions: [
         { id: "finalRanking", type: "final_reorder", label: "Final ranking", required: false, optionsSource: "none" },
+      ],
+    },
+    {
+      id: "top_pick_reason",
+      kind: "top_pick_reason",
+      title: "One last thing...",
+      subtitle: "Tell us why you chose your top employer.",
+      questions: [
+        { id: "topPickReason", type: "text", label: "Why did you choose your top pick?", required: true, optionsSource: "none" },
       ],
     },
     {
