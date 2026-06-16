@@ -315,6 +315,14 @@ export class DbStorage implements IStorage {
 
   async bulkSeedCareerPathEmployers(rows: InsertCareerPathEmployer[], mode: "replace" | "merge"): Promise<void> {
     if (rows.length === 0) return;
+    // Deduplicate within the batch — keep first occurrence of each (careerPath, employerName) pair
+    const seen = new Set<string>();
+    rows = rows.filter((r) => {
+      const key = `${r.careerPath}|||${r.employerName}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
     if (mode === "replace") {
       await db.delete(careerPathEmployers);
       const CHUNK = 500;
