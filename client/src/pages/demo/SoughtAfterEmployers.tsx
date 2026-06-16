@@ -7,7 +7,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import PageHeader from "@/components/PageHeader";
 import CompanyLogo from "@/components/CompanyLogo";
@@ -43,12 +42,14 @@ export default function SoughtAfterEmployers() {
       />
 
       <main className="max-w-5xl mx-auto px-4 pt-6 pb-12 space-y-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1 space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">Student Major</label>
+        <div className="space-y-2">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Filter by
+          </p>
+          <div className="flex flex-wrap gap-3">
             <Select value={major} onValueChange={setMajor}>
-              <SelectTrigger data-testid="select-major">
-                <SelectValue />
+              <SelectTrigger className="w-auto gap-2" data-testid="select-major">
+                {major === ALL ? "Major" : major}
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL}>All majors</SelectItem>
@@ -59,12 +60,10 @@ export default function SoughtAfterEmployers() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div className="flex-1 space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">Graduation Year</label>
+
             <Select value={gradYear} onValueChange={setGradYear}>
-              <SelectTrigger data-testid="select-gradyear">
-                <SelectValue />
+              <SelectTrigger className="w-auto gap-2" data-testid="select-gradyear">
+                {gradYear === ALL ? "Grad Year" : gradYear}
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value={ALL}>All years</SelectItem>
