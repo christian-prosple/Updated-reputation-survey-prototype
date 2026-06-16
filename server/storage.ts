@@ -281,7 +281,20 @@ export class DbStorage implements IStorage {
       .selectDistinct({ careerPath: careerPathEmployers.careerPath })
       .from(careerPathEmployers)
       .orderBy(asc(careerPathEmployers.careerPath));
-    return rows.map((r) => r.careerPath);
+    if (rows.length > 0) return rows.map((r) => r.careerPath);
+
+    // Fall back to the career_paths taxonomy when no employer mappings exist yet
+    const taxonomy = await db
+      .select({ items: taxonomies.items })
+      .from(taxonomies)
+      .where(eq(taxonomies.type, "career_paths"))
+      .limit(1);
+    if (!taxonomy[0]) return [];
+    const items = taxonomy[0].items as { value?: string; label?: string }[];
+    return items
+      .map((i) => i.value ?? i.label ?? "")
+      .filter(Boolean)
+      .sort();
   }
 
   async listCareerPathEmployers(careerPath?: string): Promise<CareerPathEmployer[]> {

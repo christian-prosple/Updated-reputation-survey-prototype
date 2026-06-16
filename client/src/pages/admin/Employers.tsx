@@ -23,6 +23,7 @@ export default function AdminEmployers() {
   const { data: paths = [], isLoading: loadingPaths } = useQuery<string[]>({
     queryKey: ["/api/admin/career-paths"],
     staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const { data: employers = [], isLoading: loadingEmployers } = useQuery<CareerPathEmployer[]>({
