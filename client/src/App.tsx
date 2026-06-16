@@ -12,6 +12,7 @@ import AdvisorDashboard from "@/pages/demo/AdvisorDashboard";
 import RespondentList from "@/pages/demo/RespondentList";
 import InvitedStudents from "@/pages/demo/InvitedStudents";
 import SoughtAfterEmployers from "@/pages/demo/SoughtAfterEmployers";
+import CompanyDetail from "@/pages/demo/CompanyDetail";
 import ComingSoon from "@/pages/demo/ComingSoon";
 import { AdminLayout } from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/Dashboard";
@@ -50,6 +51,7 @@ function Router() {
       <Route path="/demo/respondents" component={RespondentList} />
       <Route path="/demo/invited" component={InvitedStudents} />
       <Route path="/demo/employers" component={SoughtAfterEmployers} />
+      <Route path="/demo/employers/:company" component={CompanyDetail} />
       <Route path="/demo/coming-soon" component={ComingSoon} />
 
       {/* The survey flow now lives at /survey */}

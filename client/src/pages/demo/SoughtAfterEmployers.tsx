@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -109,24 +109,32 @@ export default function SoughtAfterEmployers() {
             <CardContent className="py-2">
               <ol className="divide-y">
                 {companies.map((c, i) => (
-                  <li
-                    key={c.name}
-                    className="flex items-center gap-4 py-3"
-                    data-testid={`card-company-${c.name}`}
-                  >
-                    <span className="w-8 text-lg font-semibold text-slate-400 tabular-nums">
-                      {i + 1}
-                    </span>
-                    <CompanyLogo name={c.name} />
-                    <span
-                      className="flex-1 font-serif text-lg truncate"
-                      data-testid={`text-company-name-${c.name}`}
+                  <li key={c.name} className="divide-y">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setLocation(
+                          `/demo/employers/${encodeURIComponent(c.name)}${uniParam}`
+                        )
+                      }
+                      className="flex w-full items-center gap-4 py-3 text-left hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      data-testid={`card-company-${c.name}`}
                     >
-                      {c.name}
-                    </span>
-                    <span className="text-xs text-slate-500 shrink-0">
-                      {c.count} interested
-                    </span>
+                      <span className="w-8 text-lg font-semibold text-slate-400 tabular-nums">
+                        {i + 1}
+                      </span>
+                      <CompanyLogo name={c.name} />
+                      <span
+                        className="flex-1 font-serif text-lg truncate"
+                        data-testid={`text-company-name-${c.name}`}
+                      >
+                        {c.name}
+                      </span>
+                      <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
+                      <span className="text-xs text-slate-500 shrink-0">
+                        {c.count} interested
+                      </span>
+                    </button>
                   </li>
                 ))}
               </ol>
