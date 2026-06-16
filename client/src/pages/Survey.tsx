@@ -902,7 +902,7 @@ export default function SurveyPage() {
  onFocus={() => setIsCitySearchFocused(true)}
  onClick={() => setIsCitySearchFocused(true)}
  placeholder="e.g. Sydney, Australia"
- className="w-full p-3 border-2 border-slate-200 rounded-none focus:border-primary focus:outline-none transition-colors"
+ className="w-full h-10 px-3 border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
  data-testid="input-preferred-city"
  />
  
@@ -954,8 +954,8 @@ export default function SurveyPage() {
  type="button"
  onClick={() => setIsGenderFocused(!isGenderFocused)}
  className={cn(
-"w-full p-3 pr-3 border-2 rounded-none text-left transition-colors bg-white flex items-center justify-between text-slate-900",
- isGenderFocused ?"border-primary" :"border-slate-200"
+"w-full h-10 px-3 border border-input bg-background text-sm text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-ring",
+ isGenderFocused &&"ring-2 ring-ring"
  )}
  data-testid="select-gender"
  >
@@ -1021,7 +1021,7 @@ export default function SurveyPage() {
  onFocus={() => setIsCountrySearchFocused(true)}
  onClick={() => setIsCountrySearchFocused(true)}
  placeholder="e.g. Australia"
- className="w-full p-3 border-2 border-slate-200 rounded-none focus:border-primary focus:outline-none transition-colors"
+ className="w-full h-10 px-3 border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
  data-testid="input-country"
  />
  
@@ -1066,8 +1066,8 @@ export default function SurveyPage() {
  type="button"
  onClick={() => setIsEducationLevelFocused(!isEducationLevelFocused)}
  className={cn(
-"w-full p-3 pr-3 border-2 rounded-none text-left transition-colors bg-white flex items-center justify-between text-slate-900",
- isEducationLevelFocused ?"border-primary" :"border-slate-200"
+"w-full h-10 px-3 border border-input bg-background text-sm text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-ring",
+ isEducationLevelFocused &&"ring-2 ring-ring"
  )}
  data-testid="select-education-level"
  >
@@ -1115,8 +1115,8 @@ export default function SurveyPage() {
  {cfg.questionLabel("education","selectedDegrees","Study field(s)")} <span className="text-red-500">*</span>
  </label>
  <div className={cn(
-"min-h-[48px] w-full p-2 bg-white border-2 rounded-none flex flex-wrap gap-2 items-center transition-all duration-200 cursor-text",
- isDegreeSearchFocused ?"border-primary" :"border-slate-200"
+"min-h-[40px] w-full px-3 py-2 bg-background border border-input flex flex-wrap gap-2 items-center cursor-text",
+ isDegreeSearchFocused &&"ring-2 ring-ring"
  )}
  onClick={() => setIsDegreeSearchFocused(true)}
  >
@@ -1263,7 +1263,7 @@ export default function SurveyPage() {
  value={state.personalInfo.university}
  onChange={(e) => actions.updatePersonalInfo("university", e.target.value)}
  placeholder="e.g. University of Melbourne"
- className="w-full p-3 border-2 border-slate-200 rounded-none focus:border-primary focus:outline-none transition-colors"
+ className="w-full h-10 px-3 border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
  data-testid="input-school"
  />
  </div>
@@ -1278,8 +1278,8 @@ export default function SurveyPage() {
  if (!pickerYear) setPickerYear(parseInt(state.personalInfo.graduationYear) || currentYear);
  }}
  className={cn(
-"w-full p-3 pr-3 border-2 rounded-none text-left transition-colors bg-white flex items-center justify-between text-slate-900",
- isGradMonthFocused ?"border-primary" :"border-slate-200"
+"w-full h-10 px-3 border border-input bg-background text-sm text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-ring",
+ isGradMonthFocused &&"ring-2 ring-ring"
  )}
  data-testid="select-graduation-date"
  >
@@ -1398,8 +1398,8 @@ export default function SurveyPage() {
  {/* Search Bar with Selected Pills */}
  <div className="relative z-50">
  <div className={cn(
-"min-h-[56px] w-full p-2 bg-white border-2 rounded-none flex flex-wrap gap-2 items-center transition-all duration-200",
- (isSearchFocused || roleSearchQuery) ?"border-primary" :"border-slate-200"
+"min-h-[44px] w-full px-3 py-2 bg-background border border-input flex flex-wrap gap-2 items-center",
+ (isSearchFocused || roleSearchQuery) &&"ring-2 ring-ring"
  )}>
  <div className="flex items-center pl-2">
  <Search className="w-5 h-5 text-slate-400" />
@@ -2039,7 +2039,7 @@ export default function SurveyPage() {
  value={newCompany.name}
  onChange={(e) => setNewCompany(prev => ({ ...prev, name: e.target.value }))}
  onFocus={() => setIsCompanySearchFocused(true)}
- className="w-full pl-10 pr-4 py-3 border rounded-lg text-sm outline-none transition-all bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary"
+ className="w-full h-10 pl-10 pr-4 border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
  placeholder="Add a company..."
  data-testid="input-add-company-search"
  />
@@ -2096,7 +2096,7 @@ export default function SurveyPage() {
  type="text"
  value={rolePopupSearchQuery}
  onChange={(e) => setRolePopupSearchQuery(e.target.value)}
- className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm outline-none transition-all bg-slate-50 focus:bg-white focus:ring-2 focus:ring-primary focus:border-primary"
+ className="w-full h-10 pl-9 pr-4 border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
  placeholder="Search..."
  data-testid="input-role-search"
  />
