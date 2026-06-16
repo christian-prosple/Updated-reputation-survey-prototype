@@ -475,7 +475,7 @@ export default function SurveyPage() {
     if (state.step !== 5 || !state.aspectEloRatings || Object.keys(state.aspectEloRatings).length === 0) return;
     if (activeAspectPair) return;
 
-    const MAX_ASPECT_PAIRS = Math.min(5, (state.selectedAspects.length * (state.selectedAspects.length - 1)) / 2);
+    const MAX_ASPECT_PAIRS = Math.min(5, state.selectedAspects.length - 1);
     if (state.aspectPairwiseCount >= MAX_ASPECT_PAIRS) {
       const sorted = [...state.selectedAspects].sort(
         (a, b) => (state.aspectEloRatings[b] || 1500) - (state.aspectEloRatings[a] || 1500)
@@ -1651,7 +1651,7 @@ export default function SurveyPage() {
 
   // STEP 5: ASPECTS PAIRWISE
   const renderStep5 = () => {
-    const MAX_ASPECT_PAIRS = Math.min(5, (state.selectedAspects.length * (state.selectedAspects.length - 1)) / 2);
+    const MAX_ASPECT_PAIRS = Math.min(5, state.selectedAspects.length - 1);
     return (
       <div className="flex flex-col h-full justify-center max-w-4xl mx-auto w-full">
         <div className="text-center mb-6">
