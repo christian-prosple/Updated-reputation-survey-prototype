@@ -230,6 +230,134 @@ function CsvImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => voi
   );
 }
 
+// ---------------------------------------------------------------------------
+// Matrix Import — TSV with career-path columns and ranked employer rows
+// ---------------------------------------------------------------------------
+function parseMatrix(content: string): { careerPaths: string[]; employers: { name: string; paths: string[] }[] } {
+  const lines = content.split(/\r?\n/).filter((l) => l.trim());
+  if (lines.length < 2) return { careerPaths: [], employers: [] };
+  const careerPaths = lines[0].split("\t").map((s) => s.trim()).filter(Boolean);
+  const byKey = new Map<string, { name: string; paths: Set<string> }>();
+  for (let row = 1; row < lines.length; row++) {
+    const cells = lines[row].split("\t");
+    for (let col = 0; col < careerPaths.length; col++) {
+      const name = (cells[col] ?? "").trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      if (!byKey.has(key)) byKey.set(key, { name, paths: new Set() });
+      byKey.get(key)!.paths.add(careerPaths[col]);
+    }
+  }
+  return {
+    careerPaths,
+    employers: Array.from(byKey.values()).map((e) => ({ name: e.name, paths: Array.from(e.paths).sort() })),
+  };
+}
+
+function MatrixImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => void }) {
+  const { toast } = useToast();
+  const [content, setContent] = useState("");
+  const [mode, setMode] = useState<"merge" | "replace">("replace");
+  const [busy, setBusy] = useState(false);
+
+  const parsed = content.trim() ? parseMatrix(content) : { careerPaths: [], employers: [] };
+
+  async function doImport() {
+    if (!content.trim()) { toast({ title: "Paste TSV content first", variant: "destructive" }); return; }
+    if (parsed.employers.length === 0) { toast({ title: "No employers detected — check the format", variant: "destructive" }); return; }
+    setBusy(true);
+    try {
+      const res = await apiRequest("POST", `/api/admin/taxonomies/${taxonomy.id}/import/matrix`, { content, mode });
+      const data = await res.json();
+      await queryClient.invalidateQueries({ queryKey: ["/api/admin/taxonomies"] });
+      toast({ title: "Import complete", description: `${data.imported} employers across ${data.careerPaths} career paths. ${data.total} total in taxonomy.` });
+      onDone();
+    } catch {
+      toast({ title: "Import failed", variant: "destructive" });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="space-y-5">
+      <Button variant="ghost" size="sm" onClick={onDone} data-testid="button-back-matrix"><ChevronLeft className="w-4 h-4 mr-1" /> Back</Button>
+      <div>
+        <h3 className="text-lg font-semibold">Matrix Import → "{taxonomy.name}"</h3>
+        <p className="text-sm text-slate-500 mt-1">
+          Paste a <strong>tab-separated</strong> file where <strong>row 1 = career path names</strong> (one per column) and each subsequent row lists employers ranked for that path.
+          Employers appearing in multiple columns will be deduplicated and tagged with all their career paths.
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader className="py-3"><CardTitle className="text-sm">1. Paste TSV content</CardTitle></CardHeader>
+        <CardContent className="space-y-3">
+          <Textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder={"Accounting & Advisory\tAerospace Engineering & Aviation\t...\nDeloitte\tBoeing\t...\nPwC\tLockheed Martin\t..."}
+            rows={8}
+            className="font-mono text-xs"
+            data-testid="textarea-matrix-content"
+          />
+        </CardContent>
+      </Card>
+
+      {parsed.careerPaths.length > 0 && (
+        <Card>
+          <CardHeader className="py-3">
+            <CardTitle className="text-sm flex items-center gap-2">
+              2. Preview
+              <Badge variant="secondary">{parsed.careerPaths.length} career paths</Badge>
+              <Badge variant="secondary">{parsed.employers.length} unique employers</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-xs font-semibold text-slate-500 mb-2">Career paths detected:</p>
+              <div className="flex flex-wrap gap-1">
+                {parsed.careerPaths.map((cp) => (
+                  <Badge key={cp} variant="outline" className="text-xs">{cp}</Badge>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-500 mb-2">Sample employers (first 10):</p>
+              <div className="space-y-1">
+                {parsed.employers.slice(0, 10).map((e) => (
+                  <div key={e.name} className="flex items-start gap-2 text-sm">
+                    <span className="font-medium w-48 flex-shrink-0 truncate">{e.name}</span>
+                    <span className="text-xs text-slate-500">{e.paths.slice(0, 3).join(", ")}{e.paths.length > 3 ? ` +${e.paths.length - 3} more` : ""}</span>
+                  </div>
+                ))}
+                {parsed.employers.length > 10 && <p className="text-xs text-slate-400">…and {parsed.employers.length - 10} more employers</p>}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="space-y-1">
+          <Label className="text-xs">Mode</Label>
+          <Select value={mode} onValueChange={(v) => setMode(v as "merge" | "replace")}>
+            <SelectTrigger className="w-40" data-testid="select-matrix-mode"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="replace">Replace all</SelectItem>
+              <SelectItem value="merge">Merge (update existing)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button className="mt-5" onClick={doImport} disabled={busy || parsed.employers.length === 0} data-testid="button-matrix-import">
+          {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+          Import {parsed.employers.length > 0 ? `${parsed.employers.length} employers` : ""}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 const blankItem = (): EmployerItem => ({
   id: `item-${Math.random().toString(36).slice(2, 8)}`,
   employerName: "",
@@ -438,6 +566,7 @@ function SimpleReplaceImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone:
 export default function Taxonomies() {
   const { toast } = useToast();
   const [importing, setImporting] = useState<Taxonomy | null>(null);
+  const [matrixImporting, setMatrixImporting] = useState<Taxonomy | null>(null);
   const [managing, setManaging] = useState<Taxonomy | null>(null);
   const [editing, setEditing] = useState<Taxonomy | null>(null);
   const [creating, setCreating] = useState(false);
@@ -477,6 +606,7 @@ export default function Taxonomies() {
     toast({ title: "Taxonomy deleted" });
   }
 
+  if (matrixImporting) return <MatrixImport taxonomy={matrixImporting} onDone={() => setMatrixImporting(null)} />;
   if (importing) {
     return importing.type === "employers"
       ? <CsvImport taxonomy={importing} onDone={() => setImporting(null)} />
@@ -511,6 +641,9 @@ export default function Taxonomies() {
                 </div>
                 <div className="flex gap-1 flex-wrap">
                   <Button variant="outline" size="sm" onClick={() => setManaging(t)} data-testid={`button-manage-taxonomy-${t.id}`}><ListTree className="w-4 h-4 mr-1" /> Manage items</Button>
+                  {t.type === "employers" && (
+                    <Button variant="outline" size="sm" onClick={() => setMatrixImporting(t)} data-testid={`button-matrix-import-taxonomy-${t.id}`}><Upload className="w-4 h-4 mr-1" /> Matrix import</Button>
+                  )}
                   <Button variant="outline" size="sm" onClick={() => setImporting(t)} data-testid={`button-import-taxonomy-${t.id}`}><Upload className="w-4 h-4 mr-1" /> Import CSV</Button>
                   <Button variant="outline" size="sm" asChild data-testid={`button-export-taxonomy-${t.id}`}>
                     <a href={`/api/admin/taxonomies/${t.id}/export.csv`}><Download className="w-4 h-4 mr-1" /> Export</a>

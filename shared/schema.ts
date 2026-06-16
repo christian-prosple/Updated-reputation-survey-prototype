@@ -192,7 +192,8 @@ export interface EmployerItem {
   employerName: string;
   displayName?: string;
   aliases?: string[];
-  careerPath?: string;
+  careerPath?: string;   // legacy singular (kept for backward compat)
+  careerPaths?: string[]; // all career paths this employer is associated with
   industry?: string;
   location?: string;
   isClient?: boolean;

@@ -388,6 +388,81 @@ export function registerAdminRoutes(app: Express): void {
     res.json({ ok: true, imported: processed.length, skipped, total: finalItems.length, taxonomy: updated });
   });
 
+  // Matrix import: TSV with career-path columns (row 0) and ranked employer rows (row 1+).
+  // Deduplicates employers across columns and collects all associated career paths.
+  app.post("/api/admin/taxonomies/:id/import/matrix", async (req, res) => {
+    const schema = z.object({
+      content: z.string(),
+      mode: z.enum(["replace", "merge"]).default("merge"),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ message: "Invalid payload" }); return; }
+
+    const taxId = Number(req.params.id);
+    const tax = await storage.getTaxonomy(taxId);
+    if (!tax) { res.status(404).json({ message: "Taxonomy not found" }); return; }
+
+    const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+    const lines = parsed.data.content.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) { res.status(400).json({ message: "Need at least a header row and one data row" }); return; }
+
+    const careerPaths = lines[0].split("\t").map((s) => s.trim()).filter(Boolean);
+
+    // employerKey → { employerName, careerPaths, scoreSum, scoreCount }
+    type Entry = { employerName: string; paths: Set<string>; scoreSum: number; scoreCount: number };
+    const byKey = new Map<string, Entry>();
+
+    for (let rowIdx = 1; rowIdx < lines.length; rowIdx++) {
+      const cells = lines[rowIdx].split("\t");
+      for (let col = 0; col < careerPaths.length; col++) {
+        const name = (cells[col] ?? "").trim();
+        if (!name) continue;
+        const key = name.toLowerCase();
+        if (!byKey.has(key)) byKey.set(key, { employerName: name, paths: new Set(), scoreSum: 0, scoreCount: 0 });
+        const e = byKey.get(key)!;
+        e.paths.add(careerPaths[col]);
+        e.scoreSum += (1 / rowIdx) * 100; // rank 1 → 100, rank 2 → 50, etc.
+        e.scoreCount++;
+      }
+    }
+
+    const importedItems: EmployerItem[] = [];
+    for (const [, e] of byKey) {
+      const paths = Array.from(e.paths).sort();
+      importedItems.push({
+        id: slug(e.employerName),
+        employerName: e.employerName,
+        displayName: e.employerName,
+        careerPaths: paths,
+        careerPath: paths[0],
+        popularityScore: Math.round((e.scoreSum / e.scoreCount) * 10) / 10,
+        priorityTier: 0,
+        rankingScore: 0,
+        source: "matrix_import",
+        active: true,
+      });
+    }
+
+    let finalItems: EmployerItem[];
+    if (parsed.data.mode === "replace") {
+      finalItems = importedItems;
+    } else {
+      const byId = new Map<string, EmployerItem>();
+      (tax.items as EmployerItem[]).forEach((i) => byId.set(i.id, i));
+      importedItems.forEach((i) => {
+        const prev = byId.get(i.id);
+        const mergedPaths = prev
+          ? Array.from(new Set([...(prev.careerPaths ?? (prev.careerPath ? [prev.careerPath] : [])), ...(i.careerPaths ?? [])]))
+          : (i.careerPaths ?? []);
+        byId.set(i.id, { ...prev, ...i, careerPaths: mergedPaths });
+      });
+      finalItems = Array.from(byId.values());
+    }
+
+    const updated = await storage.updateTaxonomy(taxId, { items: finalItems });
+    res.json({ ok: true, imported: importedItems.length, total: finalItems.length, careerPaths: careerPaths.length });
+  });
+
   app.get("/api/admin/imports", async (req, res) => {
     const taxonomyId = req.query.taxonomyId ? Number(req.query.taxonomyId) : undefined;
     res.json(await storage.listTaxonomyImports(taxonomyId));
