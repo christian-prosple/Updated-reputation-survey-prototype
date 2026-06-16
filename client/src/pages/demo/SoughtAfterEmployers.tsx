@@ -76,17 +76,12 @@ export default function SoughtAfterEmployers() {
       <header className="bg-white border-b">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
-            <BrandLogo variant="inline" />
+            <BrandLogo variant="inline" university={university} />
             <div className="hidden sm:block h-8 w-px bg-slate-200" />
             <div>
               <h1 className="text-xl font-bold" data-testid="text-employers-title">
                 Most Sought After Employers
               </h1>
-              {university && (
-                <p className="text-sm text-slate-500" data-testid="text-employers-university">
-                  {university}
-                </p>
-              )}
             </div>
           </div>
           <Button
