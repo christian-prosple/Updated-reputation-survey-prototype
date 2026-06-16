@@ -1,6 +1,5 @@
 import { useLocation, useSearch } from "wouter";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import BrandLogo from "@/components/BrandLogo";
 
@@ -57,16 +56,6 @@ export default function DemoType() {
               </span>
             </CardContent>
           </Card>
-        </div>
-
-        <div className="flex justify-center">
-          <Button
-            variant="ghost"
-            onClick={() => setLocation("/")}
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-1" /> Back
-          </Button>
         </div>
       </div>
     </div>

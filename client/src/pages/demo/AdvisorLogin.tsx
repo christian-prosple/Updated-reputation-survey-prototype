@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -61,16 +60,6 @@ export default function AdvisorLogin() {
               Log In
             </Button>
           </form>
-
-          <div className="flex justify-center mt-4">
-            <Button
-              variant="ghost"
-              onClick={() => setLocation(`/demo/type${uniParam}`)}
-              data-testid="button-back"
-            >
-              <ChevronLeft className="w-4 h-4 mr-1" /> Back
-            </Button>
-          </div>
         </CardContent>
       </Card>
     </div>

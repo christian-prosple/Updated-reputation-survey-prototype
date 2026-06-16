@@ -48,7 +48,11 @@ export default function SoughtAfterEmployers() {
           </p>
           <div className="flex flex-wrap gap-3">
             <Select value={major} onValueChange={setMajor}>
-              <SelectTrigger className="w-auto gap-2" data-testid="select-major">
+              <SelectTrigger
+                className="w-auto gap-2"
+                aria-label="Filter by major"
+                data-testid="select-major"
+              >
                 {major === ALL ? "Major" : major}
               </SelectTrigger>
               <SelectContent>
@@ -62,7 +66,11 @@ export default function SoughtAfterEmployers() {
             </Select>
 
             <Select value={gradYear} onValueChange={setGradYear}>
-              <SelectTrigger className="w-auto gap-2" data-testid="select-gradyear">
+              <SelectTrigger
+                className="w-auto gap-2"
+                aria-label="Filter by graduation year"
+                data-testid="select-gradyear"
+              >
                 {gradYear === ALL ? "Grad Year" : gradYear}
               </SelectTrigger>
               <SelectContent>
