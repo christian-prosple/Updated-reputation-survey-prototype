@@ -1724,12 +1724,15 @@ export default function SurveyPage() {
         )}
 
         <div className="flex flex-col items-center gap-4">
-          <div className="flex gap-4 items-center mb-2">
+          <div className="flex gap-4 items-center mb-4">
             {state.aspectComparisonHistory.length > 0 && (
               <Button variant="outline" onClick={() => { actions.undoLastAspectComparison(); setActiveAspectPair(null); }} className="text-slate-900 border-slate-200">
-                <ChevronLeft className="mr-1 w-4 h-4" /> Undo
+                <ChevronLeft className="mr-1 w-4 h-4" /> Undo previous choice
               </Button>
             )}
+            <Button variant="outline" disabled={!activeAspectPair} onClick={() => { if (activeAspectPair) { actions.recordAspectComparison(activeAspectPair, null); setActiveAspectPair(null); } }} className="text-slate-900 border-slate-200">
+              Too hard, skip this pair
+            </Button>
           </div>
           <div className="flex gap-4 w-full max-w-xs">
             <Button variant="secondary" size="lg" className="flex-1 text-muted-foreground" onClick={() => actions.prevStep()}>
