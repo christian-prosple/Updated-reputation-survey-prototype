@@ -23,7 +23,7 @@ function NumField({ label, value, onChange, step, testId, help }: { label: strin
 
 export default function Settings() {
   const { toast } = useToast();
-  const { data, isLoading } = useQuery<EmployerDisplayLogic>({ queryKey: ["/api/admin/settings/employer-logic"] });
+  const { data, isLoading } = useQuery<EmployerDisplayLogic>({ queryKey: ["/api/admin/settings/employer-logic"], staleTime: 0 });
   const [logic, setLogic] = useState<EmployerDisplayLogic | null>(null);
   const [saving, setSaving] = useState(false);
 

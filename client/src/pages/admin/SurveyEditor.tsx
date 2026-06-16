@@ -48,7 +48,7 @@ function move<T>(arr: T[], from: number, to: number): T[] {
 
 function ConfigList({ onEdit }: { onEdit: (c: SurveyConfig) => void }) {
   const { toast } = useToast();
-  const { data, isLoading } = useQuery<SurveyConfig[]>({ queryKey: ["/api/admin/configs"] });
+  const { data, isLoading } = useQuery<SurveyConfig[]>({ queryKey: ["/api/admin/configs"], staleTime: 0 });
 
   async function activate(id: number) {
     await apiRequest("POST", `/api/admin/configs/${id}/activate`);
@@ -564,7 +564,7 @@ function CustomQuestionBuilder({
 
 function ConfigEditor({ config, onBack }: { config: SurveyConfig; onBack: () => void }) {
   const { toast } = useToast();
-  const { data: taxonomies } = useQuery<Taxonomy[]>({ queryKey: ["/api/admin/taxonomies"] });
+  const { data: taxonomies } = useQuery<Taxonomy[]>({ queryKey: ["/api/admin/taxonomies"], staleTime: 0 });
   const [name, setName] = useState(config.name);
   const [pages, setPages] = useState<SurveyPageDef[]>(config.pages);
   const [pagesJson, setPagesJson] = useState(JSON.stringify(config.pages, null, 2));

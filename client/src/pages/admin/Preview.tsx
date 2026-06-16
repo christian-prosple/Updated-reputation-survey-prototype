@@ -16,8 +16,9 @@ export default function Preview() {
   const { data: config, isLoading } = useQuery<SurveyConfig>({
     queryKey: ["/api/admin/configs", id],
     enabled: !!id,
+    staleTime: 0,
   });
-  const { data: taxonomies } = useQuery<Taxonomy[]>({ queryKey: ["/api/admin/taxonomies"] });
+  const { data: taxonomies } = useQuery<Taxonomy[]>({ queryKey: ["/api/admin/taxonomies"], staleTime: 0 });
 
   if (isLoading) {
     return (

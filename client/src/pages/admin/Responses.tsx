@@ -45,6 +45,7 @@ export default function AdminResponses() {
       const res = await apiRequest("GET", `/api/admin/responses${qs ? `?${qs}` : ""}`);
       return res.json();
     },
+    staleTime: 0,
   });
 
   async function handleDelete(id: number) {

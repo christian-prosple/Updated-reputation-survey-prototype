@@ -28,7 +28,7 @@ function StatCard({ label, value, icon: Icon, testId }: { label: string; value: 
 }
 
 export default function AdminDashboard() {
-  const { data, isLoading } = useQuery<Stats>({ queryKey: ["/api/admin/stats"] });
+  const { data, isLoading } = useQuery<Stats>({ queryKey: ["/api/admin/stats"], staleTime: 0 });
 
   if (isLoading) {
     return <div className="flex justify-center py-20"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>;

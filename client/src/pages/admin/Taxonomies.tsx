@@ -443,7 +443,7 @@ export default function Taxonomies() {
   const [creating, setCreating] = useState(false);
   const [formName, setFormName] = useState("");
   const [formType, setFormType] = useState<TaxonomyType>("employers");
-  const { data, isLoading } = useQuery<Taxonomy[]>({ queryKey: ["/api/admin/taxonomies"] });
+  const { data, isLoading } = useQuery<Taxonomy[]>({ queryKey: ["/api/admin/taxonomies"], staleTime: 0 });
 
   function openCreate() {
     setEditing(null);
