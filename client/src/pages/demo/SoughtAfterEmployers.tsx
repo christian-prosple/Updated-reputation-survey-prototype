@@ -11,45 +11,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import BrandLogo from "@/components/BrandLogo";
+import CompanyLogo from "@/components/CompanyLogo";
 import { MAJORS, GRAD_YEARS, rankCompanies } from "@/data/demo-employers";
-
-const DOMAIN_OVERRIDES: Record<string, string> = {
-  "The New York Times": "nytimes.com",
-  "General Electric": "ge.com",
-  "Johnson & Johnson": "jnj.com",
-  JPMorgan: "jpmorganchase.com",
-};
-
-function logoUrl(name: string): string {
-  const domain =
-    DOMAIN_OVERRIDES[name] ??
-    name.toLowerCase().replace(/[^a-z0-9]/g, "") + ".com";
-  return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-}
-
-function CompanyLogo({ name }: { name: string }) {
-  const [err, setErr] = useState(false);
-  const init = name
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-  return (
-    <div className="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden shrink-0">
-      {!err ? (
-        <img
-          src={logoUrl(name)}
-          alt={`${name} logo`}
-          className="w-full h-full object-cover"
-          onError={() => setErr(true)}
-        />
-      ) : (
-        <span className="text-xs font-bold text-slate-500">{init}</span>
-      )}
-    </div>
-  );
-}
 
 const ALL = "all";
 

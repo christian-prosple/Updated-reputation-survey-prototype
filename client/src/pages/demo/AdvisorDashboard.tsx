@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import BrandLogo from "@/components/BrandLogo";
+import CompanyLogo from "@/components/CompanyLogo";
 import {
   DEMO_STUDENTS,
   RESPONDENT_COUNT,
@@ -143,14 +144,17 @@ export default function AdvisorDashboard() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ol className="space-y-2">
+            <ol className="divide-y">
               {MOST_SOUGHT_AFTER_EMPLOYERS.map((name, i) => (
                 <li
                   key={name}
-                  className="flex items-center gap-3 text-sm"
+                  className="flex items-center gap-4 py-3 first:pt-0 last:pb-0"
                   data-testid={`text-employer-${i}`}
                 >
-                  <span className="w-5 text-slate-400">{i + 1}</span>
+                  <span className="w-6 text-lg font-semibold text-slate-400 tabular-nums">
+                    {i + 1}
+                  </span>
+                  <CompanyLogo name={name} />
                   <span className="font-medium">{name}</span>
                 </li>
               ))}
