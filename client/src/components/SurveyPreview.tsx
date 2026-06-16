@@ -56,6 +56,36 @@ function injectAspectPages(pages: SurveyPageDef[]): SurveyPageDef[] {
   return [...pages.slice(0, idx + 1), ...ASPECT_PAGES, ...pages.slice(idx + 1)];
 }
 
+// Exact prompt text per page kind — mirrors the hardcoded text in Survey.tsx
+type KindPrompt = { title?: string; subtitle?: string; bold?: boolean; usePageTitle?: boolean; usePageSubtitle?: boolean };
+const KIND_PROMPTS: Record<string, KindPrompt> = {
+  career_order: {
+    title: "What career path are you most interested in?",
+    subtitle: "Drag and drop to sort your career paths in order of preference",
+  },
+  recognition: {
+    title: "Which of the following employers do you recognise? Select all that apply.",
+  },
+  pairwise: {
+    title: "Which opportunity would you choose?",
+  },
+  final: {
+    title: "Nice, here's your shortlist!",
+    subtitle: "Make any final adjustments by dragging and dropping or adding missing companies",
+    bold: true,
+  },
+  top_pick_reason: {
+    usePageTitle: true,
+    subtitle: "Why did you choose your top pick?",
+    bold: true,
+  },
+  thankyou: {
+    usePageTitle: true,
+    usePageSubtitle: true,
+    bold: true,
+  },
+};
+
 // --- Inline CompanyLogo (mirrors Survey.tsx; uses favicon-guess fallback) ---
 function getCompanyLogoUrl(name: string): string {
   const d = name.toLowerCase().replace(/[^a-z0-9]/g, "") + ".com";
@@ -215,10 +245,12 @@ function QuestionPreview({
   q,
   taxonomies,
   formStyle,
+  hidePrompt = false,
 }: {
   q: SurveyQuestion;
   taxonomies: Taxonomy[];
   formStyle: boolean;
+  hidePrompt?: boolean;
 }) {
   const [text, setText] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
@@ -240,7 +272,7 @@ function QuestionPreview({
   );
 
   // Big centered prompt used in prompt-style (steps 2–7)
-  const BigPromptEl = () => (
+  const BigPromptEl = () => hidePrompt ? null : (
     <div className="text-center mb-8">
       <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
         {q.label || "(untitled question)"}
@@ -638,17 +670,53 @@ export function PagePreview({ page, taxonomies }: { page: SurveyPageDef; taxonom
   }
 
   if (formStyle) {
-    // Wrap all fields in the same container as steps 0 & 1
+    // Wrap all fields in the same container as steps 0 & 1.
+    // Show the page title heading exactly as Survey.tsx does (cfg.pageTitle).
     return (
-      <div className="max-w-xl mx-auto space-y-6 w-full">
+      <div className="space-y-8">
+        {page.title && (
+          <div className="text-center">
+            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{page.title}</h2>
+            {page.subtitle && <p className="text-slate-500 mt-1">{page.subtitle}</p>}
+          </div>
+        )}
+        <div className="max-w-xl mx-auto space-y-6 w-full">
+          {qs.map((q) => (
+            <QuestionPreview key={q.id} q={q} taxonomies={taxonomies} formStyle={true} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Single question — check if this kind has a hardcoded prompt override
+  const kindPrompt = page.kind ? KIND_PROMPTS[page.kind] : undefined;
+  if (kindPrompt) {
+    const title = kindPrompt.usePageTitle ? (page.title ?? "") : (kindPrompt.title ?? "");
+    const subtitle = kindPrompt.usePageSubtitle ? (page.subtitle ?? "") : (kindPrompt.subtitle ?? "");
+    return (
+      <div className="w-full">
+        <div className="text-center mb-8">
+          {kindPrompt.bold ? (
+            <>
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">{title}</h2>
+              {subtitle && <p className="text-lg md:text-xl font-medium text-slate-600 max-w-lg mx-auto">{subtitle}</p>}
+            </>
+          ) : (
+            <>
+              <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">{title}</p>
+              {subtitle && <p className="text-sm text-slate-500 mt-2">{subtitle}</p>}
+            </>
+          )}
+        </div>
         {qs.map((q) => (
-          <QuestionPreview key={q.id} q={q} taxonomies={taxonomies} formStyle={true} />
+          <QuestionPreview key={q.id} q={q} taxonomies={taxonomies} formStyle={false} hidePrompt={true} />
         ))}
       </div>
     );
   }
 
-  // Single question — render full-width, prompt-style
+  // No override — render with the question's own label as the prompt
   return (
     <div className="w-full">
       {qs.map((q) => (
