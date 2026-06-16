@@ -1,9 +1,9 @@
 import { useMemo, useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { ChevronLeft, ChevronUp, ChevronDown, ChevronsUpDown, Bell } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronsUpDown, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import BrandLogo from "@/components/BrandLogo";
+import PageHeader from "@/components/PageHeader";
 import { useToast } from "@/hooks/use-toast";
 import { DEMO_STUDENTS } from "@/data/demo-students";
 import { cn } from "@/lib/utils";
@@ -73,29 +73,15 @@ export default function InvitedStudents() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 font-sans text-slate-900">
-      <header className="bg-white border-b">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <BrandLogo variant="inline" university={university} />
-            <div className="hidden sm:block h-8 w-px bg-slate-200" />
-            <div>
-              <h1 className="text-xl font-bold" data-testid="text-invited-title">
-                Invited Students
-              </h1>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setLocation(`/demo/dashboard${uniParam}`)}
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-1" /> Back
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        university={university}
+        containerClass="max-w-3xl mx-auto px-4"
+        onBack={() => setLocation(`/demo/dashboard${uniParam}`)}
+        title="Invited Students"
+        subtitle="Track invitations and send reminders."
+      />
 
-      <main className="max-w-3xl mx-auto px-4 py-8">
+      <main className="max-w-3xl mx-auto px-4 pt-6 pb-12">
         <Card>
           <CardContent className="p-0">
             <div className="grid grid-cols-[1fr_auto] gap-4 px-4 py-3 border-b">

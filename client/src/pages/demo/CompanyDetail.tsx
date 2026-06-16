@@ -1,5 +1,4 @@
 import { useRoute, useLocation, useSearch } from "wouter";
-import { ChevronLeft } from "lucide-react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -9,9 +8,8 @@ import {
   CartesianGrid,
   Tooltip,
 } from "recharts";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import BrandLogo from "@/components/BrandLogo";
+import PageHeader from "@/components/PageHeader";
 import CompanyLogo from "@/components/CompanyLogo";
 import MetricBarChart from "@/components/MetricBarChart";
 import NotFound from "@/pages/not-found";
@@ -64,37 +62,24 @@ export default function CompanyDetail() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 font-sans text-slate-900">
-      <header className="bg-white border-b">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-          <BrandLogo variant="inline" university={university} />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setLocation(`/demo/employers${uniParam}`)}
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-1" /> Back to employers
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        university={university}
+        backLabel="Back to employers"
+        onBack={() => setLocation(`/demo/employers${uniParam}`)}
+        title={
+          <span className="flex items-center gap-3" data-testid="text-company-title">
+            <CompanyLogo name={name} className="h-12 w-12" />
+            {name}
+          </span>
+        }
+        subtitle={
+          <span data-testid="text-company-rank">
+            #{rank} of {total} most sought after employers
+          </span>
+        }
+      />
 
-      <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
-        {/* Company header */}
-        <div className="flex items-center gap-4">
-          <CompanyLogo name={name} className="h-16 w-16" />
-          <div>
-            <h1
-              className="font-serif text-3xl"
-              data-testid="text-company-title"
-            >
-              {name}
-            </h1>
-            <p className="text-sm text-muted-foreground" data-testid="text-company-rank">
-              #{rank} of {total} most sought after employers
-            </p>
-          </div>
-        </div>
-
+      <main className="max-w-5xl mx-auto px-4 pt-6 pb-12 space-y-6">
         {/* Brand Awareness */}
         <Card>
           <CardContent className="pt-6">

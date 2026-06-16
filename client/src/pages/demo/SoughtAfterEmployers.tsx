@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
@@ -10,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import BrandLogo from "@/components/BrandLogo";
+import PageHeader from "@/components/PageHeader";
 import CompanyLogo from "@/components/CompanyLogo";
 import { MAJORS, GRAD_YEARS, rankCompanies } from "@/data/demo-employers";
 
@@ -36,29 +35,14 @@ export default function SoughtAfterEmployers() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 font-sans text-slate-900">
-      <header className="bg-white border-b">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <BrandLogo variant="inline" university={university} />
-            <div className="hidden sm:block h-8 w-px bg-slate-200" />
-            <div>
-              <h1 className="text-xl font-bold" data-testid="text-employers-title">
-                Most Sought After Employers
-              </h1>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setLocation(`/demo/dashboard${uniParam}`)}
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-1" /> Back
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        university={university}
+        onBack={() => setLocation(`/demo/dashboard${uniParam}`)}
+        title="Most Sought After Employers"
+        subtitle="Where students most want to work, based on their survey responses."
+      />
 
-      <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+      <main className="max-w-5xl mx-auto px-4 pt-6 pb-12 space-y-6">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 space-y-1.5">
             <label className="text-sm font-medium text-slate-700">Student Major</label>

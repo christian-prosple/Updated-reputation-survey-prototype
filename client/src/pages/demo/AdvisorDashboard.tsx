@@ -1,10 +1,9 @@
 import { useMemo, useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { Users, UserPlus, Building2, Search, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Users, UserPlus, Building2, Search, ChevronRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import BrandLogo from "@/components/BrandLogo";
+import PageHeader from "@/components/PageHeader";
 import CompanyLogo from "@/components/CompanyLogo";
 import {
   DEMO_STUDENTS,
@@ -26,37 +25,16 @@ export default function AdvisorDashboard() {
     return DEMO_STUDENTS.filter((s) => s.name.toLowerCase().includes(q));
   }, [query]);
 
-  const dashboardPath = `/demo/dashboard${university ? `?university=${encodeURIComponent(university)}` : ""}`;
-  const goComingSoon = (title: string) =>
-    setLocation(
-      `/demo/coming-soon?title=${encodeURIComponent(title)}&from=${encodeURIComponent(dashboardPath)}`
-    );
-
   return (
     <div className="min-h-screen bg-slate-50/50 font-sans text-slate-900">
-      <header className="bg-white border-b">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <BrandLogo variant="inline" university={university} />
-            <div className="hidden sm:block h-8 w-px bg-slate-200" />
-            <div>
-              <h1 className="text-xl font-bold" data-testid="text-dashboard-title">
-                Career Advisor Dashboard
-              </h1>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setLocation("/")}
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-1" /> Back
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        university={university}
+        onBack={() => setLocation("/")}
+        title="Career Advisor Dashboard"
+        subtitle="Search students and explore where they most want to work."
+      />
 
-      <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+      <main className="max-w-5xl mx-auto px-4 pt-6 pb-12 space-y-6">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">

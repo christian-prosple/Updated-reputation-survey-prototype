@@ -1,8 +1,7 @@
 import { useLocation, useSearch } from "wouter";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import BrandLogo from "@/components/BrandLogo";
+import PageHeader from "@/components/PageHeader";
 import { DEMO_STUDENTS } from "@/data/demo-students";
 
 export default function RespondentList() {
@@ -24,29 +23,15 @@ export default function RespondentList() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 font-sans text-slate-900">
-      <header className="bg-white border-b">
-        <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <BrandLogo variant="inline" university={university} />
-            <div className="hidden sm:block h-8 w-px bg-slate-200" />
-            <div>
-              <h1 className="text-xl font-bold" data-testid="text-respondents-title">
-                List of Respondents
-              </h1>
-            </div>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setLocation(dashboardPath)}
-            data-testid="button-back"
-          >
-            <ChevronLeft className="w-4 h-4 mr-1" /> Back
-          </Button>
-        </div>
-      </header>
+      <PageHeader
+        university={university}
+        containerClass="max-w-2xl mx-auto px-4"
+        onBack={() => setLocation(dashboardPath)}
+        title="List of Respondents"
+        subtitle="Students who have completed the survey."
+      />
 
-      <main className="max-w-2xl mx-auto px-4 py-8">
+      <main className="max-w-2xl mx-auto px-4 pt-6 pb-12">
         <Card>
           <CardContent className="p-0">
             <div className="px-4 py-3 border-b">
