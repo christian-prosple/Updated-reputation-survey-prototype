@@ -173,7 +173,7 @@ function AllocationPreview({ cfg }: { cfg: RoleAllocationConfig }) {
 // ---------------------------------------------------------------------------
 function DisplayLogicSection() {
   const { toast } = useToast();
-  const { data, isLoading } = useQuery<EmployerDisplayLogic>({
+  const { data, isLoading, isError, error, refetch } = useQuery<EmployerDisplayLogic>({
     queryKey: ["/api/admin/settings/employer-logic"],
     staleTime: 0,
   });
@@ -183,8 +183,16 @@ function DisplayLogicSection() {
   // Sync remote data into local edit state when it first arrives or after invalidation.
   useEffect(() => { if (data) setLogic(data); }, [data]);
 
-  // Use local edits if available, fall back to server data, keep spinner only while truly loading.
   const effective = logic ?? data ?? null;
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-10 text-slate-500">
+        <p className="text-sm">Failed to load — {(error as Error)?.message ?? "unknown error"}</p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+      </div>
+    );
+  }
   if (isLoading || !effective) {
     return <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>;
   }
@@ -308,7 +316,7 @@ function DisplayLogicSection() {
 // ---------------------------------------------------------------------------
 function RoleAllocationSection() {
   const { toast } = useToast();
-  const { data, isLoading } = useQuery<RoleAllocationConfig>({
+  const { data, isLoading, isError, error, refetch } = useQuery<RoleAllocationConfig>({
     queryKey: ["/api/admin/settings/role-allocation"],
     staleTime: 0,
   });
@@ -317,8 +325,16 @@ function RoleAllocationSection() {
 
   useEffect(() => { if (data) setCfg(data); }, [data]);
 
-  // Avoid a render cycle where isLoading=false but useEffect hasn't fired yet.
   const effective = cfg ?? data ?? null;
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-10 text-slate-500">
+        <p className="text-sm">Failed to load — {(error as Error)?.message ?? "unknown error"}</p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+      </div>
+    );
+  }
   if (isLoading || !effective) {
     return <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>;
   }
