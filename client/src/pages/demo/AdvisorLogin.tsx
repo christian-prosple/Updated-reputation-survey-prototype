@@ -25,7 +25,7 @@ export default function AdvisorLogin() {
   return (
     <div className="min-h-screen bg-slate-50/50 flex flex-col items-center justify-center px-4 font-sans text-slate-900">
       <BrandLogo />
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md border-0 bg-transparent">
         <CardContent className="pt-8 pb-8">
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="flex flex-col items-center text-center space-y-3">
