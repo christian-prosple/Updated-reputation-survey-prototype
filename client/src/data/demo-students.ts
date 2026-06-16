@@ -18,10 +18,12 @@ const LAST_NAMES = [
 ];
 
 // 12 x 5 = 60 unique, deterministic names (stable across renders so search works).
+// Interleaving first/last by independent moduli keeps all 60 combos unique
+// (lcm(12,5) = 60) while giving each group a realistic spread of surnames.
 const ALL_NAMES: string[] = [];
 for (let i = 0; i < 60; i++) {
   const first = FIRST_NAMES[i % FIRST_NAMES.length];
-  const last = LAST_NAMES[Math.floor(i / FIRST_NAMES.length) % LAST_NAMES.length];
+  const last = LAST_NAMES[i % LAST_NAMES.length];
   ALL_NAMES.push(`${first} ${last}`);
 }
 

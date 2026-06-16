@@ -9,6 +9,7 @@ import UniversitySelection from "@/pages/demo/UniversitySelection";
 import DemoType from "@/pages/demo/DemoType";
 import AdvisorLogin from "@/pages/demo/AdvisorLogin";
 import AdvisorDashboard from "@/pages/demo/AdvisorDashboard";
+import RespondentList from "@/pages/demo/RespondentList";
 import ComingSoon from "@/pages/demo/ComingSoon";
 import { AdminLayout } from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/Dashboard";
@@ -44,6 +45,7 @@ function Router() {
       <Route path="/demo/type" component={DemoType} />
       <Route path="/demo/login" component={AdvisorLogin} />
       <Route path="/demo/dashboard" component={AdvisorDashboard} />
+      <Route path="/demo/respondents" component={RespondentList} />
       <Route path="/demo/coming-soon" component={ComingSoon} />
 
       {/* The survey flow now lives at /survey */}
