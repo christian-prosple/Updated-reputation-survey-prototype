@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Upload, ChevronLeft, ListTree, Building2, Plus, Trash2, Download, Pencil } from "lucide-react";
+import { Loader2, Upload, ListTree, Building2, Plus, Trash2, Download, Pencil } from "lucide-react";
 import { TAXONOMY_TYPES, type Taxonomy, type TaxonomyType, type EmployerItem } from "@shared/schema";
 
 const IMPORT_FIELDS: { key: string; label: string; required?: boolean }[] = [
@@ -231,257 +231,6 @@ function CsvImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => voi
 }
 
 // ---------------------------------------------------------------------------
-// Matrix Import — TSV with career-path columns and ranked employer rows
-// ---------------------------------------------------------------------------
-// Prefer tab whenever any tab is present — fall back to comma only for pure CSV.
-// Counting commas is unreliable because career-path names contain them.
-function detectDelimiter(firstLine: string): string {
-  return firstLine.includes("\t") ? "\t" : ",";
-}
-
-function splitCSVRow(line: string): string[] {
-  const result: string[] = [];
-  let i = 0;
-  while (i <= line.length) {
-    if (i === line.length) { result.push(""); break; }
-    if (line[i] === '"') {
-      let field = "";
-      i++;
-      while (i < line.length) {
-        if (line[i] === '"') {
-          if (i + 1 < line.length && line[i + 1] === '"') { field += '"'; i += 2; }
-          else { i++; break; }
-        } else { field += line[i++]; }
-      }
-      result.push(field.trim());
-      if (i < line.length && line[i] === ',') i++;
-    } else {
-      const end = line.indexOf(",", i);
-      if (end === -1) { result.push(line.slice(i).trim()); break; }
-      result.push(line.slice(i, end).trim());
-      i = end + 1;
-    }
-  }
-  return result;
-}
-
-function searchRaw(content: string, query: string, delimiter: string): { row: number; col: number; path: string; cell: string }[] {
-  const q = query.toLowerCase().trim();
-  if (!q) return [];
-  const lines = content.split(/\r?\n/); // don't filter — preserve row numbers
-  const splitRow = (line: string) => delimiter === "," ? splitCSVRow(line) : line.split("\t").map((s) => s.trim());
-  const headers = splitRow(lines[0] ?? "");
-  const results: { row: number; col: number; path: string; cell: string }[] = [];
-  for (let r = 1; r < lines.length; r++) {
-    const cells = splitRow(lines[r]);
-    for (let c = 0; c < cells.length; c++) {
-      if (cells[c].toLowerCase().includes(q)) {
-        results.push({ row: r, col: c, path: headers[c] ?? `col ${c}`, cell: cells[c] });
-      }
-    }
-  }
-  return results;
-}
-
-function parseMatrix(content: string, forceDelimiter?: string): { careerPaths: string[]; employers: { name: string; paths: string[] }[]; delimiter: string } {
-  const lines = content.split(/\r?\n/).filter((l) => l.trim());
-  if (lines.length < 2) return { careerPaths: [], employers: [], delimiter: "\t" };
-  const delimiter = forceDelimiter ?? detectDelimiter(lines[0]);
-  const splitRow = (line: string) => delimiter === "," ? splitCSVRow(line) : line.split("\t").map((s) => s.trim());
-  // Keep ALL columns including empty ones so column indices stay aligned with data rows.
-  // Empty-header columns are skipped during assignment, not removed from the index.
-  const rawPaths = splitRow(lines[0]);
-  const byKey = new Map<string, { name: string; paths: Set<string> }>();
-  for (let row = 1; row < lines.length; row++) {
-    const cells = splitRow(lines[row]);
-    for (let col = 0; col < rawPaths.length; col++) {
-      const pathName = rawPaths[col];
-      if (!pathName) continue; // skip columns with no header
-      const name = (cells[col] ?? "").trim();
-      if (!name) continue;
-      const key = name.toLowerCase();
-      if (!byKey.has(key)) byKey.set(key, { name, paths: new Set() });
-      byKey.get(key)!.paths.add(pathName);
-    }
-  }
-  return {
-    delimiter,
-    careerPaths: rawPaths.filter(Boolean), // for display only — indices already correct above
-    employers: Array.from(byKey.values()).map((e) => ({ name: e.name, paths: Array.from(e.paths).sort() })),
-  };
-}
-
-function MatrixImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => void }) {
-  const { toast } = useToast();
-  const [content, setContent] = useState("");
-  const [filename, setFilename] = useState("");
-  const [mode, setMode] = useState<"merge" | "replace">("replace");
-  const [delimOverride, setDelimOverride] = useState<"auto" | "tab" | "comma">("auto");
-  const [busy, setBusy] = useState(false);
-  const [verifyQuery, setVerifyQuery] = useState("");
-
-  const forceDelim = delimOverride === "tab" ? "\t" : delimOverride === "comma" ? "," : undefined;
-  const parsed = content.trim() ? parseMatrix(content, forceDelim) : { careerPaths: [], employers: [], delimiter: "\t" };
-  const verifyResults = content.trim() && verifyQuery.trim()
-    ? searchRaw(content, verifyQuery, parsed.delimiter)
-    : null;
-
-  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setFilename(file.name);
-    const reader = new FileReader();
-    reader.onload = () => setContent(String(reader.result ?? ""));
-    reader.readAsText(file);
-  }
-
-  async function doImport() {
-    if (!content.trim()) { toast({ title: "Upload or paste a file first", variant: "destructive" }); return; }
-    if (parsed.employers.length === 0) { toast({ title: "No employers detected — check the file format", variant: "destructive" }); return; }
-    setBusy(true);
-    try {
-      const res = await apiRequest("POST", `/api/admin/taxonomies/${taxonomy.id}/import/matrix`, { content, mode });
-      const data = await res.json();
-      await queryClient.invalidateQueries({ queryKey: ["/api/admin/taxonomies"] });
-      toast({ title: "Import complete", description: `${data.imported} employers across ${data.careerPaths} career paths. ${data.total} total in taxonomy.` });
-      onDone();
-    } catch {
-      toast({ title: "Import failed", variant: "destructive" });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div className="space-y-5">
-      <Button variant="ghost" size="sm" onClick={onDone} data-testid="button-back-matrix"><ChevronLeft className="w-4 h-4 mr-1" /> Back</Button>
-      <div>
-        <h3 className="text-lg font-semibold">Matrix Import → "{taxonomy.name}"</h3>
-        <p className="text-sm text-slate-500 mt-1">
-          Upload a CSV or TSV where <strong>row 1 = career path names</strong> (one per column) and each row below lists employers ranked for that path.
-          The delimiter (comma or tab) is detected automatically.
-          Employers in multiple columns are deduplicated and tagged with all their career paths.
-        </p>
-      </div>
-
-      <Card>
-        <CardHeader className="py-3"><CardTitle className="text-sm">1. Upload file or paste content</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-3 flex-wrap">
-            <Input
-              type="file"
-              accept=".csv,.tsv,.txt"
-              onChange={onFile}
-              className="max-w-xs"
-              data-testid="input-matrix-file"
-            />
-            {filename && <span className="text-sm text-slate-500 truncate">{filename}</span>}
-          </div>
-          <p className="text-xs text-slate-400">Or paste directly:</p>
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder={"Paste CSV/TSV content here…"}
-            rows={5}
-            className="font-mono text-xs"
-            data-testid="textarea-matrix-content"
-          />
-          {content.trim() && (
-            <div className="flex items-center gap-3">
-              <Label className="text-xs">Delimiter</Label>
-              <Select value={delimOverride} onValueChange={(v) => setDelimOverride(v as "auto" | "tab" | "comma")}>
-                <SelectTrigger className="w-36 h-7 text-xs" data-testid="select-delim-override"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="auto">Auto-detect ({parsed.delimiter === "\t" ? "tab" : "comma"})</SelectItem>
-                  <SelectItem value="tab">Tab</SelectItem>
-                  <SelectItem value="comma">Comma</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {parsed.careerPaths.length > 0 && (
-        <Card>
-          <CardHeader className="py-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              2. Preview
-              <Badge variant="secondary">{parsed.careerPaths.length} career paths</Badge>
-              <Badge variant="secondary">{parsed.employers.length} unique employers</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-xs font-semibold text-slate-500 mb-1">First 5 column headers — verify these look right:</p>
-              <ol className="list-decimal list-inside space-y-0.5">
-                {parsed.careerPaths.slice(0, 5).map((cp, i) => (
-                  <li key={i} className="text-xs text-slate-700">Col {i + 1}: <strong>{cp}</strong></li>
-                ))}
-                {parsed.careerPaths.length > 5 && <li className="text-xs text-slate-400">…and {parsed.careerPaths.length - 5} more</li>}
-              </ol>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-500 mb-2">Sample employers (first 10) with their detected career paths:</p>
-              <div className="space-y-1">
-                {parsed.employers.slice(0, 10).map((e) => (
-                  <div key={e.name} className="flex items-start gap-2 text-sm">
-                    <span className="font-medium w-48 flex-shrink-0 truncate">{e.name}</span>
-                    <span className="text-xs text-slate-500">{e.paths.join(", ")}</span>
-                  </div>
-                ))}
-                {parsed.employers.length > 10 && <p className="text-xs text-slate-400">…and {parsed.employers.length - 10} more employers</p>}
-              </div>
-            </div>
-
-            <div className="border-t pt-3">
-              <p className="text-xs font-semibold text-slate-500 mb-2">Verify an employer — search the raw file:</p>
-              <Input
-                placeholder="e.g. Deloitte"
-                value={verifyQuery}
-                onChange={(e) => setVerifyQuery(e.target.value)}
-                className="h-7 text-xs max-w-xs"
-                data-testid="input-verify-employer"
-              />
-              {verifyResults !== null && (
-                <div className="mt-2 space-y-1">
-                  {verifyResults.length === 0 ? (
-                    <p className="text-xs text-slate-400">Not found anywhere in the raw file.</p>
-                  ) : (
-                    verifyResults.map((r, i) => (
-                      <p key={i} className="text-xs">
-                        <span className="text-slate-400">Row {r.row}, Col {r.col + 1}</span>
-                        {" → "}<strong className="text-slate-800">{r.cell}</strong>
-                        {" → career path: "}<span className="text-blue-600">{r.path}</span>
-                      </p>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="space-y-1">
-          <Label className="text-xs">Mode</Label>
-          <Select value={mode} onValueChange={(v) => setMode(v as "merge" | "replace")}>
-            <SelectTrigger className="w-40" data-testid="select-matrix-mode"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="replace">Replace all</SelectItem>
-              <SelectItem value="merge">Merge (update existing)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <Button className="mt-5" onClick={doImport} disabled={busy || parsed.employers.length === 0} data-testid="button-matrix-import">
-          {busy && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-          Import {parsed.employers.length > 0 ? `${parsed.employers.length} employers` : ""}
-        </Button>
-      </div>
-    </div>
-  );
-}
 
 const blankItem = (): EmployerItem => ({
   id: `item-${Math.random().toString(36).slice(2, 8)}`,
@@ -691,7 +440,6 @@ function SimpleReplaceImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone:
 export default function Taxonomies() {
   const { toast } = useToast();
   const [importing, setImporting] = useState<Taxonomy | null>(null);
-  const [matrixImporting, setMatrixImporting] = useState<Taxonomy | null>(null);
   const [managing, setManaging] = useState<Taxonomy | null>(null);
   const [editing, setEditing] = useState<Taxonomy | null>(null);
   const [creating, setCreating] = useState(false);
@@ -731,7 +479,6 @@ export default function Taxonomies() {
     toast({ title: "Taxonomy deleted" });
   }
 
-  if (matrixImporting) return <MatrixImport taxonomy={matrixImporting} onDone={() => setMatrixImporting(null)} />;
   if (importing) {
     return importing.type === "employers"
       ? <CsvImport taxonomy={importing} onDone={() => setImporting(null)} />
@@ -766,9 +513,6 @@ export default function Taxonomies() {
                 </div>
                 <div className="flex gap-1 flex-wrap">
                   <Button variant="outline" size="sm" onClick={() => setManaging(t)} data-testid={`button-manage-taxonomy-${t.id}`}><ListTree className="w-4 h-4 mr-1" /> Manage items</Button>
-                  {t.type === "employers" && (
-                    <Button variant="outline" size="sm" onClick={() => setMatrixImporting(t)} data-testid={`button-matrix-import-taxonomy-${t.id}`}><Upload className="w-4 h-4 mr-1" /> Matrix import</Button>
-                  )}
                   <Button variant="outline" size="sm" onClick={() => setImporting(t)} data-testid={`button-import-taxonomy-${t.id}`}><Upload className="w-4 h-4 mr-1" /> Import CSV</Button>
                   <Button variant="outline" size="sm" asChild data-testid={`button-export-taxonomy-${t.id}`}>
                     <a href={`/api/admin/taxonomies/${t.id}/export.csv`}><Download className="w-4 h-4 mr-1" /> Export</a>
