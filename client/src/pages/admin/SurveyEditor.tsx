@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ import {
   type SurveyConfig, type SurveyPageDef, type SurveyQuestion,
   type SurveyOption, type ConditionRule, type QuestionType, type Taxonomy,
 } from "@shared/schema";
-import { SinglePagePreview, SurveyPreview } from "@/components/SurveyPreview";
+import { SinglePagePreview, SurveyPreview, injectAspectPages } from "@/components/SurveyPreview";
 import {
   QUESTION_TEMPLATES, EXAMPLE_QUESTION_JSON,
   generateQuestionFromDescription, normalizeQuestion,
@@ -580,6 +580,29 @@ function ConfigEditor({ config, onBack }: { config: SurveyConfig; onBack: () => 
     setPagesJson(JSON.stringify(pages, null, 2));
   }, [pages]);
 
+  // Auto-save: debounce 1.5 s after any change to pages or name.
+  const isFirstRender = useRef(true);
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<"idle" | "pending" | "saving" | "saved">("idle");
+
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    setAutoSaveStatus("pending");
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(async () => {
+      setAutoSaveStatus("saving");
+      try {
+        await apiRequest("PATCH", `/api/admin/configs/${config.id}`, { name, pages });
+        await queryClient.invalidateQueries({ queryKey: ["/api/admin/configs"] });
+        setAutoSaveStatus("saved");
+        setTimeout(() => setAutoSaveStatus("idle"), 2000);
+      } catch {
+        setAutoSaveStatus("idle");
+      }
+    }, 1500);
+    return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
+  }, [pages, name]);
+
   // All existing question ids across the survey — used to keep new ids unique.
   const existingIds = pages.flatMap((p) => (p.questions ?? []).map((q) => q.id));
 
@@ -764,6 +787,7 @@ function ConfigEditor({ config, onBack }: { config: SurveyConfig; onBack: () => 
     </div>
   );
 
+  const previewPages = injectAspectPages(pages);
   const previewPanel = (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-2">
@@ -771,14 +795,14 @@ function ConfigEditor({ config, onBack }: { config: SurveyConfig; onBack: () => 
         <Select value={String(previewIdx)} onValueChange={(v) => setPreviewIdx(Number(v))}>
           <SelectTrigger className="h-8 w-44 text-xs" data-testid="select-preview-page"><SelectValue /></SelectTrigger>
           <SelectContent>
-            {pages.map((p, i) => (
+            {previewPages.map((p, i) => (
               <SelectItem key={p.id ?? i} value={String(i)}>{p.title || `Page ${i + 1}`}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
-      {pages[previewIdx]
-        ? <SinglePagePreview page={pages[previewIdx]} taxonomies={taxonomies ?? []} />
+      {previewPages[previewIdx]
+        ? <SinglePagePreview page={previewPages[previewIdx]} taxonomies={taxonomies ?? []} />
         : <p className="text-sm text-slate-400">No page selected.</p>}
     </div>
   );
@@ -808,6 +832,19 @@ function ConfigEditor({ config, onBack }: { config: SurveyConfig; onBack: () => 
             <ExternalLink className="w-4 h-4 mr-1" /> Open saved preview
           </a>
         </Button>
+        {autoSaveStatus === "pending" && (
+          <span className="text-xs text-slate-400 ml-1">Unsaved changes…</span>
+        )}
+        {autoSaveStatus === "saving" && (
+          <span className="flex items-center gap-1 text-xs text-slate-400 ml-1">
+            <Loader2 className="w-3 h-3 animate-spin" /> Saving…
+          </span>
+        )}
+        {autoSaveStatus === "saved" && (
+          <span className="flex items-center gap-1 text-xs text-emerald-600 ml-1">
+            <CheckCircle2 className="w-3 h-3" /> Saved
+          </span>
+        )}
       </div>
 
       {previewOn ? (

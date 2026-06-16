@@ -49,7 +49,7 @@ const ASPECT_PAGES: SurveyPageDef[] = [
   { id: "__aspect_reorder__", kind: "aspect_reorder", title: "Here's how we ranked your values.", subtitle: "Drag to adjust if needed.", questions: [] },
 ];
 
-function injectAspectPages(pages: SurveyPageDef[]): SurveyPageDef[] {
+export function injectAspectPages(pages: SurveyPageDef[]): SurveyPageDef[] {
   if (pages.some((p) => p.kind === "aspect_select")) return pages;
   const idx = pages.findIndex((p) => p.kind === "career_order");
   if (idx === -1) return pages;
