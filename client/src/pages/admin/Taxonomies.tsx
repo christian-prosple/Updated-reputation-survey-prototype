@@ -266,21 +266,25 @@ function parseMatrix(content: string, forceDelimiter?: string): { careerPaths: s
   const splitRow = (line: string) => delimiter === ","
     ? line.match(/("(?:[^"]|"")*"|[^,]*)/g)?.map((c) => c.replace(/^"|"$/g, "").replace(/""/g, '"').trim()) ?? []
     : line.split("\t").map((s) => s.trim());
-  const careerPaths = splitRow(lines[0]).filter(Boolean);
+  // Keep ALL columns including empty ones so column indices stay aligned with data rows.
+  // Empty-header columns are skipped during assignment, not removed from the index.
+  const rawPaths = splitRow(lines[0]);
   const byKey = new Map<string, { name: string; paths: Set<string> }>();
   for (let row = 1; row < lines.length; row++) {
     const cells = splitRow(lines[row]);
-    for (let col = 0; col < careerPaths.length; col++) {
+    for (let col = 0; col < rawPaths.length; col++) {
+      const pathName = rawPaths[col];
+      if (!pathName) continue; // skip columns with no header
       const name = (cells[col] ?? "").trim();
       if (!name) continue;
       const key = name.toLowerCase();
       if (!byKey.has(key)) byKey.set(key, { name, paths: new Set() });
-      byKey.get(key)!.paths.add(careerPaths[col]);
+      byKey.get(key)!.paths.add(pathName);
     }
   }
   return {
     delimiter,
-    careerPaths,
+    careerPaths: rawPaths.filter(Boolean), // for display only — indices already correct above
     employers: Array.from(byKey.values()).map((e) => ({ name: e.name, paths: Array.from(e.paths).sort() })),
   };
 }

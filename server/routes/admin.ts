@@ -414,7 +414,8 @@ export function registerAdminRoutes(app: Express): void {
         ? (line.match(/("(?:[^"]|"")*"|[^,]*)/g) ?? []).map((c) => c.replace(/^"|"$/g, "").replace(/""/g, '"').trim())
         : line.split("\t").map((s) => s.trim());
 
-    const careerPaths = splitRow(lines[0]).filter(Boolean);
+    // Keep ALL columns including empty-header ones so indices stay aligned with data rows.
+    const rawPaths = splitRow(lines[0]);
 
     // employerKey → { employerName, careerPaths, scoreSum, scoreCount }
     type Entry = { employerName: string; paths: Set<string>; scoreSum: number; scoreCount: number };
@@ -422,13 +423,15 @@ export function registerAdminRoutes(app: Express): void {
 
     for (let rowIdx = 1; rowIdx < lines.length; rowIdx++) {
       const cells = splitRow(lines[rowIdx]);
-      for (let col = 0; col < careerPaths.length; col++) {
+      for (let col = 0; col < rawPaths.length; col++) {
+        const pathName = rawPaths[col];
+        if (!pathName) continue; // skip columns with no header
         const name = (cells[col] ?? "").trim();
         if (!name) continue;
         const key = name.toLowerCase();
         if (!byKey.has(key)) byKey.set(key, { employerName: name, paths: new Set(), scoreSum: 0, scoreCount: 0 });
         const e = byKey.get(key)!;
-        e.paths.add(careerPaths[col]);
+        e.paths.add(pathName);
         e.scoreSum += (1 / rowIdx) * 100; // rank 1 → 100, rank 2 → 50, etc.
         e.scoreCount++;
       }
