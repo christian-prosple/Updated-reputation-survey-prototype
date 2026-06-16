@@ -29,7 +29,6 @@ export default function AdvisorDashboard() {
     <div className="min-h-screen bg-slate-50/50 font-sans text-slate-900">
       <PageHeader
         university={university}
-        onBack={() => setLocation("/")}
         title="Career Advisor Dashboard"
         subtitle="Search students and explore where they most want to work."
       />

@@ -8,7 +8,8 @@ interface PageHeaderProps {
   /** Container width/alignment shared by the brand bar, title block and page. */
   containerClass?: string;
   backLabel?: string;
-  onBack: () => void;
+  /** When omitted, the back link is not rendered. */
+  onBack?: () => void;
   title: ReactNode;
   subtitle?: ReactNode;
   /** Optional right-aligned actions next to the title (e.g. a download button). */
@@ -35,16 +36,18 @@ export default function PageHeader({
       </header>
 
       <div className={cn(containerClass, "pt-6")}>
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          data-testid="button-back"
-        >
-          <ArrowLeft className="h-4 w-4" /> {backLabel}
-        </button>
+        {onBack ? (
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            data-testid="button-back"
+          >
+            <ArrowLeft className="h-4 w-4" /> {backLabel}
+          </button>
+        ) : null}
 
-        <div className="mt-3 flex items-start justify-between gap-4">
+        <div className={cn("flex items-start justify-between gap-4", onBack && "mt-3")}>
           <div>
             <h1 className="font-serif text-3xl" data-testid="text-page-title">
               {title}
