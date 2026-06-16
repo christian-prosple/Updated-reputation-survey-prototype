@@ -406,14 +406,23 @@ export function registerAdminRoutes(app: Express): void {
     const lines = parsed.data.content.split(/\r?\n/).filter((l) => l.trim());
     if (lines.length < 2) { res.status(400).json({ message: "Need at least a header row and one data row" }); return; }
 
-    const careerPaths = lines[0].split("\t").map((s) => s.trim()).filter(Boolean);
+    // Auto-detect delimiter: count tabs vs commas in the header row
+    const headerTabs = (lines[0].match(/\t/g) ?? []).length;
+    const headerCommas = (lines[0].match(/,/g) ?? []).length;
+    const delimiter = headerTabs >= headerCommas ? "\t" : ",";
+    const splitRow = (line: string): string[] =>
+      delimiter === ","
+        ? (line.match(/("(?:[^"]|"")*"|[^,]*)/g) ?? []).map((c) => c.replace(/^"|"$/g, "").replace(/""/g, '"').trim())
+        : line.split("\t").map((s) => s.trim());
+
+    const careerPaths = splitRow(lines[0]).filter(Boolean);
 
     // employerKey → { employerName, careerPaths, scoreSum, scoreCount }
     type Entry = { employerName: string; paths: Set<string>; scoreSum: number; scoreCount: number };
     const byKey = new Map<string, Entry>();
 
     for (let rowIdx = 1; rowIdx < lines.length; rowIdx++) {
-      const cells = lines[rowIdx].split("\t");
+      const cells = splitRow(lines[rowIdx]);
       for (let col = 0; col < careerPaths.length; col++) {
         const name = (cells[col] ?? "").trim();
         if (!name) continue;

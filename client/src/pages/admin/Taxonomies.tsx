@@ -233,13 +233,23 @@ function CsvImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => voi
 // ---------------------------------------------------------------------------
 // Matrix Import — TSV with career-path columns and ranked employer rows
 // ---------------------------------------------------------------------------
-function parseMatrix(content: string): { careerPaths: string[]; employers: { name: string; paths: string[] }[] } {
+function detectDelimiter(firstLine: string): string {
+  const tabs = (firstLine.match(/\t/g) ?? []).length;
+  const commas = (firstLine.match(/,/g) ?? []).length;
+  return tabs >= commas ? "\t" : ",";
+}
+
+function parseMatrix(content: string): { careerPaths: string[]; employers: { name: string; paths: string[] }[]; delimiter: string } {
   const lines = content.split(/\r?\n/).filter((l) => l.trim());
-  if (lines.length < 2) return { careerPaths: [], employers: [] };
-  const careerPaths = lines[0].split("\t").map((s) => s.trim()).filter(Boolean);
+  if (lines.length < 2) return { careerPaths: [], employers: [], delimiter: "\t" };
+  const delimiter = detectDelimiter(lines[0]);
+  const splitRow = (line: string) => delimiter === ","
+    ? line.match(/("(?:[^"]|"")*"|[^,]*)/g)?.map((c) => c.replace(/^"|"$/g, "").replace(/""/g, '"').trim()) ?? []
+    : line.split("\t").map((s) => s.trim());
+  const careerPaths = splitRow(lines[0]).filter(Boolean);
   const byKey = new Map<string, { name: string; paths: Set<string> }>();
   for (let row = 1; row < lines.length; row++) {
-    const cells = lines[row].split("\t");
+    const cells = splitRow(lines[row]);
     for (let col = 0; col < careerPaths.length; col++) {
       const name = (cells[col] ?? "").trim();
       if (!name) continue;
@@ -249,6 +259,7 @@ function parseMatrix(content: string): { careerPaths: string[]; employers: { nam
     }
   }
   return {
+    delimiter,
     careerPaths,
     employers: Array.from(byKey.values()).map((e) => ({ name: e.name, paths: Array.from(e.paths).sort() })),
   };
@@ -257,14 +268,24 @@ function parseMatrix(content: string): { careerPaths: string[]; employers: { nam
 function MatrixImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => void }) {
   const { toast } = useToast();
   const [content, setContent] = useState("");
+  const [filename, setFilename] = useState("");
   const [mode, setMode] = useState<"merge" | "replace">("replace");
   const [busy, setBusy] = useState(false);
 
-  const parsed = content.trim() ? parseMatrix(content) : { careerPaths: [], employers: [] };
+  const parsed = content.trim() ? parseMatrix(content) : { careerPaths: [], employers: [], delimiter: "\t" };
+
+  function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFilename(file.name);
+    const reader = new FileReader();
+    reader.onload = () => setContent(String(reader.result ?? ""));
+    reader.readAsText(file);
+  }
 
   async function doImport() {
-    if (!content.trim()) { toast({ title: "Paste TSV content first", variant: "destructive" }); return; }
-    if (parsed.employers.length === 0) { toast({ title: "No employers detected — check the format", variant: "destructive" }); return; }
+    if (!content.trim()) { toast({ title: "Upload or paste a file first", variant: "destructive" }); return; }
+    if (parsed.employers.length === 0) { toast({ title: "No employers detected — check the file format", variant: "destructive" }); return; }
     setBusy(true);
     try {
       const res = await apiRequest("POST", `/api/admin/taxonomies/${taxonomy.id}/import/matrix`, { content, mode });
@@ -285,22 +306,39 @@ function MatrixImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => 
       <div>
         <h3 className="text-lg font-semibold">Matrix Import → "{taxonomy.name}"</h3>
         <p className="text-sm text-slate-500 mt-1">
-          Paste a <strong>tab-separated</strong> file where <strong>row 1 = career path names</strong> (one per column) and each subsequent row lists employers ranked for that path.
-          Employers appearing in multiple columns will be deduplicated and tagged with all their career paths.
+          Upload a CSV or TSV where <strong>row 1 = career path names</strong> (one per column) and each row below lists employers ranked for that path.
+          The delimiter (comma or tab) is detected automatically.
+          Employers in multiple columns are deduplicated and tagged with all their career paths.
         </p>
       </div>
 
       <Card>
-        <CardHeader className="py-3"><CardTitle className="text-sm">1. Paste TSV content</CardTitle></CardHeader>
+        <CardHeader className="py-3"><CardTitle className="text-sm">1. Upload file or paste content</CardTitle></CardHeader>
         <CardContent className="space-y-3">
+          <div className="flex items-center gap-3">
+            <Input
+              type="file"
+              accept=".csv,.tsv,.txt"
+              onChange={onFile}
+              className="max-w-xs"
+              data-testid="input-matrix-file"
+            />
+            {filename && <span className="text-sm text-slate-500 truncate">{filename}</span>}
+          </div>
+          <p className="text-xs text-slate-400">Or paste directly:</p>
           <Textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder={"Accounting & Advisory\tAerospace Engineering & Aviation\t...\nDeloitte\tBoeing\t...\nPwC\tLockheed Martin\t..."}
-            rows={8}
+            placeholder={"Paste CSV/TSV content here…"}
+            rows={5}
             className="font-mono text-xs"
             data-testid="textarea-matrix-content"
           />
+          {content.trim() && parsed.careerPaths.length > 0 && (
+            <p className="text-xs text-slate-500">
+              Detected delimiter: <strong>{parsed.delimiter === "\t" ? "tab" : "comma"}</strong>
+            </p>
+          )}
         </CardContent>
       </Card>
 
