@@ -820,13 +820,12 @@ export default function SurveyPage() {
 "Non-degree seeking"
  ];
 
- // Check if step 0 info (email, location, gender) is complete
+ // Check if step 0 info (location, gender) is complete
  const isStep0Valid = () => {
- const { email, gender, preferredCity } = state.personalInfo;
- const hasValidEmail = email.includes("@") && email.includes(".");
+ const { gender, preferredCity } = state.personalInfo;
  const hasValidGender = gender.length > 0;
  const hasValidCity = preferredCity.trim().length > 0;
- return hasValidEmail && hasValidGender && hasValidCity;
+ return hasValidGender && hasValidCity;
  };
 
  // Check if step 1 info (education details) is complete
@@ -852,7 +851,7 @@ export default function SurveyPage() {
  return gradDate > today;
  };
 
- // STEP 0: PERSONAL INFO - Email, Preferred Work Location, Gender
+ // STEP 0: PERSONAL INFO - Preferred Work Location, Gender
  const renderStep0 = () => (
  <div className="space-y-6">
  <div className="text-center mb-8">
@@ -862,19 +861,6 @@ export default function SurveyPage() {
  </div>
 
  <div className="max-w-xl mx-auto space-y-6">
- {/* Email */}
- <div className="space-y-2">
- <label className="text-sm font-medium text-slate-700">{cfg.questionLabel("personal","email","Email (so we can send you your results)")} <span className="text-red-500">*</span></label>
- <input
- type="email"
- value={state.personalInfo.email}
- onChange={(e) => actions.updatePersonalInfo("email", e.target.value)}
- placeholder="your.email@example.com"
- className="w-full p-3 border-2 border-slate-200 rounded-none focus:border-primary focus:outline-none transition-colors"
- data-testid="input-email"
- />
- </div>
-
  {/* Preferred Work Location (City) */}
  <div className="space-y-2 relative" onClick={(e) => e.stopPropagation()}>
  <label className="text-sm font-medium text-slate-700">{cfg.questionLabel("personal","preferredCity","Preferred work location (city)")} <span className="text-red-500">*</span></label>
