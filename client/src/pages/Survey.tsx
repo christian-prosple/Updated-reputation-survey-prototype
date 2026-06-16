@@ -347,6 +347,17 @@ export default function SurveyPage() {
   useSurveyBackend(state, actions);
   const cfg = useSurveyConfig();
   const [activePair, setActivePair] = useState<[CompanyEntity, CompanyEntity] | null>(null);
+  const [activeAspectPair, setActiveAspectPair] = useState<[string, string] | null>(null);
+
+  const ASPECT_OPTIONS = [
+    "Company reputation",
+    "Salary and benefits",
+    "Career opportunities",
+    "Diversity and inclusion",
+    "Senior management",
+    "Culture and values",
+    "Work life balance",
+  ];
 
   const [newCompany, setNewCompany] = useState<ManualCompany>({ name: "", role: "" });
   const [isAdding, setIsAdding] = useState(false);
@@ -410,7 +421,7 @@ export default function SurveyPage() {
   };
 
   // --- DERIVED STATE ---
-  const totalSteps = 8; 
+  const totalSteps = 11; 
 
   const targetPairwiseCount = useMemo(() => {
     const n = state.selectedCompanies.length;
@@ -424,26 +435,75 @@ export default function SurveyPage() {
     return Math.min(state.selectedCompanies.length, 20);
   }, [state.selectedCompanies.length]);
 
-  // --- EFFECT: Initialize Companies for Step 4 (Company Selection) ---
+  // --- EFFECT: Initialize Companies for Step 7 (Company Recognition) ---
   useEffect(() => {
-    if (state.step === 4 && state.displayedCompanies.length === 0) {
+    if (state.step === 7 && state.displayedCompanies.length === 0) {
       actions.generateCompanyPool();
     }
   }, [state.step]);
 
-  // --- EFFECT: Initialize Final Ranking for Step 6 (Final Ranking) ---
+  // --- EFFECT: Initialize Final Ranking for Step 9 (Final Ranking) ---
   useEffect(() => {
-    if (state.step === 6 && state.finalRanking.length === 0) {
+    if (state.step === 9 && state.finalRanking.length === 0) {
       actions.generateFinalRanking();
     }
   }, [state.step]);
 
-  // --- EFFECT: Initialize pairwise session when entering step 5 ---
+  // --- EFFECT: Initialize company pairwise session when entering step 8 ---
   useEffect(() => {
-    if (state.step === 5 && state.sessionOrder.length === 0 && state.selectedCompanies.length >= 2) {
+    if (state.step === 8 && state.sessionOrder.length === 0 && state.selectedCompanies.length >= 2) {
       actions.initializePairwiseSession();
     }
   }, [state.step, state.sessionOrder.length, state.selectedCompanies.length]);
+
+  // --- EFFECT: Initialize aspect pairwise session when entering step 5 ---
+  useEffect(() => {
+    if (state.step === 5 && Object.keys(state.aspectEloRatings).length === 0 && state.selectedAspects.length >= 2) {
+      actions.initializeAspectPairwiseSession();
+    }
+  }, [state.step]);
+
+  // --- EFFECT: Reset activeAspectPair when leaving step 5 ---
+  useEffect(() => {
+    if (state.step !== 5) {
+      setActiveAspectPair(null);
+    }
+  }, [state.step]);
+
+  // --- EFFECT: Manage Aspect Pairwise Loop ---
+  useEffect(() => {
+    if (state.step !== 5 || !state.aspectEloRatings || Object.keys(state.aspectEloRatings).length === 0) return;
+    if (activeAspectPair) return;
+
+    const MAX_ASPECT_PAIRS = Math.min(5, (state.selectedAspects.length * (state.selectedAspects.length - 1)) / 2);
+    if (state.aspectPairwiseCount >= MAX_ASPECT_PAIRS) {
+      const sorted = [...state.selectedAspects].sort(
+        (a, b) => (state.aspectEloRatings[b] || 1500) - (state.aspectEloRatings[a] || 1500)
+      );
+      actions.reorderAspects(sorted);
+      actions.nextStep();
+      return;
+    }
+
+    // Find next incomplete pair
+    const aspects = state.selectedAspects;
+    for (let i = 0; i < aspects.length; i++) {
+      for (let j = i + 1; j < aspects.length; j++) {
+        const key = [aspects[i], aspects[j]].sort().join("|");
+        if (!state.aspectCompletedPairs.has(key)) {
+          setActiveAspectPair([aspects[i], aspects[j]]);
+          return;
+        }
+      }
+    }
+
+    // All pairs exhausted early
+    const sorted = [...state.selectedAspects].sort(
+      (a, b) => (state.aspectEloRatings[b] || 1500) - (state.aspectEloRatings[a] || 1500)
+    );
+    actions.reorderAspects(sorted);
+    actions.nextStep();
+  }, [state.step, activeAspectPair, state.aspectPairwiseCount, state.aspectCompletedPairs, state.aspectEloRatings]);
 
   const CHAIN_LIMIT = 8;
 
@@ -586,9 +646,9 @@ export default function SurveyPage() {
 
   const activePairMeta = useRef<{ isChain: boolean; newChainIndex?: number }>({ isChain: false });
 
-  // --- EFFECT: Manage Pairwise Loop ---
+  // --- EFFECT: Manage Company Pairwise Loop ---
   useEffect(() => {
-    if (state.step === 5 && !activePair && state.sessionOrder.length > 0) {
+    if (state.step === 8 && !activePair && state.sessionOrder.length > 0) {
       if (state.pairwiseCount >= targetPairwiseCount) {
         actions.nextStep();
         return;
@@ -1529,8 +1589,206 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 4: COMPANY SELECTION
-  const renderStep4 = () => {
+  // STEP 4: ASPECTS SELECTION
+  const renderStep4 = () => (
+    <div className="space-y-6 h-full flex flex-col">
+      <div className="text-center mb-4">
+        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
+          What matters most to you in an employer? Select all that apply. <span className="text-red-500">*</span>
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto w-full">
+        {ASPECT_OPTIONS.map((aspect) => {
+          const isSelected = state.selectedAspects.includes(aspect);
+          return (
+            <div
+              key={aspect}
+              onClick={() => actions.toggleAspect(aspect)}
+              data-testid={`aspect-option-${aspect.toLowerCase().replace(/\s+/g, '-')}`}
+              className={cn(
+                "cursor-pointer rounded-lg p-4 border transition-all duration-200 flex items-center gap-3 select-none",
+                isSelected
+                  ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                  : "border-border bg-card hover:bg-secondary/50"
+              )}
+            >
+              <div className={cn(
+                "w-5 h-5 rounded border flex items-center justify-center transition-colors flex-shrink-0",
+                isSelected ? "border-primary bg-primary text-white" : "border-muted-foreground/50"
+              )}>
+                {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
+              </div>
+              <span className={cn("text-sm font-semibold", isSelected ? "text-slate-900" : "text-foreground")}>
+                {aspect}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="flex justify-center mt-8 pb-8 gap-4">
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={() => actions.prevStep()}
+          className="w-full max-w-[160px] text-slate-900 border-slate-200"
+          data-testid="button-aspects-back"
+        >
+          <ChevronLeft className="mr-2 w-5 h-5" /> Back
+        </Button>
+        <Button
+          onClick={() => actions.nextStep()}
+          size="lg"
+          className="w-full max-w-[160px]"
+          data-testid="button-aspects-continue"
+        >
+          Continue <ChevronRight className="ml-2 w-5 h-5" />
+        </Button>
+      </div>
+    </div>
+  );
+
+  // STEP 5: ASPECTS PAIRWISE
+  const renderStep5 = () => {
+    const MAX_ASPECT_PAIRS = Math.min(5, (state.selectedAspects.length * (state.selectedAspects.length - 1)) / 2);
+    return (
+      <div className="flex flex-col h-full justify-center max-w-4xl mx-auto w-full">
+        <div className="text-center mb-6">
+          <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
+            Which matters more to you?
+          </p>
+        </div>
+
+        <div className="max-w-md mx-auto w-full mb-10 space-y-2">
+          <div className="flex justify-between text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
+            <span>Progress</span>
+            <span>{state.aspectPairwiseCount} / {MAX_ASPECT_PAIRS}</span>
+          </div>
+          <div className="h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min((state.aspectPairwiseCount / MAX_ASPECT_PAIRS) * 100, 100)}%` }}
+              className={cn(
+                "h-full transition-colors duration-500",
+                state.aspectPairwiseCount >= MAX_ASPECT_PAIRS ? "bg-green-500" : "bg-primary"
+              )}
+            />
+          </div>
+        </div>
+
+        {activeAspectPair ? (
+          <div className="flex flex-row gap-3 md:gap-8 items-stretch mb-12 relative">
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex-1">
+              <button
+                onClick={() => {
+                  actions.recordAspectComparison(activeAspectPair, activeAspectPair[0]);
+                  setActiveAspectPair(null);
+                }}
+                data-testid={`aspect-choice-a`}
+                className="group w-full bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl p-6 md:p-10 transition-all duration-300 flex flex-col items-center justify-center h-[160px] md:h-[200px]"
+              >
+                <span className="text-lg md:text-2xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors">
+                  {activeAspectPair[0]}
+                </span>
+                <span className="mt-3 text-xs font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
+                  Select this →
+                </span>
+              </button>
+            </motion.div>
+
+            <div className="w-8 h-8 md:w-12 md:h-12 bg-white rounded-full flex items-center justify-center font-bold text-slate-300 shadow-sm border border-slate-100 z-10 flex-shrink-0 text-xs md:text-base self-center">OR</div>
+
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex-1">
+              <button
+                onClick={() => {
+                  actions.recordAspectComparison(activeAspectPair, activeAspectPair[1]);
+                  setActiveAspectPair(null);
+                }}
+                data-testid={`aspect-choice-b`}
+                className="group w-full bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl p-6 md:p-10 transition-all duration-300 flex flex-col items-center justify-center h-[160px] md:h-[200px]"
+              >
+                <span className="text-lg md:text-2xl font-bold text-center text-slate-800 group-hover:text-slate-900 transition-colors">
+                  {activeAspectPair[1]}
+                </span>
+                <span className="mt-3 text-xs font-medium text-slate-900 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
+                  Select this →
+                </span>
+              </button>
+            </motion.div>
+          </div>
+        ) : (
+          <div className="h-48 flex items-center justify-center">
+            <span className="text-slate-400">Finding next pair...</span>
+          </div>
+        )}
+
+        <div className="flex flex-col items-center gap-4">
+          <div className="flex gap-4 items-center mb-2">
+            {state.aspectComparisonHistory.length > 0 && (
+              <Button variant="outline" onClick={() => { actions.undoLastAspectComparison(); setActiveAspectPair(null); }} className="text-slate-900 border-slate-200">
+                <ChevronLeft className="mr-1 w-4 h-4" /> Undo
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-4 w-full max-w-xs">
+            <Button variant="secondary" size="lg" className="flex-1 text-muted-foreground" onClick={() => actions.prevStep()}>
+              <ChevronLeft className="mr-1 w-5 h-5" /> Back
+            </Button>
+            {state.aspectPairwiseCount >= MAX_ASPECT_PAIRS && (
+              <Button size="lg" className="flex-1" onClick={() => actions.nextStep()} data-testid="button-aspects-pairwise-continue">
+                Continue <ChevronRight className="ml-1 w-5 h-5" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // STEP 6: ASPECTS REORDER
+  const renderStep6 = () => (
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
+          Based on your choices, here's how we've ranked what matters to you. Adjust if needed.
+        </p>
+      </div>
+
+      <div className="max-w-xl mx-auto">
+        <Reorder.Group axis="y" values={state.aspectOrder} onReorder={actions.reorderAspects} className="space-y-3">
+          {state.aspectOrder.map((aspect, index) => (
+            <Reorder.Item key={aspect} value={aspect}>
+              <div className="bg-card border border-border rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow flex items-center gap-4 cursor-grab active:cursor-grabbing">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary text-muted-foreground font-bold text-sm">
+                  {index + 1}
+                </div>
+                <span className="flex-1 font-medium">{aspect}</span>
+                <GripVertical className="text-muted-foreground/50" />
+              </div>
+            </Reorder.Item>
+          ))}
+        </Reorder.Group>
+      </div>
+
+      <div className="flex justify-center mt-12 gap-4">
+        <Button
+          variant="outline"
+          size="lg"
+          onClick={() => actions.prevStep()}
+          className="w-full max-w-[160px] text-slate-900 border-slate-200"
+        >
+          <ChevronLeft className="mr-2 w-5 h-5" /> Back
+        </Button>
+        <Button onClick={() => actions.nextStep()} size="lg" className="w-full max-w-[200px]" data-testid="button-aspects-order-continue">
+          Confirm Order <ChevronRight className="ml-2 w-5 h-5" />
+        </Button>
+      </div>
+    </div>
+  );
+
+  // STEP 7: COMPANY RECOGNITION
+  const renderStep7 = () => {
     // Get unique company names from displayed entities
     const uniqueCompanyNames = Array.from(new Set(state.displayedCompanies.map(c => c.name)));
     
@@ -1595,8 +1853,8 @@ export default function SurveyPage() {
     );
   };
 
-  // STEP 5: PAIRWISE LOOP
-  const renderStep5 = () => (
+  // STEP 8: COMPANY PAIRWISE
+  const renderStep8 = () => (
     <div className="flex flex-col h-full justify-center max-w-4xl mx-auto w-full">
       <div className="text-center mb-6">
         <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">Which opportunity would you choose?</p>
@@ -1721,8 +1979,8 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 6: FINAL RANKING
-  const renderStep6 = () => (
+  // STEP 9: FINAL RANKING
+  const renderStep9 = () => (
     <div className="space-y-6">
       <div className="text-center mb-8">
         <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">
@@ -1941,8 +2199,8 @@ export default function SurveyPage() {
     </div>
   );
 
-  // STEP 7: TOP PICK REASON
-  const renderStep7 = () => {
+  // STEP 10: TOP PICK REASON
+  const renderStep10 = () => {
     const topPick = state.finalRanking[0]?.name ?? "your top pick";
     const reason = state.personalInfo.topPickReason;
     const isValid = reason.trim().length > 0;
@@ -1991,8 +2249,8 @@ export default function SurveyPage() {
     );
   };
 
-  // STEP 8: THANK YOU
-  const renderStep8 = () => (
+  // STEP 11: THANK YOU
+  const renderStep11 = () => (
     <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in zoom-in duration-500">
       <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-8">
         <CheckCircle2 className="w-10 h-10" />
@@ -2037,7 +2295,7 @@ export default function SurveyPage() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center py-8 md:py-12 px-4 md:px-8 max-w-6xl mx-auto w-full">
-        {state.step <= 7 && <StepIndicator currentStep={state.step} totalSteps={totalSteps} />}
+        {state.step <= 9 && <StepIndicator currentStep={state.step} totalSteps={totalSteps} />}
         
         <AnimatePresence mode="wait">
           <motion.div
@@ -2057,6 +2315,9 @@ export default function SurveyPage() {
             {state.step === 6 && renderStep6()}
             {state.step === 7 && renderStep7()}
             {state.step === 8 && renderStep8()}
+            {state.step === 9 && renderStep9()}
+            {state.step === 10 && renderStep10()}
+            {state.step === 11 && renderStep11()}
           </motion.div>
         </AnimatePresence>
       </main>
