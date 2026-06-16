@@ -1,0 +1,56 @@
+Got it! Here are the full instructions to give to Replit:
+
+---
+
+## New Pages & Features to Build
+
+### Page 1 — University Selection Screen (Overview/Demo Entry Point)
+
+- Create a new screen titled **"Select your college / university"**
+- Display a dropdown or searchable selector that pulls from the **existing "universities" taxonomy** already set up in the project
+- Include a **"Continue"** button that becomes active once a university is selected
+- This is the entry point for the demo flow
+
+---
+
+### Page 2 — Demo Type Selection
+
+- After clicking Continue, navigate to a screen with two options:
+  - **"Career Advisor Demo"**
+  - **"Student Demo"**
+- Each option should be a clearly clickable card or button
+- **Student Demo** should navigate to a "Coming Soon" page for now
+
+---
+
+### Page 3 — Career Advisor Login
+
+- Show a login screen with the email field **pre-filled with `demo@harvard.edu`** (static for now)
+- Password field can be blank or also pre-filled — user just clicks **"Log In"** to proceed
+- No real auth needed for the demo — clicking Log In navigates to the dashboard
+
+---
+
+### Page 4 — Career Advisor Dashboard
+
+- Show a dashboard after login with the following **4 sections/cards:**
+
+1. **List of Respondents** — label showing 10 demo students — clicking navigates to a **"Coming Soon"** page
+2. **Invited Students** — label showing 50 demo students — clicking navigates to a **"Coming Soon"** page
+3. **Most Sought After Employers** — display a static list of 5 well-known large companies (e.g. Google, Goldman Sachs, Microsoft, JPMorgan, Amazon) — clicking navigates to a **"Coming Soon"** page
+4. **Search for a Student** — a search input that searches across all students (both respondents and invited, so 60 total demo students) — generate placeholder demo student names for the search to work against
+
+- Include a **back button** that returns to the University Selection screen (Page 1)
+
+---
+
+### Notes for Replit
+
+- The "universities" taxonomy already exists in the project — pull from it, do not hardcode a university list
+- All "Coming Soon" pages should be simple placeholder screens with a back button returning to the dashboard
+- Keep the demo flow stateless — no real authentication or database writes needed
+- Harvard should map to `demo@harvard.edu` on the login screen; for now this can be static regardless of which university is selected (we'll make it dynamic later)
+
+---
+
+Want me to add anything else before you hand this off?
