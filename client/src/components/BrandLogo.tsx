@@ -25,7 +25,7 @@ export default function BrandLogo({
           {university}
         </span>
       )}
-      <span className="font-bold tracking-tight text-slate-900 group-hover:text-emerald-700 transition-colors">
+      <span className="font-serif font-semibold tracking-tight text-foreground group-hover:opacity-70 transition-opacity">
         Employer League
       </span>
     </Link>

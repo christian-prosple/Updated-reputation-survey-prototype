@@ -29,8 +29,8 @@ const STATUS_RANK: Record<InviteStatus, number> = {
 };
 
 const BADGE_STYLES: Record<"Invited" | "Completed", string> = {
-  Invited: "bg-sky-100 text-sky-700",
-  Completed: "bg-emerald-100 text-emerald-700",
+  Invited: "bg-muted text-muted-foreground border border-border",
+  Completed: "bg-foreground text-background",
 };
 
 function emailFor(name: string, domain: string): string {
@@ -141,7 +141,7 @@ export default function InvitedStudents() {
                     ) : (
                       <span
                         className={cn(
-                          "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                          "inline-flex items-center rounded-none px-2.5 py-0.5 text-xs font-medium",
                           BADGE_STYLES[s.status]
                         )}
                         data-testid={`badge-invited-status-${s.id}`}

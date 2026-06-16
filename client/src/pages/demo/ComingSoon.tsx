@@ -18,8 +18,8 @@ export default function ComingSoon() {
       <BrandLogo />
       <Card className="w-full max-w-md">
         <CardContent className="pt-8 pb-8 flex flex-col items-center text-center space-y-4">
-          <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
-            <Clock className="w-6 h-6 text-amber-600" />
+          <div className="w-12 h-12 rounded-none bg-muted border border-border flex items-center justify-center">
+            <Clock className="w-6 h-6 text-foreground" />
           </div>
           <h1 className="text-2xl font-bold" data-testid="text-comingsoon-title">
             {title}

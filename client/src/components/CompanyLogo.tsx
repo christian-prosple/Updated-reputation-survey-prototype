@@ -32,7 +32,7 @@ export default function CompanyLogo({
   return (
     <div
       className={cn(
-        "w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center overflow-hidden shrink-0",
+        "w-10 h-10 rounded-none bg-white border border-border flex items-center justify-center overflow-hidden shrink-0",
         className
       )}
     >

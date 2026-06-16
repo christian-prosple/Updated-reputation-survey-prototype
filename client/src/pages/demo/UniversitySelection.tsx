@@ -45,8 +45,8 @@ export default function UniversitySelection() {
       <Card className="w-full max-w-md">
         <CardContent className="pt-8 pb-8 space-y-6">
           <div className="flex flex-col items-center text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
-              <GraduationCap className="w-6 h-6 text-emerald-600" />
+            <div className="w-12 h-12 rounded-none bg-muted border border-border flex items-center justify-center">
+              <GraduationCap className="w-6 h-6 text-foreground" />
             </div>
             <h1 className="text-2xl font-bold" data-testid="text-university-title">
               Select your college / university

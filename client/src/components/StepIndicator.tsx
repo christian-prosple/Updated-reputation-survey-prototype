@@ -12,8 +12,8 @@ export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
         return (
           <div
             key={idx}
-            className={`flex-1 h-2 rounded-sm transition-colors duration-300 ${
-              isCompleted ? "bg-[#96D2C0]" : "bg-slate-200"
+            className={`flex-1 h-2 rounded-none transition-colors duration-300 ${
+              isCompleted ? "bg-foreground" : "bg-muted"
             }`}
           />
         );

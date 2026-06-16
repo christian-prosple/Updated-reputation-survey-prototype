@@ -95,13 +95,13 @@ export default function AdvisorDashboard() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card
-            className="cursor-pointer transition-shadow hover:shadow-md"
+            className="cursor-pointer transition-colors hover:border-foreground"
             onClick={() => setLocation(`/demo/respondents${university ? `?university=${encodeURIComponent(university)}` : ""}`)}
             data-testid="card-respondents"
           >
             <CardContent className="pt-6 pb-6 flex items-center gap-4">
-              <div className="w-11 h-11 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
-                <Users className="w-5 h-5 text-emerald-600" />
+              <div className="w-11 h-11 rounded-none bg-muted border border-border flex items-center justify-center shrink-0">
+                <Users className="w-5 h-5 text-foreground" />
               </div>
               <div className="flex-1">
                 <p className="font-semibold">List of Respondents</p>
@@ -114,13 +114,13 @@ export default function AdvisorDashboard() {
           </Card>
 
           <Card
-            className="cursor-pointer transition-shadow hover:shadow-md"
+            className="cursor-pointer transition-colors hover:border-foreground"
             onClick={() => setLocation(`/demo/invited${university ? `?university=${encodeURIComponent(university)}` : ""}`)}
             data-testid="card-invited"
           >
             <CardContent className="pt-6 pb-6 flex items-center gap-4">
-              <div className="w-11 h-11 rounded-full bg-sky-100 flex items-center justify-center shrink-0">
-                <UserPlus className="w-5 h-5 text-sky-600" />
+              <div className="w-11 h-11 rounded-none bg-muted border border-border flex items-center justify-center shrink-0">
+                <UserPlus className="w-5 h-5 text-foreground" />
               </div>
               <div className="flex-1">
                 <p className="font-semibold">Invited Students</p>
@@ -134,7 +134,7 @@ export default function AdvisorDashboard() {
         </div>
 
         <Card
-          className="cursor-pointer transition-shadow hover:shadow-md"
+          className="cursor-pointer transition-colors hover:border-foreground"
           onClick={() => setLocation(`/demo/employers${university ? `?university=${encodeURIComponent(university)}` : ""}`)}
           data-testid="card-employers"
         >
@@ -155,7 +155,7 @@ export default function AdvisorDashboard() {
                     {i + 1}
                   </span>
                   <CompanyLogo name={name} />
-                  <span className="font-medium">{name}</span>
+                  <span className="font-serif text-lg">{name}</span>
                 </li>
               ))}
             </ol>

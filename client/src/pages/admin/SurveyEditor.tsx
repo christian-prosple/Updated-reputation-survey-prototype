@@ -322,7 +322,7 @@ function QuestionCard({
                   </div>
                 )}
                 {!linked && q.taxonomyId && (
-                  <p className="text-xs text-amber-600 flex items-center gap-1">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" /> Taxonomy id {q.taxonomyId} not found
                   </p>
                 )}
@@ -452,7 +452,7 @@ function CustomQuestionBuilder({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="rounded-md bg-sky-50 border border-sky-200 text-sky-800 text-xs px-3 py-2 flex gap-2">
+        <div className="rounded-none bg-muted border border-border text-muted-foreground text-xs px-3 py-2 flex gap-2">
           <Sparkles className="w-4 h-4 shrink-0 mt-0.5" />
           <span>
             Tip: You can ask Replit Agent to generate a question JSON object, paste it here,
@@ -511,7 +511,7 @@ function CustomQuestionBuilder({
                 Validate
               </Button>
               {valid && (
-                <span className="text-xs text-green-600 flex items-center gap-1">
+                <span className="text-xs text-foreground flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5" /> Looks valid
                 </span>
               )}
@@ -841,7 +841,7 @@ function ConfigEditor({ config, onBack }: { config: SurveyConfig; onBack: () => 
           </span>
         )}
         {autoSaveStatus === "saved" && (
-          <span className="flex items-center gap-1 text-xs text-emerald-600 ml-1">
+          <span className="flex items-center gap-1 text-xs text-muted-foreground ml-1">
             <CheckCircle2 className="w-3 h-3" /> Saved
           </span>
         )}

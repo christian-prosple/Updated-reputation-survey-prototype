@@ -119,7 +119,7 @@ export default function SoughtAfterEmployers() {
                     </span>
                     <CompanyLogo name={c.name} />
                     <span
-                      className="flex-1 font-medium truncate"
+                      className="flex-1 font-serif text-lg truncate"
                       data-testid={`text-company-name-${c.name}`}
                     >
                       {c.name}
