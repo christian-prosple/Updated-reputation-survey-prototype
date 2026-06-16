@@ -20,7 +20,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, Copy, Trash2, CheckCircle2, Pencil, ChevronLeft, Plus,
-  ChevronUp, ChevronDown, GripVertical, Eye, Sparkles, ExternalLink,
+  ChevronUp, ChevronDown, GripVertical, Eye, EyeOff, Sparkles, ExternalLink,
   AlertCircle, Wand2,
 } from "lucide-react";
 import {
@@ -701,12 +701,30 @@ function ConfigEditor({ config, onBack }: { config: SurveyConfig; onBack: () => 
           <Button variant="outline" size="sm" onClick={addPage} data-testid="button-add-page"><Plus className="w-4 h-4 mr-1" /> Add page</Button>
         </div>
         {pages.map((p, idx) => (
-          <Card key={p.id ?? idx} data-testid={`card-page-${idx}`}>
+          <Card key={p.id ?? idx} className={p.hidden ? "opacity-60" : undefined} data-testid={`card-page-${idx}`}>
             <CardHeader className="py-3">
               <CardTitle className="text-sm flex items-center gap-2 flex-wrap">
                 <Badge variant="outline">{p.kind || "page"}</Badge>
+                {p.hidden && <Badge variant="secondary" data-testid={`badge-page-hidden-${idx}`}>Hidden</Badge>}
                 <span className="text-xs text-slate-400">{p.questions?.length ?? 0} question(s)</span>
                 <div className="ml-auto flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    disabled={p.kind === "thankyou"}
+                    onClick={() => setPage(idx, { hidden: !p.hidden })}
+                    title={
+                      p.kind === "thankyou"
+                        ? "The Thank You page can't be hidden — the survey needs an ending"
+                        : p.hidden
+                        ? "Show this page to respondents"
+                        : "Hide this page from respondents"
+                    }
+                    data-testid={`button-page-hide-${idx}`}
+                  >
+                    {p.hidden ? <EyeOff className="w-4 h-4 text-amber-600" /> : <Eye className="w-4 h-4" />}
+                  </Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openPreviewFor(idx)} title="Preview this page" data-testid={`button-page-preview-${idx}`}><Eye className="w-4 h-4" /></Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => movePage(idx, -1)} disabled={idx === 0} data-testid={`button-page-up-${idx}`}><ChevronUp className="w-4 h-4" /></Button>
                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => movePage(idx, 1)} disabled={idx === pages.length - 1} data-testid={`button-page-down-${idx}`}><ChevronDown className="w-4 h-4" /></Button>

@@ -48,6 +48,17 @@ export function useSurveyConfig() {
     /** True once the config has been fetched at least once. */
     isReady: !!data,
 
+    /** Set of page `kind`s that are marked hidden in the active config. */
+    hiddenKinds(): Set<string> {
+      const s = new Set<string>();
+      if (data?.pages) {
+        for (const p of data.pages) {
+          if (p.hidden && p.kind) s.add(p.kind);
+        }
+      }
+      return s;
+    },
+
     /** Page title — shown as the step heading in the live survey. */
     pageTitle(kind: string, fallback: string): string {
       return getPage(kind)?.title ?? fallback;

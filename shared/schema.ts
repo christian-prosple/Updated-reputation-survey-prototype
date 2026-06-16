@@ -77,6 +77,10 @@ export interface SurveyPageDef {
   // hand-built steps (e.g. "intro", "personal", "education", "careers",
   // "career_order", "recognition", "pairwise", "final", "thankyou").
   kind?: string;
+  // When true, this page is hidden from respondents: it is skipped in the live
+  // survey and excluded from the full preview. The editor still shows it (dimmed)
+  // so it can be re-enabled later.
+  hidden?: boolean;
   questions: SurveyQuestion[];
   conditions?: ConditionRule[];
 }

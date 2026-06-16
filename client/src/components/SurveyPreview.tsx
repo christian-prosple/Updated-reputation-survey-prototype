@@ -754,7 +754,8 @@ export function SurveyPreview({
  startIndex?: number;
  showHeader?: boolean;
 }) {
- const pages = injectAspectPages(rawPages);
+ // Hidden pages are skipped for respondents, so exclude them from the full preview.
+ const pages = injectAspectPages(rawPages.filter((p) => !p.hidden));
  const [idx, setIdx] = useState(Math.min(startIndex, Math.max(0, pages.length - 1)));
 
  if (pages.length === 0) {

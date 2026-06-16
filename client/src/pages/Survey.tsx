@@ -346,6 +346,37 @@ export default function SurveyPage() {
  const { state, actions, suggestedRoles } = useSurvey();
  useSurveyBackend(state, actions);
  const cfg = useSurveyConfig();
+
+ // Map each live-survey step to the config page `kind` that controls it, so an
+ // admin can hide a page in the editor and have respondents skip that step.
+ // (Steps 4–6 are the aspect screens, which aren't represented in the config.)
+ const STEP_KIND: Record<number, string> = {
+   0:"personal",
+   1:"education",
+   2:"careers",
+   3:"career_order",
+   7:"recognition",
+   8:"pairwise",
+   9:"final",
+   10:"top_pick_reason",
+   11:"thankyou",
+ };
+
+ // Tell the survey state which steps are hidden whenever the config changes.
+ useEffect(() => {
+   const hiddenKinds = cfg.hiddenKinds();
+   const hiddenSteps = new Set<number>();
+   for (const [step, kind] of Object.entries(STEP_KIND)) {
+     if (hiddenKinds.has(kind)) hiddenSteps.add(Number(step));
+   }
+   actions.setHiddenSteps(hiddenSteps);
+   // If the respondent is currently sitting on a now-hidden step, move them
+   // to the nearest visible one.
+   if (hiddenSteps.has(state.step)) {
+     actions.setStep(state.step);
+   }
+   // eslint-disable-next-line react-hooks/exhaustive-deps
+ }, [cfg.isReady, state.step]);
  const [activePair, setActivePair] = useState<[CompanyEntity, CompanyEntity] | null>(null);
  const [activeAspectPair, setActiveAspectPair] = useState<[string, string] | null>(null);
 

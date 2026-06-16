@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { DEGREE_TAXONOMY } from '@/data/degrees';
 
 // --- DATA CONSTANTS ---
@@ -723,6 +723,26 @@ export function useSurvey() {
     }));
   };
 
+  // Steps an admin has hidden via the survey editor. The live survey skips
+  // these so respondents never see them. Stored in a ref so nextStep/prevStep
+  // closures always read the latest value without re-creating the actions.
+  const hiddenStepsRef = useRef<Set<number>>(new Set());
+  const setHiddenSteps = (steps: Set<number>) => {
+    hiddenStepsRef.current = steps;
+  };
+  // Walk forward over any hidden steps (never past the final Thank You step).
+  const skipHiddenForward = (step: number) => {
+    let s = step;
+    while (s < 11 && hiddenStepsRef.current.has(s)) s++;
+    return s;
+  };
+  // Walk backward over any hidden steps (never below the first step).
+  const skipHiddenBackward = (step: number) => {
+    let s = step;
+    while (s > 0 && hiddenStepsRef.current.has(s)) s--;
+    return s;
+  };
+
   const nextStep = () => {
     setState(prev => {
       const next = prev.step + 1;
@@ -731,41 +751,42 @@ export function useSurvey() {
       // Step 2: role selection — if only 1 role, skip reordering (step 3) and go to 4
       if (prev.step === 2) {
         if (prev.selectedRoles.length <= 1) {
-           return { ...prev, step: 4, roleOrder: prev.selectedRoles };
+           return { ...prev, step: skipHiddenForward(4), roleOrder: prev.selectedRoles };
         }
-        return { ...prev, step: 3, roleOrder: prev.selectedRoles };
+        return { ...prev, step: skipHiddenForward(3), roleOrder: prev.selectedRoles };
       }
 
       // Step 4: aspects selection — if ≤1 aspect, skip pairwise (5) and reorder (6), go to 7
       if (prev.step === 4) {
         if (prev.selectedAspects.length <= 1) {
-          return { ...prev, step: 7, aspectOrder: prev.selectedAspects };
+          return { ...prev, step: skipHiddenForward(7), aspectOrder: prev.selectedAspects };
         }
-        return { ...prev, step: 5 };
+        return { ...prev, step: skipHiddenForward(5) };
       }
 
       // Cap at step 11 (Thank You)
-      return { ...prev, step: Math.min(next, 11) };
+      return { ...prev, step: skipHiddenForward(Math.min(next, 11)) };
     });
   };
   
-  // Custom setter for specific logic needs
-  const setStep = (step: number) => setState(prev => ({ ...prev, step }));
+  // Custom setter for specific logic needs. Lands on the nearest visible step.
+  const setStep = (step: number) =>
+    setState(prev => ({ ...prev, step: skipHiddenForward(step) }));
 
   const prevStep = () => {
     setState(prev => {
       // Step 4 (aspects): if only 1 role selected (career_order was skipped), go to 2; else go to 3
       if (prev.step === 4) {
         if (prev.selectedRoles.length <= 1) {
-          return { ...prev, step: 2 };
+          return { ...prev, step: skipHiddenBackward(2) };
         }
-        return { ...prev, step: 3 };
+        return { ...prev, step: skipHiddenBackward(3) };
       }
       // Step 5 (aspects pairwise): go back to aspects selection, reset aspects pairwise state
       if (prev.step === 5) {
         return {
           ...prev,
-          step: 4,
+          step: skipHiddenBackward(4),
           aspectEloRatings: {},
           aspectPairwiseCount: 0,
           aspectCompletedPairs: new Set<string>(),
@@ -775,22 +796,22 @@ export function useSurvey() {
       // Step 6 (aspects reorder): if only 1 aspect (shouldn't happen), go to 4; else go to 5
       if (prev.step === 6) {
         if (prev.selectedAspects.length <= 1) {
-          return { ...prev, step: 4 };
+          return { ...prev, step: skipHiddenBackward(4) };
         }
-        return { ...prev, step: 5 };
+        return { ...prev, step: skipHiddenBackward(5) };
       }
       // Step 7 (company recognition): if ≤1 aspect was selected (steps 5/6 were skipped), go to 4; else go to 6
       if (prev.step === 7) {
         if (prev.selectedAspects.length <= 1) {
-          return { ...prev, step: 4 };
+          return { ...prev, step: skipHiddenBackward(4) };
         }
-        return { ...prev, step: 6 };
+        return { ...prev, step: skipHiddenBackward(6) };
       }
       // Step 8 (company pairwise): go back to recognition, reset company pairwise state
       if (prev.step === 8) {
         return {
           ...prev,
-          step: 7,
+          step: skipHiddenBackward(7),
           sessionOrder: [],
           chainIndex: 0,
           appearancesInSession: {},
@@ -802,7 +823,7 @@ export function useSurvey() {
           wasChainPair: false,
         };
       }
-      return { ...prev, step: Math.max(0, prev.step - 1) };
+      return { ...prev, step: skipHiddenBackward(Math.max(0, prev.step - 1)) };
     });
   };
 
@@ -861,6 +882,7 @@ export function useSurvey() {
       nextStep,
       prevStep,
       setStep,
+      setHiddenSteps,
       initializePairwiseSession,
     },
     suggestedRoles
