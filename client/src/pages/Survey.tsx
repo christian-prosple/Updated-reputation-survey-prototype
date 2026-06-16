@@ -10,7 +10,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { ChevronRight, ChevronLeft, ChevronDown, GripVertical, CheckCircle2, RefreshCw, Search, X, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-import headerImage from "@assets/Screenshot_2026-01-22_at_3.04.34_pm_1769054676986.png";
 import { useSurveyConfig } from "@/hooks/use-survey-config";
 
 interface ManualCompany {
@@ -2292,24 +2291,16 @@ export default function SurveyPage() {
       className="min-h-screen bg-slate-50/50 flex flex-col font-sans text-slate-900"
       onClick={() => { setIsSearchFocused(false); setIsCountrySearchFocused(false); setIsEducationLevelFocused(false); setIsGenderFocused(false); setIsGradMonthFocused(false); setIsDegreeSearchFocused(false); setIsCitySearchFocused(false); }}
     >
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-50 relative">
-        <img 
-          src={headerImage} 
-          alt="Prosple Header" 
-          className="w-full h-auto"
-          data-testid="img-header"
-        />
-        <Link
-          href="/admin"
-          className="absolute top-2 right-2 p-2 rounded-full bg-white/70 hover:bg-white text-slate-500 hover:text-slate-900 shadow-sm transition-colors"
-          title="Admin"
-          data-testid="link-admin"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Settings className="w-5 h-5" />
-        </Link>
-      </header>
+      {/* Admin link */}
+      <Link
+        href="/admin"
+        className="fixed top-2 right-2 z-50 p-2 rounded-full bg-white/70 hover:bg-white text-slate-500 hover:text-slate-900 shadow-sm transition-colors"
+        title="Admin"
+        data-testid="link-admin"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <Settings className="w-5 h-5" />
+      </Link>
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col items-center py-8 md:py-12 px-4 md:px-8 max-w-6xl mx-auto w-full">
