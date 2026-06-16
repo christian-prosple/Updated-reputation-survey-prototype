@@ -1,6 +1,5 @@
 import { useLocation, useSearch } from "wouter";
 import { ChevronRight } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
 import PageHeader from "@/components/PageHeader";
 import { DEMO_STUDENTS } from "@/data/demo-students";
 
@@ -32,32 +31,28 @@ export default function RespondentList() {
       />
 
       <main className="max-w-2xl mx-auto px-4 pt-6 pb-12">
-        <Card>
-          <CardContent className="p-0">
-            <div className="px-4 py-3 border-b">
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Student Name
-              </span>
-            </div>
-            <ul>
-              {respondents.map((s) => (
-                <li key={s.id}>
-                  <button
-                    type="button"
-                    onClick={() => openProfile(s.name)}
-                    className="w-full flex items-center justify-between px-4 py-3 text-left border-b last:border-b-0 hover:bg-slate-50 transition-colors"
-                    data-testid={`row-respondent-${s.id}`}
-                  >
-                    <span className="text-sm font-medium" data-testid={`text-respondent-name-${s.id}`}>
-                      {s.name}
-                    </span>
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </CardContent>
-        </Card>
+        <div className="py-3 border-b">
+          <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Student Name
+          </span>
+        </div>
+        <ul>
+          {respondents.map((s) => (
+            <li key={s.id}>
+              <button
+                type="button"
+                onClick={() => openProfile(s.name)}
+                className="w-full flex items-center justify-between py-3 text-left border-b last:border-b-0 hover:bg-slate-50 transition-colors"
+                data-testid={`row-respondent-${s.id}`}
+              >
+                <span className="text-sm font-medium" data-testid={`text-respondent-name-${s.id}`}>
+                  {s.name}
+                </span>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </button>
+            </li>
+          ))}
+        </ul>
       </main>
     </div>
   );
