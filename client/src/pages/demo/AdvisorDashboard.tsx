@@ -83,7 +83,7 @@ export default function AdvisorDashboard() {
 
           <Card
             className="cursor-pointer transition-shadow hover:shadow-md"
-            onClick={() => goComingSoon("Invited Students")}
+            onClick={() => setLocation(`/demo/invited${university ? `?university=${encodeURIComponent(university)}` : ""}`)}
             data-testid="card-invited"
           >
             <CardContent className="pt-6 pb-6 flex items-center gap-4">
