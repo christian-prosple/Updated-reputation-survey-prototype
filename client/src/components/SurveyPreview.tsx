@@ -33,6 +33,29 @@ import { cn } from "@/lib/utils";
 import headerImage from "@assets/Screenshot_2026-01-22_at_3.04.34_pm_1769054676986.png";
 import type { SurveyPageDef, SurveyQuestion, Taxonomy } from "@shared/schema";
 
+const ASPECT_OPTIONS = [
+  "Company reputation",
+  "Salary and benefits",
+  "Career opportunities",
+  "Diversity and inclusion",
+  "Senior management",
+  "Culture and values",
+  "Work life balance",
+];
+
+const ASPECT_PAGES: SurveyPageDef[] = [
+  { id: "__aspect_select__",  kind: "aspect_select",  title: "What matters most to you in an employer?", subtitle: "Select all that apply.", questions: [] },
+  { id: "__aspect_pairwise__", kind: "aspect_pairwise", title: "Which matters more to you?", subtitle: "Compare values head to head.", questions: [] },
+  { id: "__aspect_reorder__", kind: "aspect_reorder", title: "Here's how we ranked your values.", subtitle: "Drag to adjust if needed.", questions: [] },
+];
+
+function injectAspectPages(pages: SurveyPageDef[]): SurveyPageDef[] {
+  if (pages.some((p) => p.kind === "aspect_select")) return pages;
+  const idx = pages.findIndex((p) => p.kind === "career_order");
+  if (idx === -1) return pages;
+  return [...pages.slice(0, idx + 1), ...ASPECT_PAGES, ...pages.slice(idx + 1)];
+}
+
 // --- Inline CompanyLogo (mirrors Survey.tsx; uses favicon-guess fallback) ---
 function getCompanyLogoUrl(name: string): string {
   const d = name.toLowerCase().replace(/[^a-z0-9]/g, "") + ".com";
@@ -521,9 +544,90 @@ function QuestionPreview({
 }
 
 // ---------------------------------------------------------------------------
+// Aspect page renderers (hardcoded steps not stored in DB config)
+// ---------------------------------------------------------------------------
+function AspectSelectPreview() {
+  const [selected, setSelected] = useState<string[]>([]);
+  return (
+    <div className="space-y-6">
+      <div className="text-center mb-4">
+        <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto">
+          What matters most to you in an employer? Select all that apply. <span className="text-red-500">*</span>
+        </p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto w-full">
+        {ASPECT_OPTIONS.map((aspect) => {
+          const isSelected = selected.includes(aspect);
+          return (
+            <div
+              key={aspect}
+              onClick={() => setSelected((prev) => isSelected ? prev.filter((a) => a !== aspect) : [...prev, aspect])}
+              className={cn(
+                "cursor-pointer rounded-lg p-4 border transition-all duration-200 flex items-center gap-3 select-none",
+                isSelected ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-card hover:bg-secondary/50"
+              )}
+            >
+              <div className={cn("w-5 h-5 rounded border flex items-center justify-center flex-shrink-0", isSelected ? "border-primary bg-primary text-white" : "border-muted-foreground/50")}>
+                {isSelected && <CheckCircle2 className="w-3.5 h-3.5" />}
+              </div>
+              <span className={cn("text-sm font-semibold", isSelected ? "text-slate-900" : "text-foreground")}>{aspect}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function AspectPairwisePreview() {
+  const pair = ["Career opportunities", "Salary and benefits"];
+  return (
+    <div className="flex flex-col items-center w-full">
+      <p className="text-xl md:text-2xl font-medium text-slate-700 mb-8 text-center">Which matters more to you?</p>
+      <div className="flex flex-row gap-3 md:gap-8 items-stretch w-full max-w-2xl mx-auto">
+        {pair.map((aspect, i) => (
+          <div key={aspect} className="flex-1">
+            <div className="group w-full bg-white border-2 border-border hover:border-primary hover:shadow-xl rounded-2xl p-6 md:p-10 transition-all duration-300 flex flex-col items-center justify-center h-[160px] md:h-[180px] cursor-pointer">
+              <span className="text-lg md:text-2xl font-bold text-center text-slate-800">{aspect}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-6 flex gap-3">
+        <button className="px-4 py-2 text-sm border rounded-lg text-slate-700 border-slate-200">Undo previous choice</button>
+        <button className="px-4 py-2 text-sm border rounded-lg text-slate-700 border-slate-200">Too hard, skip this pair</button>
+      </div>
+    </div>
+  );
+}
+
+function AspectReorderPreview() {
+  return (
+    <div className="space-y-6">
+      <p className="text-xl md:text-2xl font-medium text-slate-700 max-w-lg mx-auto text-center">
+        Based on your choices, here's how we've ranked what matters to you. Adjust if needed.
+      </p>
+      <div className="max-w-xl mx-auto space-y-3">
+        {ASPECT_OPTIONS.slice(0, 5).map((aspect, index) => (
+          <div key={aspect} className="bg-card border border-border rounded-xl p-4 shadow-sm flex items-center gap-4">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary text-muted-foreground font-bold text-sm">{index + 1}</div>
+            <span className="flex-1 font-medium">{aspect}</span>
+            <GripVertical className="text-muted-foreground/50" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // PagePreview
 // ---------------------------------------------------------------------------
 export function PagePreview({ page, taxonomies }: { page: SurveyPageDef; taxonomies: Taxonomy[] }) {
+  if (page.kind === "aspect_select") return <AspectSelectPreview />;
+  if (page.kind === "aspect_pairwise") return <AspectPairwisePreview />;
+  if (page.kind === "aspect_reorder") return <AspectReorderPreview />;
+
   const qs = page.questions ?? [];
   // Multiple questions on one page → form layout (like steps 0 & 1).
   // Single question → centered prompt layout (like steps 2–7).
@@ -572,7 +676,7 @@ export function SinglePagePreview({ page, taxonomies }: { page: SurveyPageDef; t
 // SurveyPreview — full survey modal + /admin/preview route
 // ---------------------------------------------------------------------------
 export function SurveyPreview({
-  pages,
+  pages: rawPages,
   taxonomies,
   startIndex = 0,
   showHeader = true,
@@ -582,6 +686,7 @@ export function SurveyPreview({
   startIndex?: number;
   showHeader?: boolean;
 }) {
+  const pages = injectAspectPages(rawPages);
   const [idx, setIdx] = useState(Math.min(startIndex, Math.max(0, pages.length - 1)));
 
   if (pages.length === 0) {
