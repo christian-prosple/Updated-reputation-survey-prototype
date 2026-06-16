@@ -1,8 +1,10 @@
+import { useMemo, useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, ChevronUp, ChevronDown, ChevronsUpDown, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import BrandLogo from "@/components/BrandLogo";
+import { useToast } from "@/hooks/use-toast";
 import { DEMO_STUDENTS } from "@/data/demo-students";
 import { cn } from "@/lib/utils";
 
@@ -20,9 +22,14 @@ function statusForIndex(j: number): InviteStatus {
   return STATUS_POOL[(j * 17) % STATUS_POOL.length];
 }
 
-const STATUS_STYLES: Record<InviteStatus, string> = {
+const STATUS_RANK: Record<InviteStatus, number> = {
+  Invited: 0,
+  Reminded: 1,
+  Completed: 2,
+};
+
+const BADGE_STYLES: Record<"Invited" | "Completed", string> = {
   Invited: "bg-sky-100 text-sky-700",
-  Reminded: "bg-amber-100 text-amber-700",
   Completed: "bg-emerald-100 text-emerald-700",
 };
 
@@ -31,16 +38,38 @@ function emailFor(name: string, domain: string): string {
   return `${first}.${last}@${domain}`.toLowerCase();
 }
 
+type SortDir = "none" | "asc" | "desc";
+
 export default function InvitedStudents() {
   const [, setLocation] = useLocation();
   const search = useSearch();
+  const { toast } = useToast();
   const university = new URLSearchParams(search).get("university") ?? "";
   const uniParam = university ? `?university=${encodeURIComponent(university)}` : "";
 
   const domain =
     (university.split(/\s+/)[0] || "university").toLowerCase().replace(/[^a-z]/g, "") + ".edu";
 
-  const invited = DEMO_STUDENTS.filter((s) => s.group === "invited");
+  const [sortDir, setSortDir] = useState<SortDir>("none");
+
+  const rows = useMemo(() => {
+    const base = DEMO_STUDENTS.filter((s) => s.group === "invited").map((s, j) => ({
+      ...s,
+      status: statusForIndex(j),
+      email: emailFor(s.name, domain),
+    }));
+    if (sortDir === "none") return base;
+    const sorted = [...base].sort(
+      (a, b) => STATUS_RANK[a.status] - STATUS_RANK[b.status]
+    );
+    return sortDir === "asc" ? sorted : sorted.reverse();
+  }, [domain, sortDir]);
+
+  const cycleSort = () =>
+    setSortDir((d) => (d === "none" ? "asc" : d === "asc" ? "desc" : "none"));
+
+  const SortIcon =
+    sortDir === "asc" ? ChevronUp : sortDir === "desc" ? ChevronDown : ChevronsUpDown;
 
   return (
     <div className="min-h-screen bg-slate-50/50 font-sans text-slate-900">
@@ -78,34 +107,56 @@ export default function InvitedStudents() {
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Email
               </span>
-              <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <button
+                type="button"
+                onClick={cycleSort}
+                className="flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500 hover:text-slate-900 transition-colors"
+                data-testid="button-sort-status"
+              >
                 Status
-              </span>
+                <SortIcon className="w-3.5 h-3.5" />
+              </button>
             </div>
             <ul>
-              {invited.map((s, j) => {
-                const status = statusForIndex(j);
-                return (
-                  <li
-                    key={s.id}
-                    className="grid grid-cols-[1fr_auto] items-center gap-4 px-4 py-3 border-b last:border-b-0"
-                    data-testid={`row-invited-${s.id}`}
-                  >
-                    <span className="text-sm truncate" data-testid={`text-invited-email-${s.id}`}>
-                      {emailFor(s.name, domain)}
-                    </span>
-                    <span
-                      className={cn(
-                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                        STATUS_STYLES[status]
-                      )}
-                      data-testid={`badge-invited-status-${s.id}`}
-                    >
-                      {status}
-                    </span>
-                  </li>
-                );
-              })}
+              {rows.map((s) => (
+                <li
+                  key={s.id}
+                  className="grid grid-cols-[1fr_auto] items-center gap-4 px-4 py-3 border-b last:border-b-0"
+                  data-testid={`row-invited-${s.id}`}
+                >
+                  <span className="text-sm truncate" data-testid={`text-invited-email-${s.id}`}>
+                    {s.email}
+                  </span>
+                  <div className="flex justify-end min-w-[7rem]">
+                    {s.status === "Reminded" ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-2.5 text-xs"
+                        onClick={() =>
+                          toast({
+                            title: "Reminder sent",
+                            description: `A reminder was sent to ${s.email}.`,
+                          })
+                        }
+                        data-testid={`button-remind-${s.id}`}
+                      >
+                        <Bell className="w-3.5 h-3.5 mr-1" /> Remind
+                      </Button>
+                    ) : (
+                      <span
+                        className={cn(
+                          "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                          BADGE_STYLES[s.status]
+                        )}
+                        data-testid={`badge-invited-status-${s.id}`}
+                      >
+                        {s.status}
+                      </span>
+                    )}
+                  </div>
+                </li>
+              ))}
             </ul>
           </CardContent>
         </Card>
