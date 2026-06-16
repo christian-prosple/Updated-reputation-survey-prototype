@@ -361,6 +361,7 @@ export interface RoleAllocationConfig {
   alphaMin: number;             // floor for decay exponent, default 0.6
   alphaBase: number;            // starting decay exponent, default 1.4
   alphaSlope: number;           // how fast alpha decreases with more roles, default 0.15
+  coreRatio: number;            // 0–1: proportion of each path's slot that comes from core employers, default 0.67
 }
 
 export const DEFAULT_ROLE_ALLOCATION_CONFIG: RoleAllocationConfig = {
@@ -370,6 +371,7 @@ export const DEFAULT_ROLE_ALLOCATION_CONFIG: RoleAllocationConfig = {
   alphaMin: 0.6,
   alphaBase: 1.4,
   alphaSlope: 0.15,
+  coreRatio: 0.67,
 };
 
 export const roleAllocationConfigSchema = z
@@ -380,6 +382,7 @@ export const roleAllocationConfigSchema = z
     alphaMin: z.number().min(0).max(10),
     alphaBase: z.number().min(0).max(10),
     alphaSlope: z.number().min(0).max(10),
+    coreRatio: z.number().min(0).max(1),
   })
   .partial();
 

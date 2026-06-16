@@ -78,14 +78,23 @@ function calcAllocation(nRoles: number, T: number, cfg: RoleAllocationConfig) {
   return { rows, alpha: Math.round(alpha * 1000) / 1000, nEff };
 }
 
+function splitCoreNonCore(n: number, coreRatio: number): { core: number; nonCore: number } {
+  const core = Math.round(n * coreRatio);
+  return { core, nonCore: n - core };
+}
+
 // ---------------------------------------------------------------------------
 // Preview Calculator component
 // ---------------------------------------------------------------------------
 function AllocationPreview({ cfg }: { cfg: RoleAllocationConfig }) {
   const [nRoles, setNRoles] = useState(3);
   const T = cfg.totalCompanies;
+  const coreRatio = cfg.coreRatio ?? 0.67;
 
   const result = useMemo(() => calcAllocation(nRoles, T, cfg), [nRoles, T, cfg]);
+
+  const corePct = Math.round(coreRatio * 100);
+  const nonCorePct = 100 - corePct;
 
   return (
     <Card>
@@ -111,7 +120,7 @@ function AllocationPreview({ cfg }: { cfg: RoleAllocationConfig }) {
           <div className="text-xs text-slate-500 pt-5 space-y-0.5">
             <div>n_eff = {result.nEff} (capped at maxRolesConsidered)</div>
             <div>alpha = {result.alpha} (decay exponent)</div>
-            <div>Total = {T} employers</div>
+            <div>Total = {T} employers ({corePct}% core / {nonCorePct}% non-core)</div>
           </div>
         </div>
 
@@ -127,36 +136,53 @@ function AllocationPreview({ cfg }: { cfg: RoleAllocationConfig }) {
                   <th className="py-1 pr-3">Exact</th>
                   <th className="py-1 pr-3">Floor</th>
                   <th className="py-1 pr-3">+Bonus</th>
-                  <th className="py-1 font-semibold">Allocated</th>
+                  <th className="py-1 pr-3 font-semibold">Total</th>
+                  <th className="py-1 pr-3 text-blue-600 dark:text-blue-400">Core</th>
+                  <th className="py-1 text-slate-500">Non-core</th>
                 </tr>
               </thead>
               <tbody>
-                {result.rows.map((row) => (
-                  <tr
-                    key={row.rank}
-                    className={`border-b border-slate-100 dark:border-slate-800 ${
-                      row.rank > result.nEff ? "text-slate-300 dark:text-slate-600" : ""
-                    }`}
-                    data-testid={`row-preview-role-${row.rank}`}
-                  >
-                    <td className="py-1 pr-3">
-                      #{row.rank}
-                      {row.rank === 1 && <Badge variant="secondary" className="ml-1 text-[10px] py-0 px-1">top</Badge>}
-                      {row.rank > result.nEff && <span className="ml-1 text-[10px] text-slate-300">(ignored)</span>}
-                    </td>
-                    <td className="py-1 pr-3">{row.rank <= result.nEff ? row.w.toFixed(4) : "—"}</td>
-                    <td className="py-1 pr-3">{row.rank <= result.nEff ? row.exact.toFixed(2) : "—"}</td>
-                    <td className="py-1 pr-3">{row.rank <= result.nEff ? row.floor : "—"}</td>
-                    <td className="py-1 pr-3">{row.bonus === 1 ? "+1" : row.rank <= result.nEff ? "—" : ""}</td>
-                    <td className="py-1 font-semibold">{row.rank <= result.nEff ? row.final : 0}</td>
-                  </tr>
-                ))}
+                {result.rows.map((row) => {
+                  const split = row.rank <= result.nEff ? splitCoreNonCore(row.final, coreRatio) : null;
+                  return (
+                    <tr
+                      key={row.rank}
+                      className={`border-b border-slate-100 dark:border-slate-800 ${
+                        row.rank > result.nEff ? "text-slate-300 dark:text-slate-600" : ""
+                      }`}
+                      data-testid={`row-preview-role-${row.rank}`}
+                    >
+                      <td className="py-1 pr-3">
+                        #{row.rank}
+                        {row.rank === 1 && <Badge variant="secondary" className="ml-1 text-[10px] py-0 px-1">top</Badge>}
+                        {row.rank > result.nEff && <span className="ml-1 text-[10px] text-slate-300">(ignored)</span>}
+                      </td>
+                      <td className="py-1 pr-3">{row.rank <= result.nEff ? row.w.toFixed(4) : "—"}</td>
+                      <td className="py-1 pr-3">{row.rank <= result.nEff ? row.exact.toFixed(2) : "—"}</td>
+                      <td className="py-1 pr-3">{row.rank <= result.nEff ? row.floor : "—"}</td>
+                      <td className="py-1 pr-3">{row.bonus === 1 ? "+1" : row.rank <= result.nEff ? "—" : ""}</td>
+                      <td className="py-1 pr-3 font-semibold">{row.rank <= result.nEff ? row.final : 0}</td>
+                      <td className="py-1 pr-3 text-blue-600 dark:text-blue-400 font-medium">
+                        {split ? split.core : "—"}
+                      </td>
+                      <td className="py-1 text-slate-500">
+                        {split ? split.nonCore : "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
               <tfoot>
-                <tr className="font-semibold text-slate-700 dark:text-slate-200">
-                  <td className="pt-1 pr-3" colSpan={5}>Total</td>
-                  <td className="pt-1" data-testid="text-preview-total">
+                <tr className="font-semibold text-slate-700 dark:text-slate-200 border-t border-slate-200 dark:border-slate-700">
+                  <td className="pt-2 pr-3" colSpan={5}>Total</td>
+                  <td className="pt-2 pr-3" data-testid="text-preview-total">
                     {result.rows.reduce((s, r) => s + r.final, 0)}
+                  </td>
+                  <td className="pt-2 pr-3 text-blue-600 dark:text-blue-400" data-testid="text-preview-core-total">
+                    {result.rows.reduce((s, r) => s + splitCoreNonCore(r.final, coreRatio).core, 0)}
+                  </td>
+                  <td className="pt-2 text-slate-500" data-testid="text-preview-noncore-total">
+                    {result.rows.reduce((s, r) => s + splitCoreNonCore(r.final, coreRatio).nonCore, 0)}
                   </td>
                 </tr>
               </tfoot>
@@ -400,6 +426,61 @@ function RoleAllocationSection() {
             testId="input-alloc-maxroles"
             help="Roles ranked beyond this position are ignored (get 0 employers)."
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="py-3">
+          <CardTitle className="text-sm">Core vs non-core mix</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs text-slate-500">
+            Within each career path's allocated slots, this controls how many come from
+            core (top-ranked, always included) vs non-core (discovery) employers.
+          </p>
+          {(() => {
+            const corePct = Math.round((cfg_.coreRatio ?? 0.67) * 100);
+            const nonCorePct = 100 - corePct;
+            return (
+              <div className="space-y-3">
+                <div className="flex rounded-md overflow-hidden h-7 text-xs font-semibold select-none">
+                  <div
+                    className="bg-blue-500 text-white flex items-center justify-center transition-all duration-150"
+                    style={{ width: `${corePct}%` }}
+                    data-testid="bar-core-ratio"
+                  >
+                    {corePct > 10 ? `${corePct}% core` : `${corePct}%`}
+                  </div>
+                  <div
+                    className="bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center transition-all duration-150"
+                    style={{ width: `${nonCorePct}%` }}
+                  >
+                    {nonCorePct > 10 ? `${nonCorePct}% non-core` : `${nonCorePct}%`}
+                  </div>
+                </div>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  step={1}
+                  value={corePct}
+                  onChange={(e) => set("coreRatio", Number(e.target.value) / 100)}
+                  className="w-full accent-blue-500"
+                  data-testid="slider-core-ratio"
+                />
+                <div className="flex gap-6 text-xs text-slate-500">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-sm bg-blue-500 flex-shrink-0" />
+                    <span>Core — top-ranked, high-priority employers</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-3 h-3 rounded-sm bg-slate-200 dark:bg-slate-700 flex-shrink-0" />
+                    <span>Non-core — discovery / exploration employers</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </CardContent>
       </Card>
 

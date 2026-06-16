@@ -135,23 +135,53 @@ export function registerPublicRoutes(app: Express): void {
       const taken = new Set<string>(); // deduplicate by lowercase name
       const rolePoolBreakdown: unknown[] = [];
 
-      // First pass: pick exactly `finalCompanies` from each role's pool.
+      // First pass: pick exactly `finalCompanies` from each role's pool,
+      // splitting into core and non-core according to coreRatio.
+      const coreRatio = allocationCfg.coreRatio ?? 0.67;
       for (const alloc of allocation.rows) {
         if (alloc.finalCompanies === 0) continue;
         const pool = byPath.get(alloc.roleId) ?? [];
+
+        // Split the pool by isCore flag (pool already sorted by rank asc)
+        const corePool = pool.filter((e) => e.isCore);
+        const nonCorePool = pool.filter((e) => !e.isCore).sort(() => Math.random() - 0.5);
+
+        const nCore = Math.round(alloc.finalCompanies * coreRatio);
+        const nNonCore = alloc.finalCompanies - nCore;
+
         const picked: string[] = [];
-        for (const emp of pool) {
-          if (picked.length >= alloc.finalCompanies) break;
+
+        // Pick from core pool first
+        for (const emp of corePool) {
+          if (picked.length >= nCore) break;
           const key = emp.employerName.toLowerCase();
-          if (!taken.has(key)) {
-            taken.add(key);
-            picked.push(emp.employerName);
+          if (!taken.has(key)) { taken.add(key); picked.push(emp.employerName); }
+        }
+        // If core pool ran short, fill overflow from non-core
+        const coreShortfall = nCore - picked.length;
+        let nonCoreTarget = nNonCore + coreShortfall;
+
+        // Pick from non-core pool
+        for (const emp of nonCorePool) {
+          if (picked.length >= nCore + nonCoreTarget) break;
+          const key = emp.employerName.toLowerCase();
+          if (!taken.has(key)) { taken.add(key); picked.push(emp.employerName); }
+        }
+        // If non-core ran short, fill remaining from core leftovers
+        if (picked.length < alloc.finalCompanies) {
+          for (const emp of corePool) {
+            if (picked.length >= alloc.finalCompanies) break;
+            const key = emp.employerName.toLowerCase();
+            if (!taken.has(key)) { taken.add(key); picked.push(emp.employerName); }
           }
         }
+
         rolePoolBreakdown.push({
           role: alloc.roleId,
           rank: alloc.rank,
           allocated: alloc.finalCompanies,
+          nCore,
+          nNonCore,
           actuallyUsed: picked.length,
           poolSize: pool.length,
         });
