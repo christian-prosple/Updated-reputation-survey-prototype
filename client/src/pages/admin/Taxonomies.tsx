@@ -239,6 +239,26 @@ function detectDelimiter(firstLine: string): string {
   return firstLine.includes("\t") ? "\t" : ",";
 }
 
+function searchRaw(content: string, query: string, delimiter: string): { row: number; col: number; path: string; cell: string }[] {
+  const q = query.toLowerCase().trim();
+  if (!q) return [];
+  const lines = content.split(/\r?\n/); // don't filter — preserve row numbers
+  const splitRow = (line: string) => delimiter === ","
+    ? line.match(/("(?:[^"]|"")*"|[^,]*)/g)?.map((c) => c.replace(/^"|"$/g, "").replace(/""/g, '"').trim()) ?? []
+    : line.split("\t").map((s) => s.trim());
+  const headers = splitRow(lines[0] ?? "");
+  const results: { row: number; col: number; path: string; cell: string }[] = [];
+  for (let r = 1; r < lines.length; r++) {
+    const cells = splitRow(lines[r]);
+    for (let c = 0; c < cells.length; c++) {
+      if (cells[c].toLowerCase().includes(q)) {
+        results.push({ row: r, col: c, path: headers[c] ?? `col ${c}`, cell: cells[c] });
+      }
+    }
+  }
+  return results;
+}
+
 function parseMatrix(content: string, forceDelimiter?: string): { careerPaths: string[]; employers: { name: string; paths: string[] }[]; delimiter: string } {
   const lines = content.split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) return { careerPaths: [], employers: [], delimiter: "\t" };
@@ -272,9 +292,13 @@ function MatrixImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => 
   const [mode, setMode] = useState<"merge" | "replace">("replace");
   const [delimOverride, setDelimOverride] = useState<"auto" | "tab" | "comma">("auto");
   const [busy, setBusy] = useState(false);
+  const [verifyQuery, setVerifyQuery] = useState("");
 
   const forceDelim = delimOverride === "tab" ? "\t" : delimOverride === "comma" ? "," : undefined;
   const parsed = content.trim() ? parseMatrix(content, forceDelim) : { careerPaths: [], employers: [], delimiter: "\t" };
+  const verifyResults = content.trim() && verifyQuery.trim()
+    ? searchRaw(content, verifyQuery, parsed.delimiter)
+    : null;
 
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -382,6 +406,32 @@ function MatrixImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => 
                 ))}
                 {parsed.employers.length > 10 && <p className="text-xs text-slate-400">…and {parsed.employers.length - 10} more employers</p>}
               </div>
+            </div>
+
+            <div className="border-t pt-3">
+              <p className="text-xs font-semibold text-slate-500 mb-2">Verify an employer — search the raw file:</p>
+              <Input
+                placeholder="e.g. Deloitte"
+                value={verifyQuery}
+                onChange={(e) => setVerifyQuery(e.target.value)}
+                className="h-7 text-xs max-w-xs"
+                data-testid="input-verify-employer"
+              />
+              {verifyResults !== null && (
+                <div className="mt-2 space-y-1">
+                  {verifyResults.length === 0 ? (
+                    <p className="text-xs text-slate-400">Not found anywhere in the raw file.</p>
+                  ) : (
+                    verifyResults.map((r, i) => (
+                      <p key={i} className="text-xs">
+                        <span className="text-slate-400">Row {r.row}, Col {r.col + 1}</span>
+                        {" → "}<strong className="text-slate-800">{r.cell}</strong>
+                        {" → career path: "}<span className="text-blue-600">{r.path}</span>
+                      </p>
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
