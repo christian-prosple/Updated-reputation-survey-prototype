@@ -1,0 +1,150 @@
+Implement the career-path company allocation logic from my prototype.
+
+Context:
+The survey asks users to select and rank career paths/roles. We need to decide how many companies to show from each selected career path pool. Total companies shown should always sum to T, default T = 30.
+
+Add this logic to the employer/company selection backend.
+
+## Allocation formula
+
+Inputs:
+- selectedRoles: ordered array of role/career path IDs, ranked by user preference
+- n_raw = selectedRoles.length
+- n_eff = min(n_raw, 5)
+- T = total number of companies to allocate, default 30
+- alpha_min = 0.6
+- alpha_base = 1.4
+- alpha_slope = 0.15
+
+Alpha:
+alpha = max(alpha_min, alpha_base - alpha_slope * n_eff)
+
+For each role rank r:
+- only ranks r <= n_eff are considered
+- role weight:
+  w_r = 1 / (r ^ alpha)
+- ranks greater than n_eff get weight 0
+
+Denominator:
+sumW = sum of weights for ranks 1 to n_eff
+
+Exact companies:
+exactCompanies_r = T * (w_r / sumW)
+
+Initial allocation:
+floorCompanies_r = floor(exactCompanies_r)
+
+Leftover:
+leftover = T - sum(floorCompanies)
+
+Final allocation:
+- Give +1 company to the roles with the largest fractional remainders
+- If tied, prioritise the higher-ranked role
+- Final allocations must sum exactly to T
+- Roles ranked 6+ receive 0 companies
+
+Example:
+If selectedRoles length is 5 and T = 6:
+- n_eff = 5
+- alpha = 0.65
+- expected output should be approximately:
+  - rank 1: 2 companies
+  - rank 2: 1 company
+  - rank 3: 1 company
+  - rank 4: 1 company
+  - rank 5: 1 company
+  - rank 6+: 0 companies
+
+## Behaviour requirements
+
+Add a reusable function, something like:
+
+allocateCompaniesByRolePreference(selectedRoles, totalCompanies = 30, config = {})
+
+Return:
+[
+  {
+    roleId,
+    rank,
+    considered,
+    weight,
+    exactCompanies,
+    floorCompanies,
+    remainder,
+    bonus,
+    finalCompanies
+  }
+]
+
+Also return metadata:
+{
+  nRaw,
+  nEff,
+  alpha,
+  denominator,
+  totalCompanies,
+  leftover
+}
+
+## Integrate with employer selection
+
+Wherever the app currently selects employers for the recognition question:
+1. Get the user’s selected/ranked career paths.
+2. Run the allocation function.
+3. For each selected role, select finalCompanies number of employers from that career path pool.
+4. Combine into one final employer list.
+5. Deduplicate employers across career paths.
+6. If deduplication causes fewer than T companies:
+   - refill from the highest-ranked eligible career paths first
+   - still avoid duplicates
+   - use the existing employer scoring/display logic where possible
+7. Shuffle final display order before returning to the respondent.
+8. Store allocation metadata in response/session metadata.
+
+Store:
+- selectedRoles
+- allocationConfig
+- allocationResult
+- employerIdsShown
+- rolePoolBreakdown
+- algorithmVersion, e.g. "role_preference_allocation_v1"
+
+## Admin config
+
+In Display Logic admin, add editable settings:
+- totalCompanies default 30
+- maxRolesConsidered default 5
+- alphaMin default 0.6
+- alphaBase default 1.4
+- alphaSlope default 0.15
+- enable role-preference allocation true/false
+
+Add a small preview calculator:
+- Admin enters an example number of roles selected and total companies
+- Show allocation by rank
+- Show alpha and denominator
+- This helps verify the formula.
+
+## Edge cases
+
+Handle:
+- 0 selected roles: fallback to generic employer pool
+- 1 selected role: allocate all T to rank 1
+- fewer available employers than allocated for a role: take all available and refill from other eligible roles
+- duplicate employer appears in multiple career paths
+- selectedRoles length > 5: only top 5 receive companies
+- totalCompanies small, e.g. T = 6
+- totalCompanies default 30
+
+## Tests
+
+Add tests or console-verifiable checks for:
+- 1 role, T=30 => [30]
+- 2 roles, T=30
+- 5 roles, T=6 => [2,1,1,1,1]
+- 5 roles, T=30
+- 8 roles, T=30 => ranks 6-8 receive 0
+- final allocation always sums to T
+- tie remainders favour higher-ranked role
+
+Please first inspect the current employer display logic, then implement this as a clean reusable module and wire it into the recognition company selection flow.

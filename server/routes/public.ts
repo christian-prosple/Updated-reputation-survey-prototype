@@ -3,10 +3,13 @@ import { randomUUID } from "crypto";
 import { z } from "zod";
 import { storage } from "../storage";
 import { selectEmployers } from "../employer-logic";
+import { allocateCompaniesByRolePreference } from "../role-allocation";
 import {
   DEFAULT_EMPLOYER_DISPLAY_LOGIC,
+  DEFAULT_ROLE_ALLOCATION_CONFIG,
   type EmployerItem,
   type EmployerDisplayLogic,
+  type RoleAllocationConfig,
   type StoredAnswer,
   type ResponseMetadata,
 } from "@shared/schema";
@@ -14,6 +17,11 @@ import {
 async function getDisplayLogic(): Promise<EmployerDisplayLogic> {
   const stored = await storage.getSetting<EmployerDisplayLogic>("employerDisplayLogic");
   return stored ?? DEFAULT_EMPLOYER_DISPLAY_LOGIC;
+}
+
+async function getAllocationConfig(): Promise<RoleAllocationConfig> {
+  const stored = await storage.getSetting<RoleAllocationConfig>("roleAllocationConfig");
+  return stored ?? DEFAULT_ROLE_ALLOCATION_CONFIG;
 }
 
 const answerSchema = z.object({
@@ -85,49 +93,143 @@ export function registerPublicRoutes(app: Express): void {
   });
 
   // Select employers for the recognition step.
-  // Algorithm: up to 20 core employers (isCore=true, ranked lowest first) +
-  // random 10 from non-core, giving 30 total. Falls back to the legacy
-  // selectEmployers() when the new table is empty.
-  const TOTAL_SHOWN = 30;
-  const CORE_SLOTS = 20;
+  // New algorithm (when enabled): role-preference allocation across career paths.
+  // Legacy fallback: 20 core + 10 random non-core from the careerPathEmployers table,
+  // or selectEmployers() from the taxonomy if that table is empty.
   const employersSchema = z.object({
     sessionId: z.string().optional(),
     careerPaths: z.array(z.string()).default([]),
   });
+
   app.post("/api/survey/employers", async (req: Request, res: Response) => {
     const parsed = employersSchema.safeParse(req.body);
     if (!parsed.success) { res.status(400).json({ message: "Invalid payload" }); return; }
     const { sessionId, careerPaths } = parsed.data;
 
-    // --- New algorithm: query careerPathEmployers table ---
+    const allocationCfg = await getAllocationConfig();
+    const T = allocationCfg.totalCompanies;
+
+    // Fetch all active employer rows for the selected career paths.
     const allRows = await storage.listCareerPathEmployers();
     const relevant = allRows.filter(
       (r) => r.active && (careerPaths.length === 0 || careerPaths.includes(r.careerPath)),
     );
 
-    let shownNames: string[];
-    if (relevant.length > 0) {
-      // Deduplicate by employer name (lowest rank wins when same employer appears in multiple paths).
+    let shownNames: string[] = [];
+    let exposureMeta: Record<string, unknown> = {};
+
+    if (relevant.length > 0 && careerPaths.length > 0 && allocationCfg.enabled) {
+      // -----------------------------------------------------------------------
+      // ROLE-PREFERENCE ALLOCATION ALGORITHM
+      // -----------------------------------------------------------------------
+      const allocation = allocateCompaniesByRolePreference(careerPaths, T, allocationCfg);
+
+      // Build per-path pool (ordered by rank ascending).
+      const byPath = new Map<string, typeof relevant>();
+      for (const row of [...relevant].sort((a, b) => a.rank - b.rank)) {
+        const arr = byPath.get(row.careerPath) ?? [];
+        arr.push(row);
+        byPath.set(row.careerPath, arr);
+      }
+
+      const taken = new Set<string>(); // deduplicate by lowercase name
+      const rolePoolBreakdown: unknown[] = [];
+
+      // First pass: pick exactly `finalCompanies` from each role's pool.
+      for (const alloc of allocation.rows) {
+        if (alloc.finalCompanies === 0) continue;
+        const pool = byPath.get(alloc.roleId) ?? [];
+        const picked: string[] = [];
+        for (const emp of pool) {
+          if (picked.length >= alloc.finalCompanies) break;
+          const key = emp.employerName.toLowerCase();
+          if (!taken.has(key)) {
+            taken.add(key);
+            picked.push(emp.employerName);
+          }
+        }
+        rolePoolBreakdown.push({
+          role: alloc.roleId,
+          rank: alloc.rank,
+          allocated: alloc.finalCompanies,
+          actuallyUsed: picked.length,
+          poolSize: pool.length,
+        });
+        shownNames.push(...picked);
+      }
+
+      // Refill if deduplication left us short of T.
+      if (shownNames.length < T) {
+        // Iterate roles by rank (highest priority first) for refill.
+        for (const alloc of [...allocation.rows].sort((a, b) => a.rank - b.rank)) {
+          if (!alloc.considered) continue;
+          if (shownNames.length >= T) break;
+          const pool = byPath.get(alloc.roleId) ?? [];
+          for (const emp of pool) {
+            if (shownNames.length >= T) break;
+            const key = emp.employerName.toLowerCase();
+            if (!taken.has(key)) {
+              taken.add(key);
+              shownNames.push(emp.employerName);
+            }
+          }
+        }
+      }
+
+      // Shuffle display order.
+      shownNames = shownNames.sort(() => Math.random() - 0.5);
+
+      exposureMeta = {
+        careerPaths,
+        shown: shownNames,
+        recognized: [],
+        notRecognized: [],
+        algorithmVersion: "role_preference_allocation_v1",
+        allocationConfig: allocationCfg,
+        allocationResult: allocation.meta,
+        rolePoolBreakdown,
+      };
+    } else if (relevant.length > 0) {
+      // -----------------------------------------------------------------------
+      // LEGACY ALGORITHM: 20 core + 10 random non-core
+      // -----------------------------------------------------------------------
       const byName = new Map<string, typeof relevant[0]>();
       for (const row of relevant.sort((a, b) => a.rank - b.rank)) {
         if (!byName.has(row.employerName)) byName.set(row.employerName, row);
       }
       const unique = Array.from(byName.values());
-      const core = unique.filter((r) => r.isCore).slice(0, CORE_SLOTS);
+      const core = unique.filter((r) => r.isCore).slice(0, 20);
       const nonCore = unique.filter((r) => !r.isCore).sort(() => Math.random() - 0.5);
-      const needed = TOTAL_SHOWN - core.length;
-      const fill = nonCore.slice(0, needed);
-      shownNames = [...core, ...fill].map((r) => r.employerName);
+      const needed = T - core.length;
+      shownNames = [...core, ...nonCore.slice(0, needed)].map((r) => r.employerName);
+
+      exposureMeta = {
+        careerPaths,
+        shown: shownNames,
+        recognized: [],
+        notRecognized: [],
+        algorithmVersion: 2,
+      };
     } else {
-      // Legacy fallback
+      // -----------------------------------------------------------------------
+      // TAXONOMY FALLBACK (table empty)
+      // -----------------------------------------------------------------------
       const tax = await storage.getTaxonomyByType("employers");
       if (!tax) { res.status(404).json({ message: "No employer taxonomy configured" }); return; }
       const logic = await getDisplayLogic();
       const result = selectEmployers(tax.items as EmployerItem[], careerPaths, logic);
       shownNames = result.shown.map((e) => e.employerName);
+
+      exposureMeta = {
+        careerPaths,
+        shown: shownNames,
+        recognized: [],
+        notRecognized: [],
+        algorithmVersion: 1,
+      };
     }
 
-    // Record exposure (best-effort).
+    // Record exposure best-effort.
     if (sessionId) {
       const existing = await storage.getResponseBySession(sessionId);
       if (existing) {
@@ -135,12 +237,8 @@ export function registerPublicRoutes(app: Express): void {
           metadata: {
             ...existing.metadata,
             employerExposure: {
-              ...(existing.metadata.employerExposure ?? { recognized: [], notRecognized: [] }),
-              careerPaths,
-              shown: shownNames,
-              recognized: existing.metadata.employerExposure?.recognized ?? [],
-              notRecognized: existing.metadata.employerExposure?.notRecognized ?? [],
-              algorithmVersion: 2,
+              ...(existing.metadata.employerExposure ?? {}),
+              ...exposureMeta,
             },
           },
         });
@@ -162,7 +260,7 @@ export function registerPublicRoutes(app: Express): void {
   app.post("/api/survey/complete", async (req: Request, res: Response) => {
     const parsed = completeSchema.safeParse(req.body);
     if (!parsed.success) {
-      res.status(400).json({ message: "Invalid payload" });
+      res.status(400).json({ message: "Invalid payload", errors: parsed.error.flatten() });
       return;
     }
     const { sessionId, answers, metadata, respondentEmail } = parsed.data;

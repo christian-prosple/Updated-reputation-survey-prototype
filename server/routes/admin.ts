@@ -7,9 +7,12 @@ import {
   insertTaxonomySchema,
   insertCareerPathEmployerSchema,
   DEFAULT_EMPLOYER_DISPLAY_LOGIC,
+  DEFAULT_ROLE_ALLOCATION_CONFIG,
   employerDisplayLogicSchema,
+  roleAllocationConfigSchema,
   type EmployerItem,
   type EmployerDisplayLogic,
+  type RoleAllocationConfig,
   type SurveyResponse,
 } from "@shared/schema";
 
@@ -564,7 +567,6 @@ export function registerAdminRoutes(app: Express): void {
     res.json(logic);
   });
   app.put("/api/admin/settings/employer-logic", async (req, res) => {
-    // Validate the incoming payload (bounds + types) before merging.
     const parsed = employerDisplayLogicSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ message: "Invalid display logic", errors: parsed.error.flatten() });
@@ -579,6 +581,22 @@ export function registerAdminRoutes(app: Express): void {
       version: (incoming.version ?? DEFAULT_EMPLOYER_DISPLAY_LOGIC.version),
     };
     await storage.setSetting("employerDisplayLogic", merged as unknown as Record<string, unknown>);
+    res.json(merged);
+  });
+
+  // --- Settings: role allocation config ---
+  app.get("/api/admin/settings/role-allocation", async (_req, res) => {
+    const cfg = (await storage.getSetting<RoleAllocationConfig>("roleAllocationConfig")) ?? DEFAULT_ROLE_ALLOCATION_CONFIG;
+    res.json(cfg);
+  });
+  app.put("/api/admin/settings/role-allocation", async (req, res) => {
+    const parsed = roleAllocationConfigSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ message: "Invalid allocation config", errors: parsed.error.flatten() });
+      return;
+    }
+    const merged: RoleAllocationConfig = { ...DEFAULT_ROLE_ALLOCATION_CONFIG, ...parsed.data };
+    await storage.setSetting("roleAllocationConfig", merged as unknown as Record<string, unknown>);
     res.json(merged);
   });
 }

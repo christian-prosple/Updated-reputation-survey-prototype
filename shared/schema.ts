@@ -349,6 +349,41 @@ export const DEFAULT_EMPLOYER_DISPLAY_LOGIC: EmployerDisplayLogic = {
 };
 
 // ---------------------------------------------------------------------------
+// ROLE PREFERENCE ALLOCATION CONFIG
+// ---------------------------------------------------------------------------
+// Stored in app_settings under the key "roleAllocationConfig".
+// Controls how many employers are allocated from each career-path pool.
+
+export interface RoleAllocationConfig {
+  enabled: boolean;
+  totalCompanies: number;       // T, default 30
+  maxRolesConsidered: number;   // n_eff cap, default 5
+  alphaMin: number;             // floor for decay exponent, default 0.6
+  alphaBase: number;            // starting decay exponent, default 1.4
+  alphaSlope: number;           // how fast alpha decreases with more roles, default 0.15
+}
+
+export const DEFAULT_ROLE_ALLOCATION_CONFIG: RoleAllocationConfig = {
+  enabled: true,
+  totalCompanies: 30,
+  maxRolesConsidered: 5,
+  alphaMin: 0.6,
+  alphaBase: 1.4,
+  alphaSlope: 0.15,
+};
+
+export const roleAllocationConfigSchema = z
+  .object({
+    enabled: z.boolean(),
+    totalCompanies: z.number().int().min(1).max(500),
+    maxRolesConsidered: z.number().int().min(1).max(20),
+    alphaMin: z.number().min(0).max(10),
+    alphaBase: z.number().min(0).max(10),
+    alphaSlope: z.number().min(0).max(10),
+  })
+  .partial();
+
+// ---------------------------------------------------------------------------
 // CAREER PATH EMPLOYERS
 // ---------------------------------------------------------------------------
 // One row per (careerPath, employerName) pair. Rank = position in the source
