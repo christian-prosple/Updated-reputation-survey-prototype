@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
+import BrandLogo from "@/components/BrandLogo";
 import { useSurvey, ROLES, RoleType, CompanyEntity, GENDERS, EDUCATION_STATUSES, ALL_COMPANY_NAMES, COMPANIES_BY_ROLE } from "@/hooks/use-survey";
 import { useSurveyBackend } from "@/hooks/use-survey-backend";
 import { DEGREE_TAXONOMY, ALL_DEGREES, DEGREE_CATEGORIES } from "@/data/degrees";
@@ -2291,6 +2292,9 @@ export default function SurveyPage() {
       className="min-h-screen bg-slate-50/50 flex flex-col font-sans text-slate-900"
       onClick={() => { setIsSearchFocused(false); setIsCountrySearchFocused(false); setIsEducationLevelFocused(false); setIsGenderFocused(false); setIsGradMonthFocused(false); setIsDegreeSearchFocused(false); setIsCitySearchFocused(false); }}
     >
+      {/* Brand logo */}
+      <BrandLogo />
+
       {/* Admin link */}
       <Link
         href="/admin"

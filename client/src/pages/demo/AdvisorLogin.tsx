@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import BrandLogo from "@/components/BrandLogo";
 
 export default function AdvisorLogin() {
   const [, setLocation] = useLocation();
@@ -23,6 +24,7 @@ export default function AdvisorLogin() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 flex flex-col items-center justify-center px-4 font-sans text-slate-900">
+      <BrandLogo />
       <Card className="w-full max-w-md">
         <CardContent className="pt-8 pb-8">
           <form onSubmit={handleLogin} className="space-y-6">

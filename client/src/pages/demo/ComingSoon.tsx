@@ -2,6 +2,7 @@ import { useLocation, useSearch } from "wouter";
 import { Clock, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import BrandLogo from "@/components/BrandLogo";
 
 export default function ComingSoon() {
   const [, setLocation] = useLocation();
@@ -14,6 +15,7 @@ export default function ComingSoon() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 flex flex-col items-center justify-center px-4 font-sans text-slate-900">
+      <BrandLogo />
       <Card className="w-full max-w-md">
         <CardContent className="pt-8 pb-8 flex flex-col items-center text-center space-y-4">
           <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">

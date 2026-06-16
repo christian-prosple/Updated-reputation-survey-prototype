@@ -2,6 +2,7 @@ import { useLocation, useSearch } from "wouter";
 import { Briefcase, GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import BrandLogo from "@/components/BrandLogo";
 
 export default function DemoType() {
   const [, setLocation] = useLocation();
@@ -11,6 +12,7 @@ export default function DemoType() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 flex flex-col items-center justify-center px-4 font-sans text-slate-900">
+      <BrandLogo />
       <div className="w-full max-w-2xl space-y-6">
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold" data-testid="text-demotype-title">

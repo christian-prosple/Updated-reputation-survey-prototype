@@ -13,6 +13,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import BrandLogo from "@/components/BrandLogo";
 import { cn } from "@/lib/utils";
 import type { Taxonomy, SimpleTaxonomyItem } from "@shared/schema";
 
@@ -40,6 +41,7 @@ export default function UniversitySelection() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 flex flex-col items-center justify-center px-4 font-sans text-slate-900">
+      <BrandLogo />
       <Card className="w-full max-w-md">
         <CardContent className="pt-8 pb-8 space-y-6">
           <div className="flex flex-col items-center text-center space-y-3">

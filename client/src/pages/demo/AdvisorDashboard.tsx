@@ -4,6 +4,7 @@ import { Users, UserPlus, Building2, Search, ChevronLeft, ChevronRight } from "l
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import BrandLogo from "@/components/BrandLogo";
 import {
   DEMO_STUDENTS,
   RESPONDENT_COUNT,
@@ -34,15 +35,19 @@ export default function AdvisorDashboard() {
     <div className="min-h-screen bg-slate-50/50 font-sans text-slate-900">
       <header className="bg-white border-b">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold" data-testid="text-dashboard-title">
-              Career Advisor Dashboard
-            </h1>
-            {university && (
-              <p className="text-sm text-slate-500" data-testid="text-dashboard-university">
-                {university}
-              </p>
-            )}
+          <div className="flex items-center gap-4">
+            <BrandLogo variant="inline" />
+            <div className="hidden sm:block h-8 w-px bg-slate-200" />
+            <div>
+              <h1 className="text-xl font-bold" data-testid="text-dashboard-title">
+                Career Advisor Dashboard
+              </h1>
+              {university && (
+                <p className="text-sm text-slate-500" data-testid="text-dashboard-university">
+                  {university}
+                </p>
+              )}
+            </div>
           </div>
           <Button
             variant="ghost"
