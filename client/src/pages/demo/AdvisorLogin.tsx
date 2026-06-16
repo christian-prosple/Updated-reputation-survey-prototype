@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation, useSearch } from "wouter";
-import { Briefcase, ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,10 +29,7 @@ export default function AdvisorLogin() {
         <CardContent className="pt-8 pb-8">
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="flex flex-col items-center text-center space-y-3">
-              <div className="w-12 h-12 rounded-none bg-muted border border-border flex items-center justify-center">
-                <Briefcase className="w-6 h-6 text-foreground" />
-              </div>
-              <h1 className="text-2xl font-bold" data-testid="text-login-title">
+              <h1 className="text-2xl font-normal" data-testid="text-login-title">
                 Career Advisor Login
               </h1>
             </div>

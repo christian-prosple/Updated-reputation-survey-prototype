@@ -1,5 +1,5 @@
 import { useLocation, useSearch } from "wouter";
-import { Briefcase, GraduationCap, ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import BrandLogo from "@/components/BrandLogo";
@@ -15,7 +15,7 @@ export default function DemoType() {
       <BrandLogo />
       <div className="w-full max-w-2xl space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold" data-testid="text-demotype-title">
+          <h1 className="text-2xl font-normal" data-testid="text-demotype-title">
             Choose a demo
           </h1>
           {university && (
@@ -32,10 +32,7 @@ export default function DemoType() {
             data-testid="card-career-advisor"
           >
             <CardContent className="pt-8 pb-8 flex flex-col items-center text-center space-y-3">
-              <div className="w-12 h-12 rounded-none bg-muted border border-border flex items-center justify-center">
-                <Briefcase className="w-6 h-6 text-foreground" />
-              </div>
-              <h2 className="text-lg font-semibold">Career Advisor Demo</h2>
+              <h2 className="text-lg font-normal">Career Advisor Demo</h2>
               <p className="text-sm text-muted-foreground">
                 Log in as a career advisor and explore the dashboard.
               </p>
@@ -51,10 +48,7 @@ export default function DemoType() {
             data-testid="card-student"
           >
             <CardContent className="pt-8 pb-8 flex flex-col items-center text-center space-y-3">
-              <div className="w-12 h-12 rounded-none bg-muted border border-border flex items-center justify-center">
-                <GraduationCap className="w-6 h-6 text-foreground" />
-              </div>
-              <h2 className="text-lg font-semibold">Student Demo</h2>
+              <h2 className="text-lg font-normal">Student Demo</h2>
               <p className="text-sm text-muted-foreground">
                 See the experience from a student's perspective.
               </p>

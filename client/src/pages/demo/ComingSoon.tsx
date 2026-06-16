@@ -1,5 +1,5 @@
 import { useLocation, useSearch } from "wouter";
-import { Clock, ChevronLeft } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import BrandLogo from "@/components/BrandLogo";
@@ -18,10 +18,7 @@ export default function ComingSoon() {
       <BrandLogo />
       <Card className="w-full max-w-md border-0 bg-transparent">
         <CardContent className="pt-8 pb-8 flex flex-col items-center text-center space-y-4">
-          <div className="w-12 h-12 rounded-none bg-muted border border-border flex items-center justify-center">
-            <Clock className="w-6 h-6 text-foreground" />
-          </div>
-          <h1 className="text-2xl font-bold" data-testid="text-comingsoon-title">
+          <h1 className="text-2xl font-normal" data-testid="text-comingsoon-title">
             {title}
           </h1>
           <p className="text-sm text-slate-500" data-testid="text-comingsoon-message">
