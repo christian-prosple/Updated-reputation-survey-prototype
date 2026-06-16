@@ -84,27 +84,50 @@ export function registerPublicRoutes(app: Express): void {
     res.json({ ok: true, responseId: updated?.id });
   });
 
-  // Select employers for the recognition step using the display algorithm.
+  // Select employers for the recognition step.
+  // Algorithm: up to 20 core employers (isCore=true, ranked lowest first) +
+  // random 10 from non-core, giving 30 total. Falls back to the legacy
+  // selectEmployers() when the new table is empty.
+  const TOTAL_SHOWN = 30;
+  const CORE_SLOTS = 20;
   const employersSchema = z.object({
     sessionId: z.string().optional(),
     careerPaths: z.array(z.string()).default([]),
   });
   app.post("/api/survey/employers", async (req: Request, res: Response) => {
     const parsed = employersSchema.safeParse(req.body);
-    if (!parsed.success) {
-      res.status(400).json({ message: "Invalid payload" });
-      return;
-    }
+    if (!parsed.success) { res.status(400).json({ message: "Invalid payload" }); return; }
     const { sessionId, careerPaths } = parsed.data;
-    const tax = await storage.getTaxonomyByType("employers");
-    if (!tax) {
-      res.status(404).json({ message: "No employer taxonomy configured" });
-      return;
-    }
-    const logic = await getDisplayLogic();
-    const result = selectEmployers(tax.items as EmployerItem[], careerPaths, logic);
 
-    // Record what was shown on the response (best-effort).
+    // --- New algorithm: query careerPathEmployers table ---
+    const allRows = await storage.listCareerPathEmployers();
+    const relevant = allRows.filter(
+      (r) => r.active && (careerPaths.length === 0 || careerPaths.includes(r.careerPath)),
+    );
+
+    let shownNames: string[];
+    if (relevant.length > 0) {
+      // Deduplicate by employer name (lowest rank wins when same employer appears in multiple paths).
+      const byName = new Map<string, typeof relevant[0]>();
+      for (const row of relevant.sort((a, b) => a.rank - b.rank)) {
+        if (!byName.has(row.employerName)) byName.set(row.employerName, row);
+      }
+      const unique = Array.from(byName.values());
+      const core = unique.filter((r) => r.isCore).slice(0, CORE_SLOTS);
+      const nonCore = unique.filter((r) => !r.isCore).sort(() => Math.random() - 0.5);
+      const needed = TOTAL_SHOWN - core.length;
+      const fill = nonCore.slice(0, needed);
+      shownNames = [...core, ...fill].map((r) => r.employerName);
+    } else {
+      // Legacy fallback
+      const tax = await storage.getTaxonomyByType("employers");
+      if (!tax) { res.status(404).json({ message: "No employer taxonomy configured" }); return; }
+      const logic = await getDisplayLogic();
+      const result = selectEmployers(tax.items as EmployerItem[], careerPaths, logic);
+      shownNames = result.shown.map((e) => e.employerName);
+    }
+
+    // Record exposure (best-effort).
     if (sessionId) {
       const existing = await storage.getResponseBySession(sessionId);
       if (existing) {
@@ -114,11 +137,10 @@ export function registerPublicRoutes(app: Express): void {
             employerExposure: {
               ...(existing.metadata.employerExposure ?? { recognized: [], notRecognized: [] }),
               careerPaths,
-              shown: result.shown.map((e) => e.employerName),
+              shown: shownNames,
               recognized: existing.metadata.employerExposure?.recognized ?? [],
               notRecognized: existing.metadata.employerExposure?.notRecognized ?? [],
-              algorithmVersion: result.logicVersion,
-              displayLogicSnapshot: logic as unknown as Record<string, unknown>,
+              algorithmVersion: 2,
             },
           },
         });
@@ -126,14 +148,7 @@ export function registerPublicRoutes(app: Express): void {
     }
 
     res.json({
-      employers: result.shown.map((e) => ({
-        id: e.id,
-        name: e.employerName,
-        displayName: e.displayName || e.employerName,
-        careerPath: e.careerPath,
-        isClient: e.isClient ?? false,
-      })),
-      candidatesConsidered: result.candidatesConsidered,
+      employers: shownNames.map((name, i) => ({ id: `emp-${i}`, name, displayName: name })),
     });
   });
 

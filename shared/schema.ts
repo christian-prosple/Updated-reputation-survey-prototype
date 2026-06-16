@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -347,6 +347,32 @@ export const DEFAULT_EMPLOYER_DISPLAY_LOGIC: EmployerDisplayLogic = {
   fallback: "fill_from_all",
   shuffle: true,
 };
+
+// ---------------------------------------------------------------------------
+// CAREER PATH EMPLOYERS
+// ---------------------------------------------------------------------------
+// One row per (careerPath, employerName) pair. Rank = position in the source
+// CSV column (1 = top). isCore = true means the employer is always included
+// in the 30 shown to a respondent (first 20 by rank). The remaining 10 are
+// randomly sampled from non-core employers for that path.
+// ---------------------------------------------------------------------------
+
+export const careerPathEmployers = pgTable(
+  "career_path_employers",
+  {
+    id: serial("id").primaryKey(),
+    careerPath: text("career_path").notNull(),
+    employerName: text("employer_name").notNull(),
+    rank: integer("rank").notNull().default(0),
+    isCore: boolean("is_core").notNull().default(false),
+    active: boolean("active").notNull().default(true),
+  },
+  (t) => ({ uniq: unique().on(t.careerPath, t.employerName) }),
+);
+
+export const insertCareerPathEmployerSchema = createInsertSchema(careerPathEmployers).omit({ id: true });
+export type CareerPathEmployer = typeof careerPathEmployers.$inferSelect;
+export type InsertCareerPathEmployer = z.infer<typeof insertCareerPathEmployerSchema>;
 
 // ---------------------------------------------------------------------------
 // Legacy users table (kept for compatibility; unused by the survey).

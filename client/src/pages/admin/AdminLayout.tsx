@@ -1,11 +1,12 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, FileText, ListChecks, Database, Sliders, ExternalLink } from "lucide-react";
+import { LayoutDashboard, FileText, ListChecks, Database, Sliders, ExternalLink, Building2 } from "lucide-react";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/responses", label: "Responses", icon: ListChecks },
   { href: "/admin/survey", label: "Survey Editor", icon: FileText },
+  { href: "/admin/employers", label: "Employers", icon: Building2 },
   { href: "/admin/taxonomies", label: "Taxonomies", icon: Database },
   { href: "/admin/settings", label: "Display Logic", icon: Sliders },
 ];

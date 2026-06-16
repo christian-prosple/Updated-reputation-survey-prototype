@@ -12,6 +12,7 @@ import AdminSurveyEditor from "@/pages/admin/SurveyEditor";
 import AdminTaxonomies from "@/pages/admin/Taxonomies";
 import AdminSettings from "@/pages/admin/Settings";
 import AdminPreview from "@/pages/admin/Preview";
+import AdminEmployers from "@/pages/admin/Employers";
 
 function AdminRouter() {
   return (
@@ -21,6 +22,7 @@ function AdminRouter() {
         <Route path="/admin/responses" component={AdminResponses} />
         <Route path="/admin/survey" component={AdminSurveyEditor} />
         <Route path="/admin/preview/:surveyConfigId" component={AdminPreview} />
+        <Route path="/admin/employers" component={AdminEmployers} />
         <Route path="/admin/taxonomies" component={AdminTaxonomies} />
         <Route path="/admin/settings" component={AdminSettings} />
         <Route component={NotFound} />

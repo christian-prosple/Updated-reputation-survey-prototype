@@ -1,4 +1,4 @@
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, asc } from "drizzle-orm";
 import { db } from "./db";
 import {
   users,
@@ -7,6 +7,7 @@ import {
   taxonomies,
   taxonomyImports,
   appSettings,
+  careerPathEmployers,
   type User,
   type InsertUser,
   type SurveyConfig,
@@ -18,6 +19,8 @@ import {
   type TaxonomyImport,
   type InsertTaxonomyImport,
   type ResponseStatus,
+  type CareerPathEmployer,
+  type InsertCareerPathEmployer,
 } from "@shared/schema";
 
 // Filters for querying responses. careerPath matches against the employer
@@ -75,6 +78,14 @@ export interface IStorage {
   // Settings
   getSetting<T = Record<string, unknown>>(key: string): Promise<T | undefined>;
   setSetting(key: string, value: Record<string, unknown>): Promise<void>;
+
+  // Career path employers
+  listCareerPaths(): Promise<string[]>;
+  listCareerPathEmployers(careerPath?: string): Promise<CareerPathEmployer[]>;
+  createCareerPathEmployer(data: InsertCareerPathEmployer): Promise<CareerPathEmployer>;
+  bulkSeedCareerPathEmployers(rows: InsertCareerPathEmployer[], mode: "replace" | "merge"): Promise<void>;
+  updateCareerPathEmployer(id: number, patch: Partial<InsertCareerPathEmployer>): Promise<CareerPathEmployer | undefined>;
+  deleteCareerPathEmployer(id: number): Promise<void>;
 }
 
 export class DbStorage implements IStorage {
@@ -262,6 +273,67 @@ export class DbStorage implements IStorage {
       .insert(appSettings)
       .values({ key, value })
       .onConflictDoUpdate({ target: appSettings.key, set: { value, updatedAt: new Date() } });
+  }
+
+  // --- Career path employers ---
+  async listCareerPaths(): Promise<string[]> {
+    const rows = await db
+      .selectDistinct({ careerPath: careerPathEmployers.careerPath })
+      .from(careerPathEmployers)
+      .orderBy(asc(careerPathEmployers.careerPath));
+    return rows.map((r) => r.careerPath);
+  }
+
+  async listCareerPathEmployers(careerPath?: string): Promise<CareerPathEmployer[]> {
+    if (careerPath) {
+      return db
+        .select()
+        .from(careerPathEmployers)
+        .where(eq(careerPathEmployers.careerPath, careerPath))
+        .orderBy(asc(careerPathEmployers.rank));
+    }
+    return db.select().from(careerPathEmployers).orderBy(asc(careerPathEmployers.careerPath), asc(careerPathEmployers.rank));
+  }
+
+  async createCareerPathEmployer(data: InsertCareerPathEmployer): Promise<CareerPathEmployer> {
+    const [row] = await db.insert(careerPathEmployers).values(data).returning();
+    return row;
+  }
+
+  async bulkSeedCareerPathEmployers(rows: InsertCareerPathEmployer[], mode: "replace" | "merge"): Promise<void> {
+    if (rows.length === 0) return;
+    if (mode === "replace") {
+      await db.delete(careerPathEmployers);
+      const CHUNK = 500;
+      for (let i = 0; i < rows.length; i += CHUNK) {
+        await db.insert(careerPathEmployers).values(rows.slice(i, i + CHUNK));
+      }
+    } else {
+      // Upsert in chunks — conflict on (careerPath, employerName)
+      const CHUNK = 500;
+      for (let i = 0; i < rows.length; i += CHUNK) {
+        await db
+          .insert(careerPathEmployers)
+          .values(rows.slice(i, i + CHUNK))
+          .onConflictDoUpdate({
+            target: [careerPathEmployers.careerPath, careerPathEmployers.employerName],
+            set: { rank: sql`excluded.rank`, isCore: sql`excluded.is_core`, active: sql`excluded.active` },
+          });
+      }
+    }
+  }
+
+  async updateCareerPathEmployer(id: number, patch: Partial<InsertCareerPathEmployer>): Promise<CareerPathEmployer | undefined> {
+    const [row] = await db
+      .update(careerPathEmployers)
+      .set(patch)
+      .where(eq(careerPathEmployers.id, id))
+      .returning();
+    return row;
+  }
+
+  async deleteCareerPathEmployer(id: number): Promise<void> {
+    await db.delete(careerPathEmployers).where(eq(careerPathEmployers.id, id));
   }
 }
 

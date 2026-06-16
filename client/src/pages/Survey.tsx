@@ -437,9 +437,24 @@ export default function SurveyPage() {
 
   // --- EFFECT: Initialize Companies for Step 7 (Company Recognition) ---
   useEffect(() => {
-    if (state.step === 7 && state.displayedCompanies.length === 0) {
-      actions.generateCompanyPool();
-    }
+    if (state.step !== 7 || state.displayedCompanies.length > 0) return;
+    const careerPaths = state.selectedRoles;
+    fetch("/api/survey/employers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ careerPaths }),
+    })
+      .then((r) => r.json())
+      .then((data: { employers?: { id: string; name: string }[] }) => {
+        if (data.employers && data.employers.length > 0) {
+          actions.setDisplayedCompanies(
+            data.employers.map((e) => ({ id: e.id, name: e.name, role: careerPaths[0] ?? "" }))
+          );
+        } else {
+          actions.generateCompanyPool();
+        }
+      })
+      .catch(() => actions.generateCompanyPool());
   }, [state.step]);
 
   // --- EFFECT: Initialize Final Ranking for Step 9 (Final Ranking) ---

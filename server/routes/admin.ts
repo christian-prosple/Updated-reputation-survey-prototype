@@ -5,6 +5,7 @@ import { parseCsv, toBool, toNum } from "../csv";
 import {
   insertSurveyConfigSchema,
   insertTaxonomySchema,
+  insertCareerPathEmployerSchema,
   DEFAULT_EMPLOYER_DISPLAY_LOGIC,
   employerDisplayLogicSchema,
   type EmployerItem,
@@ -460,6 +461,26 @@ export function registerAdminRoutes(app: Express): void {
       }
     }
 
+    // Build flat list for the new careerPathEmployers table:
+    // one row per (careerPath, employer) so we can query per path and track rank.
+    const CORE_THRESHOLD = 20;
+    type CpeRow = { careerPath: string; employerName: string; rank: number; isCore: boolean; active: boolean };
+    const cpeRows: CpeRow[] = [];
+    for (let rowIdx = 1; rowIdx < lines.length; rowIdx++) {
+      const cells = splitRow(lines[rowIdx]);
+      for (let col = 0; col < rawPaths.length; col++) {
+        const pathName = rawPaths[col];
+        if (!pathName) continue;
+        const name = (cells[col] ?? "").trim();
+        if (!name) continue;
+        cpeRows.push({ careerPath: pathName, employerName: name, rank: rowIdx, isCore: rowIdx <= CORE_THRESHOLD, active: true });
+      }
+    }
+
+    // Seed careerPathEmployers table (source of truth for surfacing logic).
+    await storage.bulkSeedCareerPathEmployers(cpeRows, parsed.data.mode);
+
+    // Also keep the legacy taxonomy items blob in sync.
     const importedItems: EmployerItem[] = [];
     for (const [, e] of byKey) {
       const paths = Array.from(e.paths).sort();
@@ -494,7 +515,42 @@ export function registerAdminRoutes(app: Express): void {
     }
 
     const updated = await storage.updateTaxonomy(taxId, { items: finalItems });
-    res.json({ ok: true, imported: importedItems.length, total: finalItems.length, careerPaths: careerPaths.length });
+    const uniqueCareerPaths = Array.from(new Set(cpeRows.map((r) => r.careerPath)));
+    res.json({ ok: true, imported: importedItems.length, total: finalItems.length, careerPaths: uniqueCareerPaths.length });
+  });
+
+  // --- Career path employer CRUD ---
+  app.get("/api/admin/career-paths", async (_req, res) => {
+    res.json(await storage.listCareerPaths());
+  });
+
+  app.get("/api/admin/career-path-employers", async (req, res) => {
+    const careerPath = typeof req.query.careerPath === "string" ? req.query.careerPath : undefined;
+    res.json(await storage.listCareerPathEmployers(careerPath));
+  });
+
+  app.post("/api/admin/career-path-employers", async (req, res) => {
+    const parsed = insertCareerPathEmployerSchema.safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ message: "Invalid payload", errors: parsed.error.flatten() }); return; }
+    const existing = await storage.listCareerPathEmployers(parsed.data.careerPath);
+    const maxRank = existing.reduce((m, e) => Math.max(m, e.rank), 0);
+    const row = await storage.createCareerPathEmployer({ ...parsed.data, rank: parsed.data.rank ?? maxRank + 1 });
+    res.json(row);
+  });
+
+  app.patch("/api/admin/career-path-employers/:id", async (req, res) => {
+    const id = Number(req.params.id);
+    const patchSchema = insertCareerPathEmployerSchema.partial();
+    const parsed = patchSchema.safeParse(req.body);
+    if (!parsed.success) { res.status(400).json({ message: "Invalid patch" }); return; }
+    const row = await storage.updateCareerPathEmployer(id, parsed.data);
+    if (!row) { res.status(404).json({ message: "Not found" }); return; }
+    res.json(row);
+  });
+
+  app.delete("/api/admin/career-path-employers/:id", async (req, res) => {
+    await storage.deleteCareerPathEmployer(Number(req.params.id));
+    res.json({ ok: true });
   });
 
   app.get("/api/admin/imports", async (req, res) => {
