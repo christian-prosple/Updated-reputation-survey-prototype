@@ -8,6 +8,7 @@ import SurveyPage from "@/pages/Survey";
 import UniversitySelection from "@/pages/demo/UniversitySelection";
 import DemoType from "@/pages/demo/DemoType";
 import AdvisorLogin from "@/pages/demo/AdvisorLogin";
+import StudentLogin from "@/pages/demo/StudentLogin";
 import AdvisorDashboard from "@/pages/demo/AdvisorDashboard";
 import RespondentList from "@/pages/demo/RespondentList";
 import InvitedStudents from "@/pages/demo/InvitedStudents";
@@ -47,6 +48,7 @@ function Router() {
       <Route path="/" component={UniversitySelection} />
       <Route path="/demo/type" component={DemoType} />
       <Route path="/demo/login" component={AdvisorLogin} />
+      <Route path="/demo/student" component={StudentLogin} />
       <Route path="/demo/dashboard" component={AdvisorDashboard} />
       <Route path="/demo/respondents" component={RespondentList} />
       <Route path="/demo/invited" component={InvitedStudents} />

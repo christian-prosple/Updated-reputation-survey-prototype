@@ -43,7 +43,7 @@ export default function DemoType() {
 
           <Card
             className="cursor-pointer transition-colors hover:border-foreground"
-            onClick={() => setLocation(`/survey${uniParam}`)}
+            onClick={() => setLocation(`/demo/student${uniParam}`)}
             data-testid="card-student"
           >
             <CardContent className="pt-8 pb-8 flex flex-col items-center text-center space-y-3">
