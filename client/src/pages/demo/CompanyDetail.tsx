@@ -18,9 +18,7 @@ import {
   getCompanyRank,
   computeFunnel,
   CANONICAL_RANKING,
-  AWARENESS_BARS,
   STRENGTH_BARS,
-  AWARENESS_AVG,
   STRENGTH_AVG,
 } from "@/data/company-metrics";
 
@@ -80,24 +78,6 @@ export default function CompanyDetail() {
       />
 
       <main className="max-w-5xl mx-auto px-4 pt-6 pb-12 space-y-6">
-        {/* Brand Awareness */}
-        <Card>
-          <CardContent className="pt-6">
-            <SectionHeading
-              title="Brand Awareness"
-              hint="Share of students who recognise each employer's brand, ranked highest to lowest."
-            />
-            <MetricBarChart
-              bars={AWARENESS_BARS}
-              max={100}
-              average={AWARENESS_AVG}
-              highlightName={name}
-              format={(v) => `${v}%`}
-              testid="chart-awareness"
-            />
-          </CardContent>
-        </Card>
-
         {/* Brand Strength */}
         <Card>
           <CardContent className="pt-6">
@@ -111,6 +91,7 @@ export default function CompanyDetail() {
               average={STRENGTH_AVG}
               highlightName={name}
               format={(v) => v.toFixed(1)}
+              showValues={false}
               testid="chart-strength"
             />
           </CardContent>

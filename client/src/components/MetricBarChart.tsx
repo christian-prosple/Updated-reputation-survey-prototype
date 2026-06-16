@@ -12,6 +12,7 @@ export default function MetricBarChart({
   average,
   highlightName,
   format,
+  showValues = true,
   testid,
 }: {
   bars: MetricBar[];
@@ -19,6 +20,7 @@ export default function MetricBarChart({
   average: number;
   highlightName: string;
   format: (v: number) => string;
+  showValues?: boolean;
   testid?: string;
 }) {
   const avgOffset = (average / max) * USABLE_HEIGHT;
@@ -52,16 +54,18 @@ export default function MetricBarChart({
                 className="flex w-10 shrink-0 flex-col items-center justify-end"
                 style={{ height: CHART_HEIGHT }}
               >
-                <span
-                  className={cn(
-                    "mb-1 text-[10px] tabular-nums whitespace-nowrap",
-                    isActive
-                      ? "font-semibold text-foreground"
-                      : "text-muted-foreground"
-                  )}
-                >
-                  {format(b.value)}
-                </span>
+                {showValues && (
+                  <span
+                    className={cn(
+                      "mb-1 text-[10px] tabular-nums whitespace-nowrap",
+                      isActive
+                        ? "font-semibold text-foreground"
+                        : "text-muted-foreground"
+                    )}
+                  >
+                    {format(b.value)}
+                  </span>
+                )}
                 <div
                   className={cn(
                     "w-full",
