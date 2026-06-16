@@ -45,11 +45,7 @@ export default function DemoType() {
 
           <Card
             className="cursor-pointer transition-shadow hover:shadow-md"
-            onClick={() =>
-              setLocation(
-                `/demo/coming-soon?title=${encodeURIComponent("Student Demo")}&from=${encodeURIComponent(`/demo/type${uniParam}`)}`
-              )
-            }
+            onClick={() => setLocation(`/survey${uniParam}`)}
             data-testid="card-student"
           >
             <CardContent className="pt-8 pb-8 flex flex-col items-center text-center space-y-3">
