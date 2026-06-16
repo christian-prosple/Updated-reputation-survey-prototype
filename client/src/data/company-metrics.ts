@@ -62,13 +62,13 @@ export function computeAwareness(rank: number, name: string): number {
   return Math.round(clamp(base + jitter, 6, 100));
 }
 
-// Brand Strength: 0–10 score. Best brand ~10.0, worst ~2.2, with its own
-// per-company offset so it doesn't mirror Brand Awareness.
-export function computeStrength(rank: number, name: string): number {
+// Brand Strength: 0–10 score derived purely from rank, so it decreases in
+// step with the "Most Sought After Employers" order — the top company has the
+// highest strength and each lower-ranked company has a lower score.
+export function computeStrength(rank: number): number {
   const t = rankT(rank);
   const base = 10 - 7.8 * Math.pow(t, 1.2);
-  const jitter = nameOffset(name, "strength") * 1.1;
-  return round1(clamp(base + jitter, 1.5, 10));
+  return round1(clamp(base, 1.5, 10));
 }
 
 export interface FunnelStage {
@@ -116,7 +116,7 @@ export const AWARENESS_BARS: MetricBar[] = CANONICAL_RANKING.map((c, i) => ({
 export const STRENGTH_BARS: MetricBar[] = CANONICAL_RANKING.map((c, i) => ({
   name: c.name,
   rank: i + 1,
-  value: computeStrength(i + 1, c.name),
+  value: computeStrength(i + 1),
 }));
 
 function average(values: number[]): number {
