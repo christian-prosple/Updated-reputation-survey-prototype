@@ -105,23 +105,33 @@ export default function SoughtAfterEmployers() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {companies.map((c) => (
-              <Card key={c.name} data-testid={`card-company-${c.name}`}>
-                <CardContent className="p-4 flex items-center gap-3">
-                  <CompanyLogo name={c.name} />
-                  <div className="min-w-0">
-                    <p className="font-medium truncate" data-testid={`text-company-name-${c.name}`}>
+          <Card>
+            <CardContent className="py-2">
+              <ol className="divide-y">
+                {companies.map((c, i) => (
+                  <li
+                    key={c.name}
+                    className="flex items-center gap-4 py-3"
+                    data-testid={`card-company-${c.name}`}
+                  >
+                    <span className="w-8 text-lg font-semibold text-slate-400 tabular-nums">
+                      {i + 1}
+                    </span>
+                    <CompanyLogo name={c.name} />
+                    <span
+                      className="flex-1 font-medium truncate"
+                      data-testid={`text-company-name-${c.name}`}
+                    >
                       {c.name}
-                    </p>
-                    <p className="text-xs text-slate-500">
+                    </span>
+                    <span className="text-xs text-slate-500 shrink-0">
                       {c.count} interested
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                    </span>
+                  </li>
+                ))}
+              </ol>
+            </CardContent>
+          </Card>
         )}
       </main>
     </div>
