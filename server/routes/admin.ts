@@ -409,10 +409,33 @@ export function registerAdminRoutes(app: Express): void {
     // Prefer tab if any tab present — counting commas is unreliable because
     // career-path names themselves contain commas (e.g. "Actuarial Studies, Insurance & Risk").
     const delimiter = lines[0].includes("\t") ? "\t" : ",";
+    const splitCSVRow = (line: string): string[] => {
+      const result: string[] = [];
+      let i = 0;
+      while (i <= line.length) {
+        if (i === line.length) { result.push(""); break; }
+        if (line[i] === '"') {
+          let field = "";
+          i++;
+          while (i < line.length) {
+            if (line[i] === '"') {
+              if (i + 1 < line.length && line[i + 1] === '"') { field += '"'; i += 2; }
+              else { i++; break; }
+            } else { field += line[i++]; }
+          }
+          result.push(field.trim());
+          if (i < line.length && line[i] === ',') i++;
+        } else {
+          const end = line.indexOf(",", i);
+          if (end === -1) { result.push(line.slice(i).trim()); break; }
+          result.push(line.slice(i, end).trim());
+          i = end + 1;
+        }
+      }
+      return result;
+    };
     const splitRow = (line: string): string[] =>
-      delimiter === ","
-        ? (line.match(/("(?:[^"]|"")*"|[^,]*)/g) ?? []).map((c) => c.replace(/^"|"$/g, "").replace(/""/g, '"').trim())
-        : line.split("\t").map((s) => s.trim());
+      delimiter === "," ? splitCSVRow(line) : line.split("\t").map((s) => s.trim());
 
     // Keep ALL columns including empty-header ones so indices stay aligned with data rows.
     const rawPaths = splitRow(lines[0]);

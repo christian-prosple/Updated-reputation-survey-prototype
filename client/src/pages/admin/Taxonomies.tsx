@@ -239,13 +239,37 @@ function detectDelimiter(firstLine: string): string {
   return firstLine.includes("\t") ? "\t" : ",";
 }
 
+function splitCSVRow(line: string): string[] {
+  const result: string[] = [];
+  let i = 0;
+  while (i <= line.length) {
+    if (i === line.length) { result.push(""); break; }
+    if (line[i] === '"') {
+      let field = "";
+      i++;
+      while (i < line.length) {
+        if (line[i] === '"') {
+          if (i + 1 < line.length && line[i + 1] === '"') { field += '"'; i += 2; }
+          else { i++; break; }
+        } else { field += line[i++]; }
+      }
+      result.push(field.trim());
+      if (i < line.length && line[i] === ',') i++;
+    } else {
+      const end = line.indexOf(",", i);
+      if (end === -1) { result.push(line.slice(i).trim()); break; }
+      result.push(line.slice(i, end).trim());
+      i = end + 1;
+    }
+  }
+  return result;
+}
+
 function searchRaw(content: string, query: string, delimiter: string): { row: number; col: number; path: string; cell: string }[] {
   const q = query.toLowerCase().trim();
   if (!q) return [];
   const lines = content.split(/\r?\n/); // don't filter — preserve row numbers
-  const splitRow = (line: string) => delimiter === ","
-    ? line.match(/("(?:[^"]|"")*"|[^,]*)/g)?.map((c) => c.replace(/^"|"$/g, "").replace(/""/g, '"').trim()) ?? []
-    : line.split("\t").map((s) => s.trim());
+  const splitRow = (line: string) => delimiter === "," ? splitCSVRow(line) : line.split("\t").map((s) => s.trim());
   const headers = splitRow(lines[0] ?? "");
   const results: { row: number; col: number; path: string; cell: string }[] = [];
   for (let r = 1; r < lines.length; r++) {
@@ -263,9 +287,7 @@ function parseMatrix(content: string, forceDelimiter?: string): { careerPaths: s
   const lines = content.split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) return { careerPaths: [], employers: [], delimiter: "\t" };
   const delimiter = forceDelimiter ?? detectDelimiter(lines[0]);
-  const splitRow = (line: string) => delimiter === ","
-    ? line.match(/("(?:[^"]|"")*"|[^,]*)/g)?.map((c) => c.replace(/^"|"$/g, "").replace(/""/g, '"').trim()) ?? []
-    : line.split("\t").map((s) => s.trim());
+  const splitRow = (line: string) => delimiter === "," ? splitCSVRow(line) : line.split("\t").map((s) => s.trim());
   // Keep ALL columns including empty ones so column indices stay aligned with data rows.
   // Empty-header columns are skipped during assignment, not removed from the index.
   const rawPaths = splitRow(lines[0]);
