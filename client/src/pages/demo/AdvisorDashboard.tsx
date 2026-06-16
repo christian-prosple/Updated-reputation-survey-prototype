@@ -56,6 +56,42 @@ export default function AdvisorDashboard() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Search className="w-5 h-5 text-slate-500" /> Search for a Student
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search all students by name…"
+              data-testid="input-student-search"
+            />
+            {query.trim() && (
+              <div className="border rounded-md divide-y" data-testid="list-search-results">
+                {matches.length === 0 ? (
+                  <p className="text-sm text-slate-500 p-3" data-testid="text-no-results">
+                    No students found.
+                  </p>
+                ) : (
+                  matches.map((s) => (
+                    <div
+                      key={s.id}
+                      className="flex items-center justify-between p-3 text-sm"
+                      data-testid={`row-student-${s.id}`}
+                    >
+                      <span className="font-medium">{s.name}</span>
+                      <span className="text-xs text-slate-400 capitalize">{s.group}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card
             className="cursor-pointer transition-shadow hover:shadow-md"
@@ -119,42 +155,6 @@ export default function AdvisorDashboard() {
                 </li>
               ))}
             </ol>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <Search className="w-5 h-5 text-slate-500" /> Search for a Student
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search all students by name…"
-              data-testid="input-student-search"
-            />
-            {query.trim() && (
-              <div className="border rounded-md divide-y" data-testid="list-search-results">
-                {matches.length === 0 ? (
-                  <p className="text-sm text-slate-500 p-3" data-testid="text-no-results">
-                    No students found.
-                  </p>
-                ) : (
-                  matches.map((s) => (
-                    <div
-                      key={s.id}
-                      className="flex items-center justify-between p-3 text-sm"
-                      data-testid={`row-student-${s.id}`}
-                    >
-                      <span className="font-medium">{s.name}</span>
-                      <span className="text-xs text-slate-400 capitalize">{s.group}</span>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
           </CardContent>
         </Card>
       </main>
