@@ -5,6 +5,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import SurveyPage from "@/pages/Survey";
+import UniversitySelection from "@/pages/demo/UniversitySelection";
+import DemoType from "@/pages/demo/DemoType";
+import AdvisorLogin from "@/pages/demo/AdvisorLogin";
+import AdvisorDashboard from "@/pages/demo/AdvisorDashboard";
+import ComingSoon from "@/pages/demo/ComingSoon";
 import { AdminLayout } from "@/pages/admin/AdminLayout";
 import AdminDashboard from "@/pages/admin/Dashboard";
 import AdminResponses from "@/pages/admin/Responses";
@@ -34,11 +39,15 @@ function AdminRouter() {
 function Router() {
   return (
     <Switch>
-      {/* 
-        This is a Single Page App survey.
-        The root path serves the Survey flow.
-      */}
-      <Route path="/" component={SurveyPage} />
+      {/* Demo flow — root is the entry point */}
+      <Route path="/" component={UniversitySelection} />
+      <Route path="/demo/type" component={DemoType} />
+      <Route path="/demo/login" component={AdvisorLogin} />
+      <Route path="/demo/dashboard" component={AdvisorDashboard} />
+      <Route path="/demo/coming-soon" component={ComingSoon} />
+
+      {/* The survey flow now lives at /survey */}
+      <Route path="/survey" component={SurveyPage} />
 
       {/* Admin dashboard and sub-routes */}
       <Route path="/admin/:rest*" component={AdminRouter} />
