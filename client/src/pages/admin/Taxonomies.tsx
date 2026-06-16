@@ -233,16 +233,16 @@ function CsvImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => voi
 // ---------------------------------------------------------------------------
 // Matrix Import — TSV with career-path columns and ranked employer rows
 // ---------------------------------------------------------------------------
+// Prefer tab whenever any tab is present — fall back to comma only for pure CSV.
+// Counting commas is unreliable because career-path names contain them.
 function detectDelimiter(firstLine: string): string {
-  const tabs = (firstLine.match(/\t/g) ?? []).length;
-  const commas = (firstLine.match(/,/g) ?? []).length;
-  return tabs >= commas ? "\t" : ",";
+  return firstLine.includes("\t") ? "\t" : ",";
 }
 
-function parseMatrix(content: string): { careerPaths: string[]; employers: { name: string; paths: string[] }[]; delimiter: string } {
+function parseMatrix(content: string, forceDelimiter?: string): { careerPaths: string[]; employers: { name: string; paths: string[] }[]; delimiter: string } {
   const lines = content.split(/\r?\n/).filter((l) => l.trim());
   if (lines.length < 2) return { careerPaths: [], employers: [], delimiter: "\t" };
-  const delimiter = detectDelimiter(lines[0]);
+  const delimiter = forceDelimiter ?? detectDelimiter(lines[0]);
   const splitRow = (line: string) => delimiter === ","
     ? line.match(/("(?:[^"]|"")*"|[^,]*)/g)?.map((c) => c.replace(/^"|"$/g, "").replace(/""/g, '"').trim()) ?? []
     : line.split("\t").map((s) => s.trim());
@@ -270,9 +270,11 @@ function MatrixImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => 
   const [content, setContent] = useState("");
   const [filename, setFilename] = useState("");
   const [mode, setMode] = useState<"merge" | "replace">("replace");
+  const [delimOverride, setDelimOverride] = useState<"auto" | "tab" | "comma">("auto");
   const [busy, setBusy] = useState(false);
 
-  const parsed = content.trim() ? parseMatrix(content) : { careerPaths: [], employers: [], delimiter: "\t" };
+  const forceDelim = delimOverride === "tab" ? "\t" : delimOverride === "comma" ? "," : undefined;
+  const parsed = content.trim() ? parseMatrix(content, forceDelim) : { careerPaths: [], employers: [], delimiter: "\t" };
 
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -315,7 +317,7 @@ function MatrixImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => 
       <Card>
         <CardHeader className="py-3"><CardTitle className="text-sm">1. Upload file or paste content</CardTitle></CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <Input
               type="file"
               accept=".csv,.tsv,.txt"
@@ -334,10 +336,18 @@ function MatrixImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => 
             className="font-mono text-xs"
             data-testid="textarea-matrix-content"
           />
-          {content.trim() && parsed.careerPaths.length > 0 && (
-            <p className="text-xs text-slate-500">
-              Detected delimiter: <strong>{parsed.delimiter === "\t" ? "tab" : "comma"}</strong>
-            </p>
+          {content.trim() && (
+            <div className="flex items-center gap-3">
+              <Label className="text-xs">Delimiter</Label>
+              <Select value={delimOverride} onValueChange={(v) => setDelimOverride(v as "auto" | "tab" | "comma")}>
+                <SelectTrigger className="w-36 h-7 text-xs" data-testid="select-delim-override"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="auto">Auto-detect ({parsed.delimiter === "\t" ? "tab" : "comma"})</SelectItem>
+                  <SelectItem value="tab">Tab</SelectItem>
+                  <SelectItem value="comma">Comma</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -353,20 +363,21 @@ function MatrixImport({ taxonomy, onDone }: { taxonomy: Taxonomy; onDone: () => 
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <p className="text-xs font-semibold text-slate-500 mb-2">Career paths detected:</p>
-              <div className="flex flex-wrap gap-1">
-                {parsed.careerPaths.map((cp) => (
-                  <Badge key={cp} variant="outline" className="text-xs">{cp}</Badge>
+              <p className="text-xs font-semibold text-slate-500 mb-1">First 5 column headers — verify these look right:</p>
+              <ol className="list-decimal list-inside space-y-0.5">
+                {parsed.careerPaths.slice(0, 5).map((cp, i) => (
+                  <li key={i} className="text-xs text-slate-700">Col {i + 1}: <strong>{cp}</strong></li>
                 ))}
-              </div>
+                {parsed.careerPaths.length > 5 && <li className="text-xs text-slate-400">…and {parsed.careerPaths.length - 5} more</li>}
+              </ol>
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-500 mb-2">Sample employers (first 10):</p>
+              <p className="text-xs font-semibold text-slate-500 mb-2">Sample employers (first 10) with their detected career paths:</p>
               <div className="space-y-1">
                 {parsed.employers.slice(0, 10).map((e) => (
                   <div key={e.name} className="flex items-start gap-2 text-sm">
                     <span className="font-medium w-48 flex-shrink-0 truncate">{e.name}</span>
-                    <span className="text-xs text-slate-500">{e.paths.slice(0, 3).join(", ")}{e.paths.length > 3 ? ` +${e.paths.length - 3} more` : ""}</span>
+                    <span className="text-xs text-slate-500">{e.paths.join(", ")}</span>
                   </div>
                 ))}
                 {parsed.employers.length > 10 && <p className="text-xs text-slate-400">…and {parsed.employers.length - 10} more employers</p>}
