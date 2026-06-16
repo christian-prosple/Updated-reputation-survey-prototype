@@ -60,7 +60,7 @@ export default function CompanyDetail() {
 
   const rank = getCompanyRank(name);
   const total = CANONICAL_RANKING.length;
-  const funnel = computeFunnel(rank);
+  const funnel = computeFunnel(rank, name);
 
   return (
     <div className="min-h-screen bg-slate-50/50 font-sans text-slate-900">

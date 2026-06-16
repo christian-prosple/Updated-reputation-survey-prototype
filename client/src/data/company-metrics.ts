@@ -27,23 +27,48 @@ function round1(x: number): number {
   return Math.round(x * 10) / 10;
 }
 
+function clamp(x: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, x));
+}
+
 // 0 for the best-ranked company, 1 for the worst-ranked company.
 function rankT(rank: number): number {
   if (N <= 1) return 0;
   return (rank - 1) / (N - 1);
 }
 
-// Brand Awareness: % of students who recognise the brand. Top brands sit near
-// 100% and taper gradually; the tail drops toward ~12%.
-export function computeAwareness(rank: number): number {
-  const t = rankT(rank);
-  return Math.round(100 - 86 * Math.pow(t, 1.35));
+// Deterministic per-company offset in [-1, 1] derived from the company name and
+// a salt. Using different salts lets Brand Awareness and Brand Strength diverge
+// for the same company, so a firm can be strong on one and weaker on the other
+// while both still broadly track the overall ranking.
+function nameOffset(name: string, salt: string): number {
+  let h = 2166136261;
+  const s = `${salt}:${name}`;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  // Map the 32-bit hash to [-1, 1].
+  return ((h >>> 0) / 4294967296) * 2 - 1;
 }
 
-// Brand Strength: 0–10 score. Best brand ~10.0, worst ~2.2.
-export function computeStrength(rank: number): number {
+// Brand Awareness: % of students who recognise the brand. Top brands sit near
+// 100% and taper gradually; the tail drops toward ~12%. A per-company offset
+// nudges it off the pure rank curve so it differs from Brand Strength.
+export function computeAwareness(rank: number, name: string): number {
   const t = rankT(rank);
-  return round1(10 - 7.8 * Math.pow(t, 1.2));
+  const base = 100 - 86 * Math.pow(t, 1.35);
+  const jitter = nameOffset(name, "awareness") * 9;
+  return Math.round(clamp(base + jitter, 6, 100));
+}
+
+// Brand Strength: 0–10 score. Best brand ~10.0, worst ~2.2, with its own
+// per-company offset so it doesn't mirror Brand Awareness.
+export function computeStrength(rank: number, name: string): number {
+  const t = rankT(rank);
+  const base = 10 - 7.8 * Math.pow(t, 1.2);
+  const jitter = nameOffset(name, "strength") * 1.1;
+  return round1(clamp(base + jitter, 1.5, 10));
 }
 
 export interface FunnelStage {
@@ -55,9 +80,9 @@ export interface FunnelStage {
 // Retention between stages is high for top brands (gentle slope) and low for
 // weaker brands (steep drop-off), with the final "1st preference" stage always
 // the sharpest decline.
-export function computeFunnel(rank: number): FunnelStage[] {
+export function computeFunnel(rank: number, name: string): FunnelStage[] {
   const q = 1 - rankT(rank); // 1 = best, 0 = worst
-  const recognise = computeAwareness(rank);
+  const recognise = computeAwareness(rank, name);
   const s2 = recognise * (0.84 + 0.11 * q);
   const s3 = s2 * (0.84 + 0.11 * q);
   const s4 = s3 * (0.76 + 0.16 * q);
@@ -78,18 +103,20 @@ export interface MetricBar {
   value: number;
 }
 
-// All companies' awareness/strength in rank order (already descending, since
-// both metrics are monotonic in rank). Used to render the full bar charts.
+// All companies' awareness/strength in rank order. Values broadly trend with
+// rank but carry a per-company offset, so the two charts no longer mirror each
+// other. Bars stay in rank order so a company sits at the same x-position in
+// both charts.
 export const AWARENESS_BARS: MetricBar[] = CANONICAL_RANKING.map((c, i) => ({
   name: c.name,
   rank: i + 1,
-  value: computeAwareness(i + 1),
+  value: computeAwareness(i + 1, c.name),
 }));
 
 export const STRENGTH_BARS: MetricBar[] = CANONICAL_RANKING.map((c, i) => ({
   name: c.name,
   rank: i + 1,
-  value: computeStrength(i + 1),
+  value: computeStrength(i + 1, c.name),
 }));
 
 function average(values: number[]): number {
