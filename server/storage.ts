@@ -319,7 +319,13 @@ export class DbStorage implements IStorage {
       await db.delete(careerPathEmployers);
       const CHUNK = 500;
       for (let i = 0; i < rows.length; i += CHUNK) {
-        await db.insert(careerPathEmployers).values(rows.slice(i, i + CHUNK));
+        await db
+          .insert(careerPathEmployers)
+          .values(rows.slice(i, i + CHUNK))
+          .onConflictDoUpdate({
+            target: [careerPathEmployers.careerPath, careerPathEmployers.employerName],
+            set: { rank: sql`excluded.rank`, isCore: sql`excluded.is_core`, active: sql`excluded.active` },
+          });
       }
     } else {
       // Upsert in chunks — conflict on (careerPath, employerName)
