@@ -12,18 +12,18 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = "primary", size = "md", isLoading, children, disabled, ...props }, ref) => {
     
     const variants = {
-      primary: "bg-primary text-primary-foreground shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 hover:-translate-y-0.5 active:translate-y-0 active:shadow-md",
-      secondary: "bg-white text-foreground border border-border shadow-sm hover:border-primary/50 hover:bg-slate-50",
+      primary: "bg-primary text-primary-foreground hover:bg-primary/90",
+      secondary: "bg-white text-foreground border border-border hover:border-primary/50 hover:bg-slate-50",
       outline: "bg-transparent border-2 border-primary text-primary hover:bg-primary/5",
       ghost: "bg-transparent text-foreground hover:bg-secondary",
-      danger: "bg-destructive text-destructive-foreground shadow-md hover:bg-destructive/90",
+      danger: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
     };
 
     const sizes = {
-      sm: "h-9 px-4 text-xs rounded-lg",
-      md: "h-12 px-6 text-sm rounded-xl",
-      lg: "h-14 px-8 text-base rounded-2xl",
-      icon: "h-10 w-10 p-0 rounded-xl flex items-center justify-center",
+      sm: "h-9 px-4 text-xs rounded-none",
+      md: "h-12 px-6 text-sm rounded-none",
+      lg: "h-14 px-8 text-base rounded-none",
+      icon: "h-10 w-10 p-0 rounded-none flex items-center justify-center",
     };
 
     return (

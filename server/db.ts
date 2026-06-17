@@ -1,10 +1,12 @@
-// No real database connection needed for this prototype
 import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "@shared/schema";
 
-// Export dummy objects to satisfy imports, but they won't be used
-export const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL || "postgres://dummy:dummy@localhost:5432/dummy" 
-});
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL is not set. Provision a PostgreSQL database for this project.",
+  );
+}
+
+export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle(pool, { schema });

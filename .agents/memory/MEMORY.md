@@ -1,0 +1,1 @@
+- [Config-driven survey copy](survey-config-driven.md) — Survey.tsx reads headings/labels/options from DB via useSurveyConfig hook; DB is authoritative for copy.

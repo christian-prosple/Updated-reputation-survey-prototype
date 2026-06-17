@@ -1,64 +1,63 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  /* Premium, Professional Palette - Deep Indigo & Slate */
+  /* Employer League design system — black & white, square corners */
   --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
+  --foreground: 0 0% 0%;
 
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+  --card-foreground: 0 0% 0%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
+  --popover-foreground: 0 0% 0%;
 
-  --primary: 162 40% 71%; /* Prosple Mint #96D2C0 */
-  --primary-foreground: 222 47% 11%;
+  --primary: 0 0% 11%; /* #1B1B1B */
+  --primary-foreground: 0 0% 100%;
 
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222 47% 11%;
+  --secondary: 0 0% 96%;
+  --secondary-foreground: 0 0% 11%;
 
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215 16% 47%;
+  --muted: 0 0% 96%;
+  --muted-foreground: 0 0% 40%;
 
-  --accent: 162 40% 95%; 
-  --accent-foreground: 162 40% 30%;
+  --accent: 0 0% 96%;
+  --accent-foreground: 0 0% 11%;
 
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
 
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 162 40% 71%;
+  --border: 0 0% 92%; /* #EAEAEA */
+  --input: 0 0% 92%;
+  --ring: 0 0% 0%;
 
-  --radius: 0.75rem;
+  --radius: 0rem;
 
-  --font-display: 'DM Sans', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-display: 'Lora', Georgia, serif;
+  --font-body: 'Geist', system-ui, sans-serif;
+  --font-sans: 'Geist', system-ui, sans-serif;
+  --font-serif: 'Lora', Georgia, serif;
 }
 
 @layer base {
   body {
-    @apply bg-background text-foreground antialiased selection:bg-primary/20;
+    @apply bg-background text-foreground antialiased selection:bg-foreground/10;
     font-family: var(--font-body);
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
-    @apply font-bold tracking-tight text-foreground;
+    @apply font-semibold tracking-tight text-foreground;
   }
 }
 
 @layer components {
-  /* Smooth transitions for interactive elements */
   .transition-all-200 {
     @apply transition-all duration-200 ease-out;
   }
 
   .card-hover {
-    @apply hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 ease-out border-transparent hover:border-primary/20;
+    @apply hover:border-foreground/30 transition-colors duration-200 ease-out;
   }
 }

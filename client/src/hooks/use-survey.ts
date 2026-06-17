@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { DEGREE_TAXONOMY } from '@/data/degrees';
 
 // --- DATA CONSTANTS ---
@@ -209,6 +209,7 @@ export interface PersonalInfo {
   country: string;
   university: string;
   preferredCity: string;
+  topPickReason: string;
 }
 
 export interface CompanyEntity {
@@ -223,6 +224,14 @@ export interface SurveyState {
   selectedDegrees: DegreeType[];
   selectedRoles: RoleType[];
   roleOrder: RoleType[];
+  // Aspects (job priority) state
+  selectedAspects: string[];
+  aspectOrder: string[];
+  aspectEloRatings: Record<string, number>;
+  aspectPairwiseCount: number;
+  aspectCompletedPairs: Set<string>;
+  aspectComparisonHistory: { winnerId: string | null; pair: [string, string] }[];
+  // Company recognition / pairwise state
   displayedCompanies: CompanyEntity[];
   selectedCompanies: CompanyEntity[];
   pairwiseWins: Record<string, number>;
@@ -251,11 +260,18 @@ export function useSurvey() {
       graduationYear: "",
       country: "",
       university: "",
-      preferredCity: ""
+      preferredCity: "",
+      topPickReason: ""
     },
     selectedDegrees: [],
     selectedRoles: [],
     roleOrder: [],
+    selectedAspects: [],
+    aspectOrder: [],
+    aspectEloRatings: {},
+    aspectPairwiseCount: 0,
+    aspectCompletedPairs: new Set(),
+    aspectComparisonHistory: [],
     displayedCompanies: [],
     selectedCompanies: [],
     pairwiseWins: {},
@@ -294,6 +310,89 @@ export function useSurvey() {
 
   const reorderRoles = (newOrder: RoleType[]) => {
     setState(prev => ({ ...prev, roleOrder: newOrder }));
+  };
+
+  const toggleAspect = (aspect: string) => {
+    setState(prev => {
+      const exists = prev.selectedAspects.includes(aspect);
+      const next = exists
+        ? prev.selectedAspects.filter(a => a !== aspect)
+        : [...prev.selectedAspects, aspect];
+      return { ...prev, selectedAspects: next };
+    });
+  };
+
+  const reorderAspects = (newOrder: string[]) => {
+    setState(prev => ({ ...prev, aspectOrder: newOrder }));
+  };
+
+  const initializeAspectPairwiseSession = () => {
+    setState(prev => {
+      const initialElo: Record<string, number> = {};
+      prev.selectedAspects.forEach(a => { initialElo[a] = 1500; });
+      return {
+        ...prev,
+        aspectEloRatings: initialElo,
+        aspectPairwiseCount: 0,
+        aspectCompletedPairs: new Set<string>(),
+        aspectComparisonHistory: [],
+      };
+    });
+  };
+
+  const recordAspectComparison = (pair: [string, string], winnerId: string | null) => {
+    setState(prev => {
+      const [a, b] = pair;
+      const key = [a, b].sort().join("|");
+      let newElo = { ...prev.aspectEloRatings };
+      if (winnerId) {
+        const loserId = a === winnerId ? b : a;
+        const K = 32;
+        const rW = newElo[winnerId] || 1500;
+        const rL = newElo[loserId] || 1500;
+        const eW = 1 / (1 + Math.pow(10, (rL - rW) / 400));
+        newElo[winnerId] = rW + K * (1 - eW);
+        newElo[loserId] = rL + K * (0 - (1 - eW));
+      }
+      return {
+        ...prev,
+        aspectEloRatings: newElo,
+        aspectPairwiseCount: prev.aspectPairwiseCount + 1,
+        aspectCompletedPairs: new Set(prev.aspectCompletedPairs).add(key),
+        aspectComparisonHistory: [...prev.aspectComparisonHistory, { winnerId, pair }],
+      };
+    });
+  };
+
+  const undoLastAspectComparison = () => {
+    setState(prev => {
+      if (prev.aspectComparisonHistory.length === 0) return prev;
+      const last = prev.aspectComparisonHistory[prev.aspectComparisonHistory.length - 1];
+      const newHistory = prev.aspectComparisonHistory.slice(0, -1);
+      const key = [...last.pair].sort().join("|");
+      const newCompleted = new Set(prev.aspectCompletedPairs);
+      newCompleted.delete(key);
+      const newElo: Record<string, number> = {};
+      prev.selectedAspects.forEach(a => { newElo[a] = 1500; });
+      for (const h of newHistory) {
+        if (h.winnerId) {
+          const loserId = h.pair[0] === h.winnerId ? h.pair[1] : h.pair[0];
+          const K = 32;
+          const rW = newElo[h.winnerId] || 1500;
+          const rL = newElo[loserId] || 1500;
+          const eW = 1 / (1 + Math.pow(10, (rL - rW) / 400));
+          newElo[h.winnerId] = rW + K * (1 - eW);
+          newElo[loserId] = rL + K * (0 - (1 - eW));
+        }
+      }
+      return {
+        ...prev,
+        aspectEloRatings: newElo,
+        aspectPairwiseCount: Math.max(0, prev.aspectPairwiseCount - 1),
+        aspectCompletedPairs: newCompleted,
+        aspectComparisonHistory: newHistory,
+      };
+    });
   };
 
   const generateCompanyPool = () => {
@@ -575,6 +674,25 @@ export function useSurvey() {
     setState(prev => ({ ...prev, finalRanking: newRanking }));
   };
 
+  // Replace the recognition-step company pool (used when the backend employer
+  // display algorithm decides which employers to show). Resets dependent state.
+  const setDisplayedCompanies = (companies: CompanyEntity[]) => {
+    setState(prev => ({
+      ...prev,
+      displayedCompanies: companies,
+      selectedCompanies: [],
+      pairwiseWins: {},
+      completedPairs: new Set(),
+      pairwiseCount: 0,
+      finalRanking: [],
+      eloRatings: {},
+      sessionOrder: [],
+      chainIndex: 0,
+      appearancesInSession: {},
+      wasChainPair: false,
+    }));
+  };
+
   const initializePairwiseSession = () => {
     const ids = state.selectedCompanies.map(c => c.id);
     const shuffled = [...ids].sort(() => Math.random() - 0.5);
@@ -605,37 +723,95 @@ export function useSurvey() {
     }));
   };
 
+  // Steps an admin has hidden via the survey editor. The live survey skips
+  // these so respondents never see them. Stored in a ref so nextStep/prevStep
+  // closures always read the latest value without re-creating the actions.
+  const hiddenStepsRef = useRef<Set<number>>(new Set());
+  const setHiddenSteps = (steps: Set<number>) => {
+    hiddenStepsRef.current = steps;
+  };
+  // Walk forward over any hidden steps (never past the final Thank You step).
+  const skipHiddenForward = (step: number) => {
+    let s = step;
+    while (s < 11 && hiddenStepsRef.current.has(s)) s++;
+    return s;
+  };
+  // Walk backward over any hidden steps (never below the first step).
+  const skipHiddenBackward = (step: number) => {
+    let s = step;
+    while (s > 0 && hiddenStepsRef.current.has(s)) s--;
+    return s;
+  };
+
   const nextStep = () => {
     setState(prev => {
       const next = prev.step + 1;
       
       // LOGIC GATES FOR STEP TRANSITIONS
-      // Step 2 is role selection - if only 1 role, skip reordering (step 3) and go to 4
+      // Step 2: role selection — if only 1 role, skip reordering (step 3) and go to 4
       if (prev.step === 2) {
         if (prev.selectedRoles.length <= 1) {
-           return { ...prev, step: 4, roleOrder: prev.selectedRoles };
+           return { ...prev, step: skipHiddenForward(4), roleOrder: prev.selectedRoles };
         }
-        // If >1 role, initialize order with selection order and go to step 3
-        return { ...prev, step: 3, roleOrder: prev.selectedRoles };
+        return { ...prev, step: skipHiddenForward(3), roleOrder: prev.selectedRoles };
       }
 
-      // Cap at step 7 (Thank You)
-      return { ...prev, step: Math.min(next, 7) };
+      // Step 4: aspects selection — if ≤1 aspect, skip pairwise (5) and reorder (6), go to 7
+      if (prev.step === 4) {
+        if (prev.selectedAspects.length <= 1) {
+          return { ...prev, step: skipHiddenForward(7), aspectOrder: prev.selectedAspects };
+        }
+        return { ...prev, step: skipHiddenForward(5) };
+      }
+
+      // Cap at step 11 (Thank You)
+      return { ...prev, step: skipHiddenForward(Math.min(next, 11)) };
     });
   };
   
-  // Custom setter for specific logic needs
-  const setStep = (step: number) => setState(prev => ({ ...prev, step }));
+  // Custom setter for specific logic needs. Lands on the nearest visible step.
+  const setStep = (step: number) =>
+    setState(prev => ({ ...prev, step: skipHiddenForward(step) }));
 
   const prevStep = () => {
     setState(prev => {
-      if (prev.step === 4 && prev.selectedRoles.length <= 1) {
-        return { ...prev, step: 2 };
+      // Step 4 (aspects): if only 1 role selected (career_order was skipped), go to 2; else go to 3
+      if (prev.step === 4) {
+        if (prev.selectedRoles.length <= 1) {
+          return { ...prev, step: skipHiddenBackward(2) };
+        }
+        return { ...prev, step: skipHiddenBackward(3) };
       }
+      // Step 5 (aspects pairwise): go back to aspects selection, reset aspects pairwise state
       if (prev.step === 5) {
         return {
           ...prev,
-          step: 4,
+          step: skipHiddenBackward(4),
+          aspectEloRatings: {},
+          aspectPairwiseCount: 0,
+          aspectCompletedPairs: new Set<string>(),
+          aspectComparisonHistory: [],
+        };
+      }
+      // Step 6 (aspects reorder): if only 1 aspect (shouldn't happen), go to 4; else go to 5
+      if (prev.step === 6) {
+        if (prev.selectedAspects.length <= 1) {
+          return { ...prev, step: skipHiddenBackward(4) };
+        }
+        return { ...prev, step: skipHiddenBackward(5) };
+      }
+      // Step 7 (company recognition): if ≤1 aspect was selected (steps 5/6 were skipped), go to 4; else go to 6
+      if (prev.step === 7) {
+        if (prev.selectedAspects.length <= 1) {
+          return { ...prev, step: skipHiddenBackward(4) };
+        }
+        return { ...prev, step: skipHiddenBackward(6) };
+      }
+      // Step 8 (company pairwise): go back to recognition, reset company pairwise state
+      if (prev.step === 8) {
+        return {
+          ...prev,
+          step: skipHiddenBackward(7),
           sessionOrder: [],
           chainIndex: 0,
           appearancesInSession: {},
@@ -647,7 +823,7 @@ export function useSurvey() {
           wasChainPair: false,
         };
       }
-      return { ...prev, step: Math.max(0, prev.step - 1) };
+      return { ...prev, step: skipHiddenBackward(Math.max(0, prev.step - 1)) };
     });
   };
 
@@ -690,16 +866,23 @@ export function useSurvey() {
       selectDegree,
       selectRole,
       reorderRoles,
+      toggleAspect,
+      reorderAspects,
+      initializeAspectPairwiseSession,
+      recordAspectComparison,
+      undoLastAspectComparison,
       generateCompanyPool,
       toggleCompanySelection,
       recordComparison,
       undoLastComparison,
       generateFinalRanking,
       updateFinalRanking,
+      setDisplayedCompanies,
       updatePersonalInfo,
       nextStep,
       prevStep,
       setStep,
+      setHiddenSteps,
       initializePairwiseSession,
     },
     suggestedRoles

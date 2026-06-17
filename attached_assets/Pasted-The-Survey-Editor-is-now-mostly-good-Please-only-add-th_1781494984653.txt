@@ -1,0 +1,121 @@
+The Survey Editor is now mostly good. Please only add the missing pieces below — do not rebuild the editor.
+
+## 1. Add live preview
+
+Add a preview experience to the Survey Editor.
+
+Requirements:
+- Add a right-side preview panel, or a “Preview” button that opens a modal.
+- Preview the currently selected page using the same respondent-facing components as the real survey.
+- Preview should update as I edit title, subtitle, questions, required state, options, etc.
+- Add a “Preview full survey” button.
+- Add a route like `/admin/preview/:surveyConfigId`.
+- Clearly mark preview as “Preview only”.
+- Preview responses should not be saved as real responses.
+
+## 2. Add AI/custom question builder slot
+
+I still want the flexibility of describing a custom question in Replit chat and having it become part of the survey editor.
+
+Add a “Custom Question Builder” section inside the Survey Editor.
+
+UX idea:
+- Add button: “Create custom question”
+- Opens a modal/drawer with:
+  - Textarea: “Describe the question you want to create”
+  - Dropdown: target page
+  - Button: “Generate question JSON”
+  - Button: “Insert into survey”
+  - Advanced JSON editor
+
+Important: this does not need to call an AI API. The main goal is to create a structured place where Replit Agent/chat can insert generated question JSON.
+
+Implement it as a human/agent-friendly workflow:
+- The textarea is where I can write something like:
+  “Create a pairwise employer comparison question using recognized employers, 10 comparisons, allow skip, store exposure data.”
+- The app should either:
+  1. Generate a basic template from keywords, or
+  2. Let Replit Agent populate the JSON manually into the advanced editor.
+
+The output should be a valid question object matching the survey config schema.
+
+## 3. Add question JSON import/paste
+
+In the custom question builder, support pasting raw question JSON.
+
+Requirements:
+- Validate JSON before inserting
+- Show validation errors
+- Require fields:
+  - id
+  - type
+  - label
+- Auto-fill missing optional fields with defaults:
+  - required: false
+  - helperText: ""
+  - options: []
+  - conditions: []
+  - config: {}
+- Generate a stable unique ID if the pasted question ID already exists
+- Insert into selected page
+- Save as part of normal survey draft
+
+## 4. Add reusable custom question templates
+
+Add a small template library inside the custom question builder.
+
+Templates:
+- Blank custom question
+- Employer recognition question
+- Pairwise employer comparison
+- Drag ranking/reorder question
+- Career path selector
+- Searchable multi-select
+- Static content block
+
+When I select a template, populate the JSON editor with a valid starter object.
+
+## 5. Make this Replit-Agent friendly
+
+Add helper comments or documentation in the code explaining:
+- where survey question JSON is defined
+- how to add a new custom question type
+- how Replit Agent can insert a generated question into the editor
+- expected schema for custom questions
+
+Add an admin-facing hint near the custom builder:
+
+“Tip: You can ask Replit Agent to generate a question JSON object, paste it here, validate it, then insert it into the survey.”
+
+## 6. Example custom question JSON
+
+Include this example somewhere in the builder as a collapsible help section:
+
+{
+  "id": "pairwise_employer_comparison",
+  "type": "pairwise",
+  "label": "Which employer would you prefer?",
+  "helperText": "Choose the employer you would be more likely to apply to.",
+  "required": true,
+  "optionsSource": "recognized_employers",
+  "config": {
+    "comparisons": 10,
+    "allowSkip": true,
+    "allowUndo": true,
+    "storeExposureData": true,
+    "algorithm": "coverage_booster"
+  },
+  "conditions": []
+}
+
+## 7. Test
+
+Please test:
+- Preview current page
+- Preview full survey
+- Create question from template
+- Paste valid JSON and insert
+- Paste invalid JSON and see validation error
+- Insert pairwise question into existing page
+- Save draft
+- Confirm public survey still works
